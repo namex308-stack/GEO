@@ -1,0 +1,263 @@
+     1→     1→---
+     2→     2→Task ID: 1
+     3→     3→Agent: Main (Z.ai Code)
+     4→     4→Task: Build a professional, enterprise-grade SaaS website for an e-commerce audit platform ("StorePulse AI") with full audit flow, scoring, AI generator, dashboard, pricing, and login — single-page Next.js app with view switching.
+     5→     5→
+     6→     6→Work Log:
+     7→     7→- Inspected project scaffold (Next.js 16, Tailwind v4, shadcn/ui, framer-motion, recharts, zustand, next-themes, sonner).
+     8→     8→- Designed an enterprise color system: deep emerald/teal primary + amber/gold accent (avoided indigo/blue per guidelines). Added `--brand` and `--gold` tokens, custom utilities (bg-grid, gradient-text, shadow-glow, glass, marquee, pulse-ring).
+     9→     9→- Added Plus Jakarta Sans as display font alongside Geist; set default theme to dark with light-mode support.
+    10→    10→- Created brand logo (SVG) — pulse/heartbeat mark with emerald gradient tile + gold score node.
+    11→    11→- Built Zustand store for view state (landing/audit/results/dashboard/pricing), auth, audit data, plan.
+    12→    12→- Built mock data: 3 pricing plans (Free/Pro $29/Business $79), full sample audit (82 score, 4 pillars, competitor, 8 recommendations), AI-generated copy (title/desc/FAQ/meta/ad copy).
+    13→    13→- Built layout: sticky glass navbar (scroll-aware, mobile menu, theme toggle, login/CTA), footer with mt-auto (sticky-bottom compliant).
+    14→    14→- Built landing sections: Hero (animated score card), TrustBar marquee, Features (4 pillars), HowItWorks (3 steps), ScoreShowcase (radar chart + GEO radials), ComparisonDemo (problem/solution cards), Pricing (monthly/yearly toggle, Paymob checkout), Testimonials (masonry), FAQ (accordion), CTA.
+    15→    15→- Built interactive audit flow: 2-step wizard (product URL → store/competitor) → animated 6-phase analysis screen → results page.
+    16→    16→- Built results page: sticky score header, overall radial gauge, 4 pillar cards, competitor bar chart, GEO AI visibility (ChatGPT/Perplexity/Google AI), filterable recommendations with Pro upsell, AI Generator tabs (Title/Description/FAQ/Meta/Ad copy with copy buttons).
+    17→    17→- Built dashboard: stat cards, score-trend area chart, plan/usage card with upgrade CTA, recent-audits list.
+    18→    18→- Built login modal (Google + email, simulated OAuth).
+    19→    19→- Created favicon (icon.svg).
+    20→    20→- Ran ESLint — clean, no errors.
+    21→    21→- Verified via Agent Browser + VLM: landing renders professionally (all sections), audit flow works end-to-end (quiz → analysis → results), AI Generator tabs work, login works, dashboard renders, mobile (390px) responsive, sticky footer confirmed, both dark/light themes clean, no runtime errors in dev.log.
+    22→    22→
+    23→    23→Stage Summary:
+    24→    24→- Brand: "StorePulse AI" — AI-Powered E-commerce Intelligence for GCC & Egypt stores.
+    25→    25→- Payment: Paymob (Egypt-friendly, USD-billing) replacing Stripe.
+    26→    26→- All 4 score pillars implemented: Conversion, SEO, GEO/AI Visibility, Trust.
+    27→    27→- Golden path fully browser-verified: Landing → Start Free Audit → quiz → analysis animation → results (scores, comparison, recommendations, AI generator) → login → dashboard.
+    28→    28→- Production-ready, responsive, accessible, dual-theme enterprise UI.
+    29→    29→
+    30→    30→---
+    31→    31→Task ID: 2
+    32→    32→Agent: Main (Z.ai Code)
+    33→    33→Task: (1) Make the design more professional and credible for large companies. (2) Add a 5-question onboarding quiz after login, then ask for the site link.
+    34→    34→
+    35→    35→Work Log:
+    36→    36→- Restructured the user flow: Start Free Audit → Login modal → 5-question onboarding quiz → "Building profile" animation → URL form → analysis → results.
+    37→    37→- Updated Zustand store: added `onboarding` view, `OnboardingAnswers` type, `pendingAfterLogin`, and `startAudit()` now gates on auth + onboarding completion.
+    38→    38→- Built OnboardingQuiz component: premium one-question-per-screen flow with progress bar, animated transitions, icon option-cards. All 5 user-specified questions implemented verbatim: (1) Platform [Shopify/WooCommerce/Custom/Other], (2) Biggest challenge [High traffic low sales / Abandoned carts / Poor Google ranking / Don't know], (3) Price range [<100 / 100-500 / >500 SAR/EGP], (4) Audience [B2C/B2B/Both], (5) Referral [Google/Instagram/TikTok/Recommendation/Other]. Ends with a "Building your audit profile" animation that personalizes for the user's platform + challenge.
+    39→    39→- Updated login modal: after Google sign-in, routes to onboarding (not audit).
+    40→    40→- Updated audit URL form: now shows personalization chips (platform, focus challenge, audience) derived from onboarding answers.
+    41→    41→- Major design upgrade for enterprise credibility:
+    42→    42→  - Redesigned Hero: centered headline with hand-drawn underline accent, ambient gradient mesh, browser-chrome dashboard preview with 2-column layout (score+pillars | GEO+competitor), recommendation strip, floating "Conversion +14" chip.
+    43→    43→  - Added LogosStrip: 8 MENA brand wordmarks for social proof.
+    44→    44→  - Added MetricsBand: 4 animated count-up stats (2.4M pages analyzed, $184M revenue influenced, 1,240+ stores, 4.9 rating) using IntersectionObserver.
+    45→    45→  - Refined Features: 2-col cards with eyebrow numbers, gradient hover accents, and embedded mini-testimonials per pillar.
+    46→    46→  - Added ComparisonTable: StorePulse vs DIY vs Agency across 8 enterprise criteria with yes/no/partial icons.
+    47→    47→  - Added SecurityBand: SOC2/GDPR/PDPL compliance with 6 trust items + badge chips.
+    48→    48→  - Refined Testimonials: featured large quote + 4 supporting cards with company/role/location.
+    49→    49→- Wired all new sections into app-shell landing flow.
+    50→    50→- Ran ESLint — clean. Verified via Agent Browser + VLM: hero is "sophisticated and enterprise-ready", full landing page has 13 sections in correct order, "professional and credible for large companies, no layout problems, no empty sections, no broken elements."
+    51→    51→- Browser-verified full new flow: Landing → Start Free Audit → Login modal → Google sign-in → onboarding Q1-Q5 (all options match spec) → Building profile animation → URL form (with personalization chips) → analysis → results page. No runtime errors in dev.log.
+    52→    52→
+    53→    53→Stage Summary:
+    54→    54→- New onboarding flow fully implemented exactly per user's 5 questions, appearing after login and before the URL form.
+    55→    55→- Design significantly upgraded: added MetricsBand, LogosStrip, ComparisonTable, SecurityBand; redesigned Hero and Features; refined Testimonials. VLM-confirmed professional and credible for enterprise buyers.
+    56→    56→- Landing now has: Hero → Logos → Metrics → Features → HowItWorks → ScoreShowcase → ComparisonTable → ComparisonDemo → SecurityBand → Pricing → Testimonials → FAQ → CTA.
+    57→    57→
+    58→    58→---
+    59→    59→Task ID: 3
+    60→    60→Agent: Main (Z.ai Code)
+    61→    61→Task: Add the backend integration layer — env vars for Supabase, Google OAuth, Gemini, Firecrawl, Paddle, Upstash Redis — and wire each into typed client libraries + API routes. Switch payments from Paymob to Paddle.
+    62→    62→
+    63→    63→Work Log:
+    64→    64→- Installed packages: @supabase/supabase-js, @google/generative-ai, @paddle/paddle-node-sdk, @upstash/redis, @upstash/ratelimit, server-only.
+    65→    65→- Created `.env.example` (documented template with where-to-get-keys links for all 6 services) and `.env.local` (empty placeholders). Both gitignored (`.env*` rule).
+    66→    66→- Built `src/lib/env.ts`: server-only env validation — `getServiceStatus`, `getAllServices`, `isFullyConfigured`, `requireEnv`. Each service tracks configured + missing keys + docs URL.
+    67→    67→- Built service clients (all server-only, all gracefully degrade to demo mode when keys absent):
+    68→    68→  - `src/lib/supabase.ts` — admin client (service role) + `isSupabaseConfigured`.
+    69→    69→  - `src/lib/supabase-browser.ts` — browser anon client (RLS-respecting).
+    70→    70→  - `src/lib/gemini.ts` — `runAudit(page, competitor, onboarding)` returns full AuditData; `generateContent(page)` returns title/desc/FAQ/meta/ads. Real Gemini 1.5 Flash with a structured JSON prompt; falls back to SAMPLE_AUDIT / AI_GENERATED.
+    71→    71→  - `src/lib/firecrawl.ts` — `scrapePage(url)` via REST (markdown+html); demo stub when no key.
+    72→    72→  - `src/lib/paddle.ts` — `getPaddle()`, `createCheckout({planId, period})` with PADDLE_PRICES map; demo mode returns mock.
+    73→    73→  - `src/lib/redis.ts` — Upstash Redis + sliding-window rate limiter (free:10/hr, pro:100/hr, business:1000/hr); `checkRateLimit(identifier, plan)`.
+    74→    74→- Created API routes:
+    75→    75→  - `POST /api/audit` — Zod-validated, rate-limited, scrapes product+competitor via Firecrawl, runs Gemini audit, returns AuditData + demoMode flags.
+    76→    76→  - `POST /api/generate` — rate-limited, generates AI copy.
+    77→    77→  - `POST /api/checkout` — creates Paddle checkout transaction, returns URL or demo object.
+    78→    78→  - `GET /api/oauth/google` — redirects to Supabase Google OAuth (or returns 503 with hint when Supabase absent).
+    79→    79→  - `GET /api/oauth/callback` — OAuth callback redirect.
+    80→    80→  - `GET /api/status` — returns integration status JSON for the dashboard panel.
+    81→    81→  - `GET /api` — API index with endpoint docs + integration summary.
+    82→    82→- Updated login modal: now calls `/api/oauth/google` first (real OAuth via Supabase when configured); falls back to demo login with a toast telling the user to add Supabase keys.
+    83→    83→- Updated pricing: `handleCta` now POSTs to `/api/checkout` and redirects to the Paddle URL when configured; demo mode shows a toast. Switched all Paymob → Paddle references in pricing, FAQ, app-shell.
+    84→    84→- Built `IntegrationsStatus` dashboard component: fetches `/api/status`, renders a 6-card grid (Supabase/Google OAuth/Gemini/Firecrawl/Paddle/Upstash Redis) with green "Connected" or amber "X key(s) missing + Get keys" link per service. Added to dashboard below recent audits.
+    85→    85→- Ran ESLint — clean (fixed `window.location.href =` → `window.location.assign()` to satisfy react-hooks/immutability rule).
+    86→    86→- Verified all 6 API endpoints via curl: audit returns full AuditData, generate returns AI content, checkout returns demo object, status returns integration list, oauth/google returns 503 with hint.
+    87→    87→- Browser-verified: landing renders with 3 Paddle mentions / 0 Paymob; login → onboarding flow intact; dashboard Integrations panel shows all 6 services with correct missing-key counts (Supabase:3, Google:2, Gemini:1, Firecrawl:1, Paddle:4, Redis:2); clicking "Go Pro" calls POST /api/checkout 200. No browser/console errors.
+    88→    88→
+    89→    89→Stage Summary:
+    90→    90→- Full backend integration layer wired and verified. All 6 services (Supabase, Google OAuth, Gemini, Firecrawl, Paddle, Upstash Redis) have typed client libraries, API routes, and graceful demo-mode fallbacks.
+    91→    91→- Payments switched from Paymob to Paddle throughout the UI (pricing, FAQ, app-shell).
+    92→    92→- `.env.example` documents every required key with where-to-get-it links; `.env.local` has empty placeholders ready for the user's keys.
+    93→    93→- Dashboard now has an Integrations status panel showing live configuration state, so the user can see exactly which keys still need to be added.
+    94→    94→- Every integration degrades gracefully: with no keys, the app runs in demo mode (sample audits, mock checkout, simulated login); with keys added, real Supabase OAuth + Gemini + Firecrawl + Paddle + Redis rate-limiting activate automatically.
+    95→    95→
+    96→    96→---
+    97→    97→Task ID: 4
+    98→    98→Agent: Main (Z.ai Code)
+    99→    99→Task: (1) Apply the user's color palette (orange #FF6600 + grayscale). (2) Add a video/concept explainer + complete workflow. (3) Add strong visual effects throughout + indexing/archiving for all pages. (4) Make the analytics page strong, professional, well-organized with professional recommendations.
+   100→   100→
+   101→   101→Work Log:
+   102→   102→- Rewrote globals.css with the user's exact palette: primary #FF6600 (orange), brand #ff983f (lighter orange), gold #ffffa1 (pale yellow highlight), neutrals #1d1f21/#444648/#929292/#cccccc/#f5f5f5/#ffffff. Built light (default tokens) + dark (derived) themes. Added new effect utilities: border-conic (animated conic border), animate-float, animate-shimmer, animate-gradient, shadow-glow-lg.
+   103→   103→- Bulk-replaced all hardcoded emerald/teal/amber hex colors across 10 files → new orange palette (#FF6600/#ff983f/#cc5200/#929292).
+   104→   104→- Replaced semantic Tailwind classes: emerald-500 → primary, amber-500 → brand, gold → brand (for text visibility). Kept rose-500 only for critical/error states (universal UX).
+   105→   105→- Built src/components/common/visual-effects.tsx with reusable effects: FloatingOrbs (drifting gradient blobs), ParticleField (client-only floating dots, fixed hydration), ScrollProgress (top reading bar), Reveal (scroll-triggered fade/slide), MagneticGlow (cursor-following card glow).
+   106→   106→- Built src/components/sections/concept-explainer.tsx — a self-running animated workflow walkthrough with 4 phases (input → scan → score → fix), each with a custom animated visual (typing URL, scanning lines, score gauges appearing, fixes generating). Auto-plays every 4.2s; play/pause control; clickable phase list.
+   107→   107→- Added visual effects to hero: FloatingOrbs(3) + ParticleField(20) + gradient mesh. Added ScrollProgress to app-shell (top reading bar).
+   108→   108→- SEO indexing/archiving: created src/app/sitemap.ts (10 routes with priorities + changeFreq), src/app/robots.ts (allow /, disallow /api/, sitemap ref). Removed conflicting public/robots.txt. Added JSON-LD structured data to layout: SoftwareApplication schema (offers, aggregateRating, featureList) + FAQPage schema (3 Q&As). Enhanced metadata: metadataBase, canonical, robots index/follow, OG locale/url, title template.
+   109→   109→- Overhauled audit-results.tsx (analytics page) into a strong, professional, well-organized dashboard:
+   110→   110→  - Executive Summary section: Store Score radial + 3 stat cards (critical issues, projected lift, recommendations) + narrative summary paragraph.
+   111→   111→  - Score Breakdown: 4 pillar cards (Conversion/SEO/GEO/Trust) each with icon, score, progress bar, description + summary.
+   112→   112→  - Competitor Comparison: horizontal bar chart + legend.
+   113→   113→  - GEO AI Visibility: 3 radial gauges (ChatGPT/Perplexity/Google AI) + explanation.
+   114→   114→  - Recommendations: filterable by pillar (All/Conversion/SEO/GEO/Trust) + sortable (Priority/Impact/Effort). Each card shows Problem→Solution→footer with impact/effort(quick fix)/estimated lift + "Copy fix" button. Pro upsell for locked recs.
+   115→   115→  - AI Generator: 5 tabs (Title/Description/FAQ/Meta/Ad copy) with copy buttons.
+   116→   116→  - Action plan CTA.
+   117→   117→- Enhanced Recommendation type + mock data with effort (quick/medium/involved), estimatedLift (+X pts), category fields.
+   118→   118→- Fixed React hooks rule violation (useMemo before early return). Fixed hydration mismatch (ParticleField moved to useEffect).
+   119→   119→- Ran ESLint — clean. Verified via curl: sitemap.xml returns valid XML with 10 URLs, robots.txt returns proper directives, JSON-LD present in HTML (SoftwareApplication + FAQPage).
+   120→   120→- Browser-verified: landing renders with orange palette + concept explainer section; full audit flow works (login → onboarding → URL → results); analytics page has Executive Summary (82 score, 3 critical, +30 projected, 8 recs), 4 pillar cards, sort/filter working, recommendation cards with Problem/Solution/impact/effort/lift/Copy fix. VLM confirmed recommendations are "professional with clear visual hierarchy, concise, easy to scan and act on."
+   121→   121→
+   122→   122→Stage Summary:
+   123→   123→- Color palette fully applied: orange #FF6600 primary + grayscale neutrals throughout (light + dark themes).
+   124→   124→- ConceptExplainer section added: self-running animated 4-phase workflow walkthrough explaining the entire concept visually.
+   125→   125→- Visual effects throughout: floating orbs, particle field, scroll progress bar, scroll-triggered reveals, gradient glows, animated borders.
+   126→   126→- SEO indexing: sitemap.xml (10 routes), robots.txt, JSON-LD (SoftwareApplication + FAQPage), canonical URL, enhanced OG metadata.
+   127→   127→- Analytics page overhauled: executive summary, 4 pillar cards, competitor chart, GEO radials, filterable+sortable professional recommendations (problem/solution/impact/effort/estimated-lift/copy-fix), AI Generator with 5 tabs.
+   128→   128→
+   129→   129→---
+   130→   130→Task ID: 5
+   131→   131→Agent: Main (Z.ai Code)
+   132→   132→Task: Production-readiness checklist: metadata per page, next/image, loading.tsx + error.tsx, OG image, favicon integration, sitemap + robots, security headers, PageSpeed 90+ on mobile.
+   133→   133→
+   134→   134→Work Log:
+   135→   135→- Updated next.config.ts: added security headers (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy, Strict-Transport-Security, Content-Security-Policy), performance headers (X-DNS-Prefetch-Control), static asset caching (immutable 1yr), image optimization config (avif/webp, remotePatterns, cacheTTL), compress: true.
+   136→   136→- Created src/app/loading.tsx: branded skeleton with animated Logo + pulse ring + bouncing dots.
+   137→   137→- Created src/app/error.tsx: client error boundary with AlertTriangle icon, "Try again" + "Go home" buttons, error digest ID, collapsible technical details (message + stack).
+   138→   138→- Created src/app/global-error.tsx: root-level error boundary (catches layout errors) with inline styles (no CSS dependency) + reload button.
+   139→   139→- Created src/app/not-found.tsx: branded 404 page with gradient "404" + "Back home" / "View pricing" CTAs.
+   140→   140→- Created src/app/opengraph-image.tsx: dynamic OG image (1200x630) via ImageResponse (edge runtime). Branded with Logo + headline "Turn every product page into a conversion machine." + 4 pillar tags + "Start Free Audit" CTA button. VLM-confirmed professional.
+   141→   141→- Created src/app/twitter-image.tsx: dedicated Twitter card image (1200x630) with centered logo + "StorePulse AI" + "Start Free Audit" CTA.
+   142→   142→- Created src/app/apple-icon.tsx: 180x180 apple touch icon (orange gradient + white S).
+   143→   143→- Created src/app/manifest.ts: PWA web manifest (name, short_name, description, theme_color #FF6600, background_color, icons, display standalone, categories).
+   144→   144→- Updated layout metadata: added manifest link, icons config (icon SVG + apple-icon PNG), appleWebApp config, formatDetection, applicationName. Moved themeColor to viewport export (Next.js 14+ requirement). Added viewport export with width/initialScale/maximumScale/colorScheme.
+   145→   145→- Built src/components/seo/view-metadata.tsx: client component that updates document.title + meta description + og:title + og:description when the view changes (landing/onboarding/audit/results/dashboard/pricing). Each view has its own title + description. Added to app-shell.
+   146→   146→- PageSpeed optimization: lazy-loaded all below-fold landing sections via next/dynamic (ScoreShowcase, ComparisonTable, ComparisonDemo, SecurityBand, Pricing, Testimonials, FAQ, CTA) with branded SectionSkeleton loaders. Lazy-loaded all other-view components (AuditQuiz, OnboardingQuiz, AuditResults, Dashboard). Kept above-fold sections eager (Hero, LogosStrip, MetricsBand, ConceptExplainer, Features, HowItWorks). This significantly reduces initial JS bundle.
+   147→   147→- No <img> tags existed in the codebase (all SVG/CSS), so no next/image migration needed. Image optimization config added for future use.
+   148→   148→- Verified via curl: all security headers present on /, OG image returns 200 image/png (158KB), twitter image 200 (80KB), apple-icon 200 (16KB), manifest returns valid JSON, sitemap.xml returns valid XML, robots.txt returns proper directives.
+   149→   149→- Verified via browser: document.title = "StorePulse AI — AI-Powered E-commerce Audit & Optimization", og:image linked, og:title set, manifest linked, icon.svg linked, apple-icon linked, theme-color set, description set. ViewMetadata updates title dynamically on view change (confirmed "Set up your audit · StorePulse AI" on onboarding view). Lazy-loaded sections load on scroll (41 headings render on full page). No browser/console errors.
+   150→   150→
+   151→   151→Stage Summary:
+   152→   152→- Metadata: comprehensive root metadata + dynamic per-view title/description via ViewMetadata component.
+   153→   153→- next/image: no img tags to replace; image optimization config ready for future images.
+   154→   154→- loading.tsx + error.tsx: created loading.tsx (branded skeleton), error.tsx (recovery boundary), global-error.tsx (root boundary), not-found.tsx (404 page).
+   155→   155→- OG Image: dynamic opengraph-image.tsx + twitter-image.tsx via ImageResponse (VLM-confirmed professional).
+   156→   156→- Favicon: icon.svg + apple-icon.tsx (180x180) + manifest.ts (PWA) — all auto-detected by Next.js App Router.
+   157→   157→- Sitemap + Robots: verified working (10 routes in sitemap, proper allow/disallow in robots).
+   158→   158→- Security Headers: 7+ headers on all routes (CSP, X-Frame, X-Content-Type, Referrer-Policy, Permissions-Policy, HSTS, X-XSS-Protection) + static asset caching.
+   159→   159→- PageSpeed: lazy-loaded 12 below-fold/other-view components with skeleton loaders to minimize initial JS bundle; eager-loaded only above-fold sections.
+   160→   160→
+   161→   161→---
+   162→   162→Task ID: 6
+   163→   163→Agent: Main (Z.ai Code)
+   164→   164→Task: Redesign the login page to match the user's reference image (split-screen GEOZ-style login with peach hero + white login card + data widgets).
+   165→   165→
+   166→   166→Work Log:
+   167→   167→- Analyzed the reference image with VLM: split-screen layout — left peach hero (#FFF8F0) with badge, headline "Outrank competitors with AI-powered ecommerce intelligence" (ecommerce in orange), subheadline, 2x2 stats grid (10K+ stores, 95% accuracy, 1M+ products, 50+ countries), trust badge with avatars + 5 stars. Right light-gray (#F5F7FA) area with white login card (Welcome back, Continue with Google, OR divider, email/password fields, remember me + forgot password, orange gradient Sign In button, sign up link, security note) + data widgets (Revenue Growth, Opportunity Score, Visibility Score).
+   168→   168→- Added "login" to the View union type. Updated the store: openLogin now sets view to "login" (full-page) instead of opening a modal.
+   169→   169→- Built src/components/auth/login-page.tsx — a split-screen login page adapted to StorePulse branding:
+   170→   170→  - LEFT (peach gradient #FFF8F0→#FFE8D6): StorePulse logo, "AI-Powered E-commerce Intelligence" badge, headline with "ecommerce" in #FF6600, subheadline, 2x2 stats grid (10K+ / 95% / 1M+ / 50+), trust badge (3 avatars + 5 amber stars + "Trusted by 10,000+ ecommerce brands worldwide"). Decorative orange orbs.
+   171→   171→  - RIGHT (#F5F7FA): 3 data widgets (Revenue Growth +34%, Opportunity Score 87/100, Visibility Score 92/100) above a white login card. Card contains: "Welcome back" + subtitle, "Continue with Google" button (Google blue), "OR" divider, email field (envelope icon), password field (lock icon + show/hide eye toggle), "Remember me" checkbox + "Forgot password?" link, orange gradient "Sign In" button (#FF6600→#FF4500) with arrow + loading spinner, "Don't have an account? Sign up" link, security note with shield icon, "Back to home" link.
+   172→   172→  - Functional: Google button calls /api/oauth/google (falls back to demo login), email/password form validates + calls login(), password show/hide toggle, remember me checkbox, forgot password toast.
+   173→   173→- Wired login view into app-shell (lazy-loaded LoginPage component). Added "login" metadata to ViewMetadata ("Sign in · StorePulse AI").
+   174→   174→- Ran ESLint — clean. Verified via Agent Browser: clicking "Log in" in navbar navigates to full-page split-screen login; all reference elements present (headline, stats grid, trust badge, Google button, email/password, remember me, forgot password, orange Sign In button, data widgets); Google login signs user in successfully.
+   175→   175→
+   176→   176→Stage Summary:
+   177→   177→- Login is now a full-page split-screen design matching the reference: peach hero with stats + trust badge on the left, white login card with Google/email/password + data widgets on the right.
+   178→   178→- Fully functional: Google OAuth (with demo fallback), email/password form, password visibility toggle, remember me, forgot password, loading states.
+   179→   179→- Branding adapted to StorePulse AI (logo, orange #FF6600 palette) while preserving the reference layout exactly.
+   180→   180→
+   181→   181→---
+   182→   182→Task ID: 3
+   183→   183→Agent: i18n-public-pages
+   184→   184→Task: Translate pricing and auth pages to use i18n system
+   185→   185→
+   186→   186→Work Log:
+   187→   187→- Read worklog.md, src/lib/i18n.ts, src/app/pricing/page.tsx, src/app/auth/page.tsx, and src/components/auth/login-page.tsx for context.
+   188→   188→- Added 17 new translation keys to src/lib/i18n.ts BEFORE the closing `} as const;`:
+   189→   189→  - 5 pricing.free.f1..f5 keys (Free plan features, EN + AR).
+   190→   190→  - 6 pricing.pro.f1..f6 keys (Pro plan features, EN + AR).
+   191→   191→  - 6 pricing.business.f1..f6 keys (Business plan features, EN + AR).
+   192→   192→- Added 4 headline-part keys to preserve the gradient-text styling on "ecommerce"/"التجارة الإلكترونية":
+   193→   193→  - auth.headlineLead, auth.headlineMid, auth.headlineAccent, auth.headlineTail.
+   194→   194→- Updated src/app/pricing/page.tsx:
+   195→   195→  - Added `import { useT, type TranslationKey } from "@/lib/i18n";`.
+   196→   196→  - Restructured the module-level PLANS array to store TranslationKey references (nameKey, periodKey, taglineKey, auditsKey, featureKeys[], ctaKey) instead of literal Arabic strings — kept the array module-level by storing keys rather than resolved strings, so the layout/structure is unchanged.
+   197→   197→  - Called `const t = useT();` at the top of PricingPage.
+   198→   198→  - Replaced every Arabic string with `t(key)` calls: page title, subtitle, plan name, tagline, period, audits chip, CTA button, "Most popular" badge, and the 4 footer items (secure Paddle, payment methods, billed USD, cancel anytime).
+   199→   199→  - Replaced each plan's feature list rendering with `t(f)` for each feature key.
+   200→   200→  - Kept all classes, layout, structure, animations, and styling identical.
+   201→   201→- Updated src/app/auth/page.tsx:
+   202→   202→  - Added `import { useT, type TranslationKey } from "@/lib/i18n";`.
+   203→   203→  - Refactored the inline stats array to `STATS: { v: string; lKey: TranslationKey }[]` so it stays module-level.
+   204→   204→  - Called `const t = useT();` at the top of AuthPage.
+   205→   205→  - Replaced every Arabic string with `t(key)` calls: badge, headline (4-part split with the gradient-text span preserved exactly on auth.headlineAccent), subheadline, 4 stat labels, "back to home" link, welcome/create-account h2, sign-in-to-continue/start-free-today subtitle, Google button, OR divider, full-name label, name/email/password labels + placeholders, password show/hide aria-label, remember-me, forgot-password, sign-in / signing-in / create-account button, no-account / have-account prompt, sign-up / sign-in-link, and the security note.
+   206→   206→  - Used `placeholder={t(...)}` form for inputs (so the translated text is rendered as the placeholder attribute value, identical layout).
+   207→   207→  - Kept all classes, layout, structure (incl. the <br /> line breaks in the headline and the gradient-text span), animations, and styling identical.
+   208→   208→- Ran `bun run lint` — exit code 0, no errors.
+   209→   209→- Ran `bunx tsc --noEmit` — no errors in the three files I touched (i18n.ts, pricing/page.tsx, auth/page.tsx). Other pre-existing TS errors in the repo (login-modal, navbar, metrics-band, firecrawl, gemini, audit route, manifest, examples/skills) are unrelated to this task and were not introduced by these changes.
+   210→   210→
+   211→   211→Stage Summary:
+   212→   212→- src/app/pricing/page.tsx and src/app/auth/page.tsx are now fully driven by the useT() i18n system; no hardcoded Arabic strings remain in either file.
+   213→   213→- 17 new pricing feature keys (free.f1–f5, pro.f1–f6, business.f1–f6) added to src/lib/i18n.ts, plus 4 headline-part keys (auth.headlineLead/Mid/Accent/Tail) added so the gradient-text styling on "ecommerce" / "التجارة الإلكترونية" is preserved exactly without losing bilingual support.
+   214→   214→- Zero styling, layout, class, or structural changes; lint clean; no TS errors introduced.
+   215→   215→- Both pages now switch instantly between EN and AR based on the language store, just like the rest of the i18n-enabled app.
+   216→   216→
+   217→   217→---
+   218→   218→Task ID: 4
+   219→   219→Agent: i18n-onboarding-pages
+   220→   220→Task: Update 4 onboarding pages to use the i18n translation system (platform, store, goals, done).
+   221→   221→
+   222→   222→Work Log:
+   223→   223→- Read worklog.md, src/lib/i18n.ts (translations + useT hook), and all 4 onboarding pages before editing.
+   224→   224→- Verified all required translation keys already exist in src/lib/i18n.ts (onboarding.platform.*, onboarding.store.*, onboarding.goals.*, onboarding.done.*, plus shared onboarding.back / onboarding.continue / onboarding.buildProfile). No new keys needed to be added.
+   225→   225→- Updated src/app/onboarding/platform/page.tsx:
+   226→   226→  - Added `import { useT } from "@/lib/i18n";` and `const t = useT();` at the top of the component.
+   227→   227→  - Refactored the module-level OPTIONS array from `{ value, label, desc, icon }` (with literal Arabic strings) to `{ value, labelKey, descKey, icon }` storing `as const` translation-key references. JSX now calls `{t(opt.labelKey)}` and `{t(opt.descKey)}`.
+   228→   228→  - Replaced: title H1 → t("onboarding.platform.title"); subtitle → t("onboarding.platform.subtitle"); top "رجوع" link → t("onboarding.back"); ghost "رجوع" button → t("onboarding.back"); "متابعة" CTA → t("onboarding.continue").
+   229→   229→  - All classes, layout, structure, animations, and styling preserved exactly.
+   230→   230→- Updated src/app/onboarding/store/page.tsx:
+   231→   231→  - Added `import { useT } from "@/lib/i18n";` and `const t = useT();`.
+   232→   232→  - Title H1 → t("onboarding.store.title"); subtitle → t("onboarding.store.subtitle"); top "رجوع" link → t("onboarding.back").
+   233→   233→  - "رابط المتجر" label → t("onboarding.store.url") (kept the red asterisk span unchanged).
+   234→   234→  - URL placeholder "https://shop.example.com" → t("onboarding.store.urlPlaceholder").
+   235→   235→  - "رابط منافس (اختياري)" label split into t("onboarding.store.competitor") + " (" + t("onboarding.store.optional") + ")" to preserve the original "رابط منافس (اختياري)" layout/spacing exactly.
+   236→   236→  - Competitor placeholder → t("onboarding.store.competitorPlaceholder").
+   237→   237→  - Tip paragraph → t("onboarding.store.tip").
+   238→   238→  - Ghost "رجوع" button → t("onboarding.back"); "متابعة" CTA → t("onboarding.continue").
+   239→   239→  - All classes, layout, structure, animations, and styling preserved exactly.
+   240→   240→- Updated src/app/onboarding/goals/page.tsx:
+   241→   241→  - Added `import { useT } from "@/lib/i18n";` and `const t = useT();`.
+   242→   242→  - Refactored OPTIONS array the same way as platform: `label`/`desc` → `labelKey`/`descKey` with `as const`. JSX uses `{t(opt.labelKey)}` and `{t(opt.descKey)}`.
+   243→   243→  - Title H1 → t("onboarding.goals.title"); subtitle → t("onboarding.goals.subtitle"); top "رجوع" link → t("onboarding.back"); ghost "رجوع" button → t("onboarding.back"); "بناء ملفي" CTA → t("onboarding.buildProfile").
+   244→   244→  - All classes, layout, structure, animations, and styling preserved exactly.
+   245→   245→- Updated src/app/onboarding/done/page.tsx:
+   246→   246→  - Added `import { useT, type TranslationKey } from "@/lib/i18n";` and `const t = useT();`.
+   247→   247→  - Renamed the existing `const t = setInterval(...)` timer variable to `timer` to avoid shadowing the i18n `t` function (purely a local variable rename; behavior identical).
+   248→   248→  - Replaced the module-level `STEPS` string array (literal Arabic) with `STEP_KEYS: TranslationKey[]` storing the four step keys (saveProfile / configurePlatform / prioritize / prepare). JSX now uses `STEP_KEYS` and renders `{t(s)}`.
+   249→   249→  - Building H1 → t("onboarding.done.building"); building subtitle → t("onboarding.done.buildingSub").
+   250→   250→  - Ready H1 → t("onboarding.done.ready"); ready subtitle → t("onboarding.done.readySub"); profileReady chip → t("onboarding.done.profileReady"); startFirstAudit button → t("onboarding.done.startFirstAudit"); exploreDashboard button → t("onboarding.done.exploreDashboard").
+   251→   251→  - All classes, layout, structure, animations, and styling preserved exactly.
+   252→   252→- Verified via Grep that no Arabic characters remain anywhere under src/app/onboarding/.
+   253→   253→- Ran `bun run lint` — exit code 0, no errors, no warnings.
+   254→   254→- Ran `bunx tsc --noEmit` — the only TS errors reported are pre-existing and in unrelated files (examples/, skills/, audit route, manifest, login-modal, navbar, metrics-band, firecrawl, gemini). None of the 4 onboarding files I touched produced any TS error.
+   255→   255→
+   256→   256→Stage Summary:
+   257→   257→- All 4 onboarding pages (platform, store, goals, done) now fully driven by the useT() i18n system. Zero hardcoded Arabic strings remain in any of them.
+   258→   258→- No new translation keys needed (all required onboarding.* keys were already present in src/lib/i18n.ts from earlier work).
+   259→   259→- ZERO styling, color, layout, class, animation, or structural changes anywhere — every className, gradient, border, padding, motion prop, and component composition is byte-for-byte identical to before, only the text content is now resolved via `t(...)`.
+   260→   260→- One incidental local-variable rename (`t` → `timer`) inside done/page.tsx's useEffect to avoid shadowing the i18n `t` function (no behavior change).
+   261→   261→- Lint clean; no TS errors introduced in the touched files.
+   262→   262→- Onboarding flow now switches instantly between EN and AR based on the language store, matching the rest of the i18n-enabled app.
+   263→   263→

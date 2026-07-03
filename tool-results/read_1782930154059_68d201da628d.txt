@@ -1,0 +1,576 @@
+     1→"use client";
+     2→
+     3→import { useLanguageStore, type Language } from "./language-store";
+     4→
+     5→/**
+     6→ * Translation dictionary.
+     7→ * Organized by page/section for maintainability.
+     8→ * Every string used in the app pages is defined here in both EN and AR.
+     9→ */
+    10→export const translations = {
+    11→  // ===== Shared / Navbar / Footer =====
+    12→  "nav.dashboard": { en: "Dashboard", ar: "لوحة التحكم" },
+    13→  "nav.newAudit": { en: "New Audit", ar: "تحليل جديد" },
+    14→  "nav.history": { en: "History", ar: "السجل" },
+    15→  "nav.watch": { en: "Watch", ar: "المراقبة" },
+    16→  "nav.settings": { en: "Settings", ar: "الإعدادات" },
+    17→  "nav.startFreeAudit": { en: "Start Free Audit", ar: "ابدأ تحليلاً مجانياً" },
+    18→  "nav.menu": { en: "Menu", ar: "القائمة" },
+    19→  "nav.toggleTheme": { en: "Toggle theme", ar: "تبديل المظهر" },
+    20→
+    21→  "footer.tagline": {
+    22→    en: "AI-powered e-commerce intelligence. Audit, benchmark and optimize every product page — across conversion, SEO, GEO and trust.",
+    23→    ar: "ذكاء التجارة الإلكترونية المدعوم بالذكاء الاصطناعي. حلّل وقيّم وحسّن كل صفحة منتج — عبر التحويل وSEO وGEO والثقة.",
+    24→  },
+    25→  "footer.copyright": {
+    26→    en: "© {year} StoreAudit AI — AI-powered e-commerce intelligence",
+    27→    ar: "© {year} StoreAudit AI — منصة ذكاء التجارة الإلكترونية",
+    28→  },
+    29→  "footer.docs": { en: "Docs", ar: "التوثيق" },
+    30→  "footer.blog": { en: "Blog", ar: "المدونة" },
+    31→  "footer.pricing": { en: "Pricing", ar: "الأسعار" },
+    32→  "footer.back": { en: "Back", ar: "رجوع" },
+    33→
+    34→  // ===== Auth Page =====
+    35→  "auth.badge": { en: "AI-Powered E-commerce Intelligence", ar: "ذكاء التجارة الإلكترونية بالذكاء الاصطناعي" },
+    36→  "auth.headline": { en: "Outrank competitors with AI-powered ecommerce intelligence.", ar: "تفوّق على منافسيك بذكاء التجارة الإلكترونية المدعوم بالذكاء الاصطناعي." },
+    37→  "auth.headlineLead": { en: "Outrank competitors", ar: "تفوّق على منافسيك" },
+    38→  "auth.headlineMid": { en: "with AI-powered ", ar: "بذكاء " },
+    39→  "auth.headlineAccent": { en: "ecommerce", ar: "التجارة الإلكترونية" },
+    40→  "auth.headlineTail": { en: "intelligence.", ar: "المدعوم بالذكاء الاصطناعي." },
+    41→  "auth.subheadline": {
+    42→    en: "Track competitors, discover opportunities, and grow your store with data-driven AI insights.",
+    43→    ar: "تتبع المنافسين، اكتشف الفرص، ونمّ متجرك برؤى مدعومة بالذكاء الاصطناعي.",
+    44→  },
+    45→  "auth.stat.stores": { en: "Stores", ar: "متجر" },
+    46→  "auth.stat.accuracy": { en: "Accuracy", ar: "دقة" },
+    47→  "auth.stat.products": { en: "Products", ar: "منتج" },
+    48→  "auth.stat.countries": { en: "Countries", ar: "دولة" },
+    49→  "auth.welcomeBack": { en: "Welcome back", ar: "مرحباً بعودتك" },
+    50→  "auth.createAccount": { en: "Create account", ar: "إنشاء حساب" },
+    51→  "auth.signInToContinue": { en: "Sign in to your account to continue", ar: "سجّل الدخول للمتابعة" },
+    52→  "auth.startFreeToday": { en: "Start your free trial today", ar: "ابدأ تجربتك المجانية اليوم" },
+    53→  "auth.continueWithGoogle": { en: "Continue with Google", ar: "المتابعة عبر Google" },
+    54→  "auth.or": { en: "OR", ar: "أو" },
+    55→  "auth.fullName": { en: "Full name", ar: "الاسم الكامل" },
+    56→  "auth.enterName": { en: "Enter your name", ar: "أدخل اسمك" },
+    57→  "auth.email": { en: "Email address", ar: "البريد الإلكتروني" },
+    58→  "auth.enterEmail": { en: "Enter your email", ar: "أدخل بريدك" },
+    59→  "auth.password": { en: "Password", ar: "كلمة المرور" },
+    60→  "auth.enterPassword": { en: "Enter your password", ar: "أدخل كلمة المرور" },
+    61→  "auth.showPassword": { en: "Show password", ar: "إظهار كلمة المرور" },
+    62→  "auth.hidePassword": { en: "Hide password", ar: "إخفاء كلمة المرور" },
+    63→  "auth.rememberMe": { en: "Remember me", ar: "تذكّرني" },
+    64→  "auth.forgotPassword": { en: "Forgot password?", ar: "نسيت كلمة المرور؟" },
+    65→  "auth.signIn": { en: "Sign In", ar: "تسجيل الدخول" },
+    66→  "auth.signingIn": { en: "Signing in…", ar: "جاري المعالجة…" },
+    67→  "auth.noAccount": { en: "Don't have an account?", ar: "ليس لديك حساب؟" },
+    68→  "auth.haveAccount": { en: "Already have an account?", ar: "لديك حساب بالفعل؟" },
+    69→  "auth.signUp": { en: "Sign up", ar: "أنشئ حساباً" },
+    70→  "auth.signInLink": { en: "Sign in", ar: "سجّل الدخول" },
+    71→  "auth.securityNote": { en: "Your data is secure with enterprise-grade encryption", ar: "بياناتك آمنة بتشفير على مستوى المؤسسات" },
+    72→  "auth.backToHome": { en: "Back to home", ar: "العودة للرئيسية" },
+    73→
+    74→  // ===== Onboarding =====
+    75→  "onboarding.platform.title": { en: "What platform do you use for your store?", ar: "ما المنصة التي تستخدمها لمتجرك؟" },
+    76→  "onboarding.platform.subtitle": { en: "We'll tailor recommendations to your stack.", ar: "سنخصص التوصيات حسب منصتك." },
+    77→  "onboarding.platform.shopify": { en: "Shopify", ar: "Shopify" },
+    78→  "onboarding.platform.shopifyDesc": { en: "Shopify Plus or standard", ar: "Shopify Plus أو قياسي" },
+    79→  "onboarding.platform.woo": { en: "WooCommerce", ar: "WooCommerce" },
+    80→  "onboarding.platform.wooDesc": { en: "WordPress + WooCommerce", ar: "WordPress + WooCommerce" },
+    81→  "onboarding.platform.custom": { en: "Custom Store", ar: "متجر مخصص" },
+    82→  "onboarding.platform.customDesc": { en: "Self-built or headless", ar: "مبني ذاتياً أو headless" },
+    83→  "onboarding.platform.other": { en: "Other", ar: "أخرى" },
+    84→  "onboarding.platform.otherDesc": { en: "Salla, Zid, Magento, Wix…", ar: "Salla, Zid, Magento, Wix…" },
+    85→  "onboarding.continue": { en: "Continue", ar: "متابعة" },
+    86→  "onboarding.back": { en: "Back", ar: "رجوع" },
+    87→
+    88→  "onboarding.store.title": { en: "Enter your store URL", ar: "أدخل رابط متجرك" },
+    89→  "onboarding.store.subtitle": { en: "Your store homepage (required) and a competitor URL (optional)", ar: "الرابط الرئيسي لمتجرك (مطلوب) ورابط منافس (اختياري)" },
+    90→  "onboarding.store.url": { en: "Store URL", ar: "رابط المتجر" },
+    91→  "onboarding.store.urlPlaceholder": { en: "https://shop.example.com", ar: "https://shop.example.com" },
+    92→  "onboarding.store.competitor": { en: "Competitor URL", ar: "رابط منافس" },
+    93→  "onboarding.store.competitorPlaceholder": { en: "https://competitor.com", ar: "https://competitor.com" },
+    94→  "onboarding.store.optional": { en: "optional", ar: "اختياري" },
+    95→  "onboarding.store.tip": { en: "Works with any public product page — Shopify, WooCommerce, Salla, Zid and custom stores.", ar: "يعمل مع أي صفحة منتج عامة — Shopify, WooCommerce, Salla, Zid والمتاجر المخصصة." },
+    96→
+    97→  "onboarding.goals.title": { en: "What is your biggest challenge right now?", ar: "ما أكبر تحدٍ تواجهه الآن؟" },
+    98→  "onboarding.goals.subtitle": { en: "We'll prioritize the fixes that matter most to you.", ar: "سنرتب التوصيات حسب أولويتك." },
+    99→  "onboarding.goals.traffic": { en: "High traffic but low sales", ar: "زيارات عالية لكن مبيعات ضعيفة" },
+   100→  "onboarding.goals.trafficDesc": { en: "Visitors aren't converting", ar: "الزوار لا يتحولون لعملاء" },
+   101→  "onboarding.goals.carts": { en: "Abandoned carts", ar: "سلات متروكة" },
+   102→  "onboarding.goals.cartsDesc": { en: "Checkout drop-off", ar: "تسرب عند الدفع" },
+   103→  "onboarding.goals.ranking": { en: "Poor Google ranking", ar: "ترتيب ضعيف في Google" },
+   104→  "onboarding.goals.rankingDesc": { en: "Not showing up in search", ar: "لا أظهر في البحث" },
+   105→  "onboarding.goals.dontKnow": { en: "I don't know — find out for me", ar: "لا أعرف — اكتشف ذلك لي" },
+   106→  "onboarding.goals.dontKnowDesc": { en: "Let the audit decide", ar: "دع التحليل يقرر" },
+   107→  "onboarding.buildProfile": { en: "Build my audit profile", ar: "بناء ملفي" },
+   108→
+   109→  "onboarding.done.building": { en: "Building your audit profile", ar: "جاري بناء ملف التحليل الخاص بك" },
+   110→  "onboarding.done.buildingSub": { en: "Personalizing StoreAudit AI to your store, challenge and audience.", ar: "تخصيص StoreAudit AI حسب متجرك وتحدياتك وجمهورك." },
+   111→  "onboarding.done.saveProfile": { en: "Saving your profile", ar: "حفظ ملفك" },
+   112→  "onboarding.done.configurePlatform": { en: "Configuring for your platform", ar: "تهيئة المنصة" },
+   113→  "onboarding.done.prioritize": { en: "Prioritizing your challenge", ar: "ترتيب الأولويات" },
+   114→  "onboarding.done.prepare": { en: "Preparing your audit workspace", ar: "تجهيز مساحة العمل" },
+   115→  "onboarding.done.ready": { en: "You're all set! 🎉", ar: "أنت جاهز! 🎉" },
+   116→  "onboarding.done.readySub": { en: "Your account is set up. Start your first audit now.", ar: "تم إعداد حسابك بنجاح. ابدأ أول تحليل لمتجرك الآن." },
+   117→  "onboarding.done.profileReady": { en: "Your profile is ready — let's start auditing", ar: "ملفك جاهز — لنبدأ التحليل" },
+   118→  "onboarding.done.startFirstAudit": { en: "Start first audit", ar: "بدء أول تحليل" },
+   119→  "onboarding.done.exploreDashboard": { en: "Explore dashboard", ar: "استكشاف لوحة التحكم" },
+   120→
+   121→  // ===== Dashboard =====
+   122→  "dashboard.title": { en: "Dashboard", ar: "لوحة التحكم" },
+   123→  "dashboard.welcome": { en: "Welcome back, {name} 👋", ar: "مرحباً بعودتك، {name} 👋" },
+   124→  "dashboard.subtitle": { en: "Here's how your store is performing.", ar: "إليك أداء متجرك." },
+   125→  "dashboard.upgrade": { en: "Upgrade", ar: "ترقية" },
+   126→  "dashboard.newAudit": { en: "New audit", ar: "تحليل جديد" },
+   127→  "dashboard.avgScore": { en: "Average Store Score", ar: "متوسط درجة المتجر" },
+   128→  "dashboard.auditsMonth": { en: "Audits this month", ar: "تحليلات هذا الشهر" },
+   129→  "dashboard.unlimited": { en: "Unlimited", ar: "غير محدود" },
+   130→  "dashboard.geoVisibility": { en: "GEO AI visibility", ar: "ظهور في محركات AI" },
+   131→  "dashboard.aboveAvg": { en: "Above market avg", ar: "فوق المتوسط" },
+   132→  "dashboard.issuesFixed": { en: "Issues fixed", ar: "مشاكل تم إصلاحها" },
+   133→  "dashboard.ofFound": { en: "of {count} found", ar: "من {count}" },
+   134→  "dashboard.thisQuarter": { en: "+13 this quarter", ar: "+13 هذا الربع" },
+   135→  "dashboard.scoreTrend": { en: "Score trend", ar: "اتجاه الدرجة" },
+   136→  "dashboard.sinceMay": { en: "+18 pts since May", ar: "+18 نقطة منذ مايو" },
+   137→  "dashboard.trendSub": { en: "Your Store Score over the last 6 months.", ar: "درجة متجرك خلال آخر 6 أشهر." },
+   138→  "dashboard.yourPlan": { en: "Your plan", ar: "باقتك" },
+   139→  "dashboard.free": { en: "Free", ar: "مجاني" },
+   140→  "dashboard.usage": { en: "Usage", ar: "الاستخدام" },
+   141→  "dashboard.auditsPerMonth": { en: "3 audits / month", ar: "3 تحليلات / شهر" },
+   142→  "dashboard.remaining": { en: "{count} remaining", ar: "تبقى {count}" },
+   143→  "dashboard.unlockPro": { en: "Unlock Pro", ar: "افتح الاحترافي" },
+   144→  "dashboard.unlockSub": { en: "Unlimited audits, competitor comparison & AI Generator.", ar: "تحليلات غير محدودة، مقارنة المنافسين ومولد AI." },
+   145→  "dashboard.upgradeMonth": { en: "Upgrade — $29/mo", ar: "ترقية — $29/شهر" },
+   146→  "dashboard.recentAudits": { en: "Recent audits", ar: "أحدث التحليلات" },
+   147→  "dashboard.viewAll": { en: "View all", ar: "عرض الكل" },
+   148→  "dashboard.today": { en: "Today", ar: "اليوم" },
+   149→  "dashboard.yesterday": { en: "Yesterday", ar: "أمس" },
+   150→  "dashboard.daysAgo": { en: "{count} days ago", ar: "قبل {count} أيام" },
+   151→  "dashboard.weekAgo": { en: "1 week ago", ar: "قبل أسبوع" },
+   152→  "dashboard.welcomeSubtitle": { en: "Welcome back 👋 Here's how your store is performing.", ar: "مرحباً بعودتك 👋 إليك أداء متجرك" },
+   153→
+   154→  // Month abbreviations (trend chart)
+   155→  "month.may": { en: "May", ar: "مايو" },
+   156→  "month.jun": { en: "Jun", ar: "يونيو" },
+   157→  "month.jul": { en: "Jul", ar: "يوليو" },
+   158→  "month.aug": { en: "Aug", ar: "أغسطس" },
+   159→  "month.sep": { en: "Sep", ar: "سبتمبر" },
+   160→  "month.oct": { en: "Oct", ar: "أكتوبر" },
+   161→
+   162→  // ===== Audit New =====
+   163→  "auditNew.title": { en: "New Audit", ar: "تحليل جديد" },
+   164→  "auditNew.subtitle": { en: "Paste your product URL and get a full audit in 60 seconds", ar: "الصق رابط منتجك واحصل على تحليل كامل خلال 60 ثانية" },
+   165→  "auditNew.productUrl": { en: "Product URL", ar: "رابط المنتج" },
+   166→  "auditNew.productUrlDesc": { en: "The page you want to audit. This is the only required field.", ar: "الصفحة التي تريد تحليلها — هذا الحقل الوحيد المطلوب." },
+   167→  "auditNew.productPlaceholder": { en: "https://shop.example.com/products/argan-glow-serum", ar: "https://shop.example.com/products/argan-glow-serum" },
+   168→  "auditNew.urlError": { en: "Enter a valid URL starting with http:// or https://", ar: "أدخل رابطاً صحيحاً يبدأ بـ http:// أو https://" },
+   169→  "auditNew.storeUrl": { en: "Store URL", ar: "رابط المتجر" },
+   170→  "auditNew.competitorUrl": { en: "Competitor URL", ar: "رابط منافس" },
+   171→  "auditNew.cancel": { en: "Cancel", ar: "إلغاء" },
+   172→  "auditNew.runAudit": { en: "Run audit", ar: "تشغيل التحليل" },
+   173→  "auditNew.tip": { en: "Works with any public product page — Shopify, WooCommerce, Salla, Zid, custom stores & affiliate pages.", ar: "يعمل مع أي صفحة منتج عامة — Shopify, WooCommerce, Salla, Zid والمتاجر المخصصة." },
+   174→  "auditNew.competitorTip": { en: "Benchmarking against your top competitor unlocks gap analysis — see exactly where you win and lose.", ar: "المقارنة مع منافسك تفتح تحليل الفجوات — اعرف بالضبط أين تفوز وأين تخسر." },
+   175→
+   176→  // ===== Scanning =====
+   177→  "scanning.analyzing": { en: "Auditing your page", ar: "جاري تحليل صفحتك" },
+   178→  "scanning.takesTime": { en: "This takes about 60 seconds", ar: "يستغرق هذا حوالي 60 ثانية" },
+   179→  "scanning.reading": { en: "Reading page with Firecrawl", ar: "قراءة الصفحة عبر Firecrawl" },
+   180→  "scanning.readingDetail": { en: "Title · description · images · price · CTAs", ar: "العنوان · الوصف · الصور · السعر · أزرار CTA" },
+   181→  "scanning.conversion": { en: "Scoring conversion", ar: "تقييم التحويل" },
+   182→  "scanning.conversionDetail": { en: "Persuasion, CTA visibility, benefit framing", ar: "الإقناع، وضوح CTA، صياغة الفوائد" },
+   183→  "scanning.seo": { en: "Scoring SEO", ar: "تقييم SEO" },
+   184→  "scanning.seoDetail": { en: "Meta, schema, keywords, structure", ar: "Meta، Schema، الكلمات المفتاحية، البنية" },
+   185→  "scanning.geo": { en: "Scoring GEO / AI visibility", ar: "تقييم الظهور في AI" },
+   186→  "scanning.geoDetail": { en: "Testing ChatGPT, Perplexity, Google AI", ar: "اختبار ChatGPT, Perplexity, Google AI" },
+   187→  "scanning.trust": { en: "Scoring trust", ar: "تقييم الثقة" },
+   188→  "scanning.trustDetail": { en: "Policies, shipping, reviews, security", ar: "السياسات، الشحن، المراجعات، الأمان" },
+   189→  "scanning.recommendations": { en: "Generating AI recommendations", ar: "توليد التوصيات" },
+   190→  "scanning.recommendationsDetail": { en: "Prioritized fixes + ready-to-paste copy", ar: "إصلاحات مرتبة + نسخ جاهز للصق" },
+   191→
+   192→  // ===== Report =====
+   193→  "report.title": { en: "Audit Report", ar: "تقرير التحليل" },
+   194→  "report.reaudit": { en: "Re-audit", ar: "إعادة" },
+   195→  "report.aiGenerator": { en: "AI Generator", ar: "مولد AI" },
+   196→  "report.auditComplete": { en: "Audit complete", ar: "اكتمل التحليل" },
+   197→  "report.vsCompetitor": { en: "+{count} vs competitor", ar: "+{count} عن المنافس" },
+   198→  "report.criticalIssues": { en: "Critical issues", ar: "مشاكل حرجة" },
+   199→  "report.projectedLift": { en: "Projected lift", ar: "التحسن المتوقع" },
+   200→  "report.recommendations": { en: "Recommendations", ar: "توصيات" },
+   201→  "report.execSummary": { en: "Executive summary", ar: "ملخص تنفيذي" },
+   202→  "report.scoreBreakdown": { en: "Score breakdown", ar: "تفصيل الدرجات" },
+   203→  "report.competitorComparison": { en: "Competitor comparison", ar: "مقارنة بالمنافس" },
+   204→  "report.you": { en: "You", ar: "أنت" },
+   205→  "report.competitor": { en: "Competitor", ar: "المنافس" },
+   206→  "report.geoTitle": { en: "GEO / AI Visibility", ar: "الظهور في محركات AI" },
+   207→  "report.geoSub": { en: "Can generative engines read and recommend your product?", ar: "هل تستطيع محركات الذكاء الاصطناعي قراءة وتوصية منتجك؟" },
+   208→  "report.aiRecommendations": { en: "AI recommendations", ar: "توصيات الذكاء الاصطناعي" },
+   209→  "report.sortBy": { en: "Sort:", ar: "ترتيب:" },
+   210→  "report.priority": { en: "Priority", ar: "الأولوية" },
+   211→  "report.impact": { en: "Impact", ar: "التأثير" },
+   212→  "report.effort": { en: "Effort", ar: "الجهد" },
+   213→  "report.all": { en: "All", ar: "الكل" },
+   214→  "report.problem": { en: "Problem", ar: "المشكلة" },
+   215→  "report.solution": { en: "Solution", ar: "الحل" },
+   216→  "report.highImpact": { en: "high impact", ar: "تأثير عالٍ" },
+   217→  "report.mediumImpact": { en: "medium impact", ar: "تأثير متوسط" },
+   218→  "report.lowImpact": { en: "low impact", ar: "تأثير منخفض" },
+   219→  "report.quickFix": { en: "Quick fix", ar: "إصلاح سريع" },
+   220→  "report.mediumEffort": { en: "Medium", ar: "متوسط" },
+   221→  "report.involved": { en: "Involved", ar: "معقّد" },
+   222→  "report.copyFix": { en: "Copy fix", ar: "نسخ" },
+   223→  "report.moreOnPro": { en: "{count} more recommendations on Pro", ar: "{count} توصيات إضافية في الباقة الاحترافية" },
+   224→  "report.unlockAll": { en: "Unlock all {count} recommendations, competitor deep-dives and the AI Generator.", ar: "افتح جميع {count} توصية، مقارنات المنافسين ومولد AI." },
+   225→  "report.upgradePro": { en: "Upgrade to Pro — $29/mo", ar: "ترقية — $29/شهر" },
+   226→  "report.applyFixes": { en: "Apply the fixes & re-audit in 2 weeks", ar: "طبّق الإصلاحات وأعد التحليل خلال أسبوعين" },
+   227→  "report.applySub": { en: "Implement the recommendations, then schedule a re-audit to measure your improvement. Pro users get automated monitoring.", ar: "طبّق التوصيات، ثم جدد التحليل لقياس تحسنك. يحصل مستخدمو الاحترافي على مراقبة تلقائية." },
+   228→  "report.upgradeMonitor": { en: "Upgrade for monitoring", ar: "ترقية للمراقبة" },
+   229→  "report.viewAllAudits": { en: "View all audits", ar: "عرض كل التحليلات" },
+   230→  "report.noAudit": { en: "No audit found.", ar: "لا يوجد تحليل." },
+   231→  "report.runAudit": { en: "Run an audit", ar: "تشغيل تحليل" },
+   232→  "report.newAudit": { en: "New audit", ar: "تحليل جديد" },
+   233→  "report.storeScore": { en: "Store Score", ar: "درجة المتجر" },
+   234→  "report.pointsValue": { en: "+{count} points", ar: "+{count} نقطة" },
+   235→  "report.conversionSummary": { en: "Strong price and imagery, but the description leans on features over benefits and the CTA is bland.", ar: "نقطة سعر وصور قوية، لكن الوصف يعتمد على الميزات بدل الفوائد وزر CTA باهت." },
+   236→  "report.seoSummary": { en: "Clean Meta title and H1, but missing Product schema and long-tail keywords.", ar: "عنوان Meta وH1 نظيفان، لكن ينقصه Product schema وكلمات مفتاحية طويلة." },
+   237→  "report.geoSummary": { en: "AI assistants read the page partially, but it lacks Q&A structure and a clear benefit statement.", ar: "مساعدو AI يقرؤون الصفحة جزئياً، لكن ينقصها هيكلة Q&A وبيان فوائد واضح." },
+   238→  "report.trustSummary": { en: "Return policy and reviews are present. Missing visible shipping estimate and security badge.", ar: "سياسة الإرجاع والمراجعات موجودة. ينقصه تقدير شحن مرئي وشارة أمان." },
+   239→  "report.rec1.problem": { en: "Description lists ingredients but never states the benefit the shopper will feel.", ar: "الوصف يذكر المكونات لكن لا يذكر الفائدة التي يشعر بها المشتري." },
+   240→  "report.rec1.solution": { en: "Rewrite the first paragraph as a benefit-led hook: 'Wake up to softer, more hydrated skin in 7 nights.'", ar: "أعد كتابة الفقرة الأولى كخطاف يركز على الفائدة: 'استيقظ ببشرة أنعم وأكثر ترطيباً خلال 7 ليالٍ'." },
+   241→  "report.rec2.problem": { en: "ChatGPT reads the page but can't recommend it confidently — no 'who is this for' statement.", ar: "ChatGPT يقرأ الصفحة لكن لا يستطيع توصيتها بثقة — لا يوجد بيان 'لمن هذا المنتج'." },
+   242→  "report.rec2.solution": { en: "Add a positioning line: 'For dry, sensitive skin seeking a natural, fragrance-free glow serum.'", ar: "أضف جملة تموضع: 'لبشرة جافة وحساسة تبحث عن سيروم توهج طبيعي وخالٍ من العطور.'" },
+   243→  "report.rec3.problem": { en: "No Product schema markup. Google can't show rich results.", ar: "لا يوجد Product schema markup. Google لا يستطيع عرض نتائج غنية." },
+   244→  "report.rec3.solution": { en: "Add JSON-LD Product schema with name, image, price, availability and rating.", ar: "أضف JSON-LD Product schema مع الاسم، الصورة، السعر، التوفّر، والتقييم." },
+   245→
+   246→  // Pillar labels
+   247→  "pillar.conversion": { en: "Conversion", ar: "التحويل" },
+   248→  "pillar.seo": { en: "SEO", ar: "SEO" },
+   249→  "pillar.geo": { en: "GEO / AI", ar: "GEO / AI" },
+   250→  "pillar.trust": { en: "Trust", ar: "الثقة" },
+   251→  "pillar.conversionDesc": { en: "How hard your page sells", ar: "مدى قوة بيع صفحتك" },
+   252→  "pillar.seoDesc": { en: "Can Google find & rank you", ar: "هل يجدك Google ويرتبك" },
+   253→  "pillar.geoDesc": { en: "Can AI recommend you", ar: "هل يستطيع AI توصيتك" },
+   254→  "pillar.trustDesc": { en: "Does the shopper believe you", ar: "هل يثق بك المتسوق" },
+   255→
+   256→  // Severity
+   257→  "severity.critical": { en: "Critical", ar: "حرج" },
+   258→  "severity.warning": { en: "Warning", ar: "تحذير" },
+   259→  "severity.opportunity": { en: "Opportunity", ar: "فرصة" },
+   260→
+   261→  // ===== Compare =====
+   262→  "compare.title": { en: "Competitor Comparison", ar: "مقارنة المنافسين" },
+   263→  "compare.subtitle": { en: "Your store vs competitor — where you win and where you lose", ar: "متجرك مقابل المنافس — أين تفوز وأين تخسر" },
+   264→  "compare.pillarComparison": { en: "Pillar-by-pillar comparison", ar: "المقارنة حسب المحاور" },
+   265→  "compare.win": { en: "Win", ar: "تفوق" },
+   266→  "compare.lose": { en: "Lose", ar: "تأخر" },
+   267→  "compare.tie": { en: "Tie", ar: "تعادل" },
+   268→  "compare.gapAnalysis": { en: "Gap analysis", ar: "تحليل الفجوات" },
+   269→  "compare.projectedAfter": { en: "Projected after fixes: 94/100", ar: "النتيجة المتوقعة بعد الإصلاحات: 94/100" },
+   270→  "compare.applyConversion": { en: "Applying conversion fixes widens the gap to +20 pts", ar: "تطبيق توصيات التحويل يوسع الفارق إلى +20 نقطة" },
+   271→  "compare.getFixes": { en: "Get ready-to-paste fixes", ar: "احصل على الإصلاحات الجاهزة" },
+   272→  "compare.gap1Title": { en: "SEO win", ar: "تفوق في SEO" },
+   273→  "compare.gap1Desc": { en: "Your score 85 vs competitor 68 — Meta and Schema structure is far better.", ar: "درجتك 85 مقابل 68 للمنافس — هيكلة Meta و Schema أفضل بكثير." },
+   274→  "compare.gap2Title": { en: "AI visibility win", ar: "تفوق في الظهور AI" },
+   275→  "compare.gap2Desc": { en: "Your product is more recommendable by ChatGPT and Perplexity.", ar: "منتجك أكثر قابلية للتوصية من قبل ChatGPT وPerplexity." },
+   276→  "compare.gap3Title": { en: "Conversion gap", ar: "تأخر في التحويل" },
+   277→  "compare.gap3Desc": { en: "Competitor leads by two points — their CTA and description are stronger.", ar: "المنافس يتفوق بنقطتين — زر CTA ووصفه أقوى." },
+   278→  "compare.gap4Title": { en: "Trust opportunity", ar: "فرصة في الثقة" },
+   279→  "compare.gap4Desc": { en: "Narrow gap (88 vs 86) — add a visible shipping badge to widen it.", ar: "فارق ضيق (88 مقابل 86) — أضف شارة شحن مرئية لتوسيع الفجوة." },
+   280→
+   281→  // ===== Generate =====
+   282→  "generate.title": { en: "AI Generator", ar: "مولد الذكاء الاصطناعي" },
+   283→  "generate.subtitle": { en: "Ready-to-paste copy, generated from your audit. One click to copy.", ar: "نسخ جاهز للصق، مولّد من تحليلك — انقر للنسخ." },
+   284→  "generate.pro": { en: "Pro", ar: "احترافي" },
+   285→  "generate.titleTab": { en: "Title", ar: "العنوان" },
+   286→  "generate.descriptionTab": { en: "Description", ar: "الوصف" },
+   287→  "generate.faqTab": { en: "FAQ", ar: "الأسئلة الشائعة" },
+   288→  "generate.metaTab": { en: "Meta", ar: "Meta" },
+   289→  "generate.adTab": { en: "Ad copy", ar: "الإعلانات" },
+   290→  "generate.optimizedTitle": { en: "Optimized product title", ar: "عنوان المنتج المُحسّن" },
+   291→  "generate.benefitDesc": { en: "Benefit-led description", ar: "وصف يركز على الفوائد" },
+   292→  "generate.metaDesc": { en: "Meta description", ar: "وصف Meta" },
+   293→  "generate.seoOptimized": { en: "SEO-optimized", ar: "مُحسّن لـ SEO" },
+   294→  "generate.geoFriendly": { en: "GEO-friendly", ar: "صديق لـ GEO" },
+   295→  "generate.chars": { en: "{count} chars", ar: "{count} حرف" },
+   296→  "generate.copy": { en: "Copy", ar: "نسخ" },
+   297→  "generate.copied": { en: "{label} copied", ar: "تم نسخ {label}" },
+   298→  "generate.question": { en: "Question", ar: "السؤال" },
+   299→  "generate.idealFor": { en: "Ideal for Google and AI", ar: "مثالي لـ Google و AI" },
+   300→
+   301→  // ===== History =====
+   302→  "history.title": { en: "Audit History", ar: "سجل التحليلات" },
+   303→  "history.subtitle": { en: "All your past audits in one place", ar: "جميع تحليلاتك السابقة في مكان واحد" },
+   304→  "history.filter": { en: "Filter", ar: "فلترة" },
+   305→  "history.score": { en: "Score", ar: "الدرجة" },
+   306→  "history.product": { en: "Product", ar: "المنتج" },
+   307→  "history.date": { en: "Date", ar: "التاريخ" },
+   308→  "history.change": { en: "Change", ar: "التغيّر" },
+   309→  "history.dateToday": { en: "Today, 14:22", ar: "اليوم، 14:22" },
+   310→  "history.weeksAgo": { en: "{count} weeks ago", ar: "قبل {count} أسبوع" },
+   311→  "history.complete": { en: "Complete", ar: "مكتمل" },
+   312→
+   313→  // ===== Watch =====
+   314→  "watch.title": { en: "Watch", ar: "المراقبة" },
+   315→  "watch.subtitle": { en: "Monitor your pages automatically and get alerts on changes", ar: "راقب صفحاتك تلقائياً واحصل على تنبيهات عند التغييرات" },
+   316→  "watch.addWatch": { en: "Add to watch", ar: "إضافة للمراقبة" },
+   317→  "watch.pagesWatched": { en: "Pages watched", ar: "صفحات تحت المراقبة" },
+   318→  "watch.activeAlerts": { en: "Active alerts", ar: "تنبيهات نشطة" },
+   319→  "watch.lastCheck": { en: "Last check", ar: "آخر فحص" },
+   320→  "watch.ago": { en: "{time} ago", ar: "قبل {time}" },
+   321→  "watch.alertsCount": { en: "{count} alerts", ar: "{count} تنبيه" },
+   322→  "watch.viewAlerts": { en: "View alerts", ar: "عرض التنبيهات" },
+   323→
+   324→  "watch.alerts.title": { en: "Alerts", ar: "التنبيهات" },
+   325→  "watch.alerts.subtitle": { en: "All alerts from your watched pages", ar: "جميع التنبيهات من صفحاتك تحت المراقبة" },
+   326→  "watch.alerts.critical": { en: "Critical", ar: "حرج" },
+   327→  "watch.alerts.warning": { en: "Warning", ar: "تحذير" },
+   328→  "watch.alerts.info": { en: "Info", ar: "معلومة" },
+   329→
+   330→  // Time units used with watch.ago
+   331→  "watch.time.hour": { en: "1 hour", ar: "ساعة" },
+   332→  "watch.time.3hours": { en: "3 hours", ar: "3 ساعات" },
+   333→  "watch.time.5hours": { en: "5 hours", ar: "5 ساعات" },
+   334→  "watch.time.yesterday": { en: "Yesterday", ar: "أمس" },
+   335→
+   336→  "watch.diff.title": { en: "Change Comparison", ar: "مقارنة التغييرات" },
+   337→  "watch.diff.subtitle": { en: "Alert #{id} — Before & After", ar: "التنبيه #{id} — قبل وبعد" },
+   338→  "watch.diff.before": { en: "Before", ar: "قبل" },
+   339→  "watch.diff.after": { en: "After", ar: "بعد" },
+   340→  "watch.diff.change": { en: "Change", ar: "التغيّر" },
+   341→  "watch.diff.detected": { en: "Detected changes", ar: "التغييرات المكتشفة" },
+   342→  "watch.diff.improved": { en: "Improved", ar: "تحسّن" },
+   343→  "watch.diff.regressed": { en: "Regressed", ar: "تراجع" },
+   344→  "watch.diff.same": { en: "Same", ar: "بدون تغيير" },
+   345→  "watch.diff.changed": { en: "Changed", ar: "تغيير" },
+   346→
+   347→  // Per-alert content (sample alert entries)
+   348→  "watch.alerts.alert1.title": { en: "SEO score dropped by 5 points", ar: "انخفاض درجة SEO بـ 5 نقاط" },
+   349→  "watch.alerts.alert1.desc": { en: "Product schema was removed from the page", ar: "تم حذف Product schema من الصفحة" },
+   350→  "watch.alerts.alert1.page": { en: "سيروم الأركان للوجه", ar: "سيروم الأركان للوجه" },
+   351→
+   352→  "watch.alerts.alert2.title": { en: "Price change", ar: "تغيّر في السعر" },
+   353→  "watch.alerts.alert2.desc": { en: "Price changed from 120 to 99 SAR", ar: "السعر تغيّر من 120 إلى 99 ريال" },
+   354→  "watch.alerts.alert2.page": { en: "سيروم الأركان للوجه", ar: "سيروم الأركان للوجه" },
+   355→
+   356→  "watch.alerts.alert3.title": { en: "Conversion score dropped by 2 points", ar: "انخفاض درجة التحويل بـ 2 نقطة" },
+   357→  "watch.alerts.alert3.desc": { en: "CTA button changed to a less visible color", ar: "زر CTA تغيّر إلى لون أقل وضوحاً" },
+   358→  "watch.alerts.alert3.page": { en: "زيت الحبة السوداء", ar: "زيت الحبة السوداء" },
+   359→
+   360→  "watch.alerts.alert4.title": { en: "New competitor page", ar: "صفحة جديدة للمنافس" },
+   361→  "watch.alerts.alert4.desc": { en: "Competitor added a new product in the same category", ar: "المنافس أضاف منتجاً جديداً في نفس الفئة" },
+   362→  "watch.alerts.alert4.page": { en: "Competitor monitoring", ar: "مراقبة المنافسين" },
+   363→
+   364→  // Per-diff content (sample diff entries)
+   365→  "watch.diff.diff1.field": { en: "Product title", ar: "عنوان المنتج" },
+   366→  "watch.diff.diff1.before": { en: "Pure Argan Serum 30ml", ar: "سيروم الأركان النقي 30مل" },
+   367→  "watch.diff.diff1.after": { en: "Argan Glow Serum — 7-night rehydration", ar: "سيروم توهج الأركان — إعادة ترطيب 7 ليالٍ" },
+   368→  "watch.diff.diff1.impact": { en: "+5 SEO points", ar: "+5 نقاط SEO" },
+   369→
+   370→  "watch.diff.diff2.field": { en: "CTA button", ar: "زر CTA" },
+   371→  "watch.diff.diff2.before": { en: "Add to cart (gray)", ar: "أضف للسلة (رمادي)" },
+   372→  "watch.diff.diff2.after": { en: "Buy now (orange #FF6600)", ar: "اشترِ الآن (برتقالي #FF6600)" },
+   373→  "watch.diff.diff2.impact": { en: "+3 conversion points", ar: "+3 نقاط تحويل" },
+   374→
+   375→  "watch.diff.diff3.field": { en: "Product Schema", ar: "Product Schema" },
+   376→  "watch.diff.diff3.before": { en: "Present (JSON-LD)", ar: "موجود (JSON-LD)" },
+   377→  "watch.diff.diff3.after": { en: "Removed", ar: "محذوف" },
+   378→  "watch.diff.diff3.impact": { en: "-5 SEO points", ar: "-5 نقاط SEO" },
+   379→
+   380→  "watch.diff.diff4.field": { en: "Meta description", ar: "وصف Meta" },
+   381→  "watch.diff.diff4.before": { en: "120 chars", ar: "120 حرف" },
+   382→  "watch.diff.diff4.after": { en: "155 chars (optimized)", ar: "155 حرف (مُحسّن)" },
+   383→  "watch.diff.diff4.impact": { en: "+2 SEO points", ar: "+2 نقاط SEO" },
+   384→
+   385→  "watch.diff.diff5.field": { en: "Product images", ar: "صور المنتج" },
+   386→  "watch.diff.diff5.before": { en: "5 images", ar: "5 صور" },
+   387→  "watch.diff.diff5.after": { en: "5 images (no change)", ar: "5 صور (بدون تغيير)" },
+   388→  "watch.diff.diff5.impact": { en: "—", ar: "—" },
+   389→
+   390→  "watch.diff.diff6.field": { en: "Product price", ar: "سعر المنتج" },
+   391→  "watch.diff.diff6.before": { en: "120 SAR", ar: "120 ريال" },
+   392→  "watch.diff.diff6.after": { en: "99 SAR", ar: "99 ريال" },
+   393→  "watch.diff.diff6.impact": { en: "Pricing change", ar: "تغيير في التسعير" },
+   394→
+   395→  // ===== Settings =====
+   396→  "settings.title": { en: "Settings", ar: "الإعدادات" },
+   397→  "settings.subtitle": { en: "Manage your account and preferences", ar: "إدارة حسابك وتفضيلاتك" },
+   398→  "settings.profile": { en: "Profile", ar: "الملف الشخصي" },
+   399→  "settings.billingSubscription": { en: "Billing & subscription", ar: "الفوترة والاشتراك" },
+   400→  "settings.billingDesc": { en: "Manage your plan and payment methods", ar: "إدارة باقتك وطرق الدفع" },
+   401→  "settings.usage": { en: "Usage", ar: "الاستخدام" },
+   402→  "settings.usageDesc": { en: "Your audits and plan limits", ar: "تحليلاتك ومحددات الباقة" },
+   403→  "settings.fullName": { en: "Full name", ar: "الاسم الكامل" },
+   404→  "settings.email": { en: "Email", ar: "البريد الإلكتروني" },
+   405→  "settings.company": { en: "Company", ar: "الشركة" },
+   406→  "settings.companyPlaceholder": { en: "Your company name", ar: "اسم شركتك" },
+   407→  "settings.country": { en: "Country", ar: "الدولة" },
+   408→  "settings.changeAvatar": { en: "Change avatar", ar: "تغيير الصورة" },
+   409→  "settings.saveChanges": { en: "Save changes", ar: "حفظ التغييرات" },
+   410→  "settings.preferences": { en: "Preferences", ar: "التفضيلات" },
+   411→  "settings.emailNotifs": { en: "Email notifications", ar: "تنبيهات البريد الإلكتروني" },
+   412→  "settings.emailNotifsDesc": { en: "Alerts when audits complete or changes detected", ar: "تنبيهات عند اكتمال التحليل أو اكتشاف تغييرات" },
+   413→  "settings.language": { en: "Language", ar: "اللغة" },
+   414→  "settings.twoFactor": { en: "Two-factor authentication", ar: "المصادقة الثنائية" },
+   415→  "settings.twoFactorDesc": { en: "Not enabled", ar: "غير مفعّل" },
+   416→  "settings.edit": { en: "Edit", ar: "تعديل" },
+   417→
+   418→  // Billing
+   419→  "billing.title": { en: "Billing & Subscription", ar: "الفوترة والاشتراك" },
+   420→  "billing.subtitle": { en: "Manage your plan and payment methods", ar: "إدارة باقتك وطرق الدفع" },
+   421→  "billing.currentPlan": { en: "Current plan", ar: "الباقة الحالية" },
+   422→  "billing.freePlan": { en: "Free plan", ar: "الباقة المجانية" },
+   423→  "billing.freeDesc": { en: "3 audits per month · 1 store · 5 recommendations per audit", ar: "3 تحليلات شهرياً · متجر واحد · 5 توصيات لكل تحليل" },
+   424→  "billing.auditsRemaining": { en: "Audits remaining", ar: "التحليلات المتبقية" },
+   425→  "billing.renewsOn": { en: "Renews on", ar: "يتجدد في" },
+   426→  "billing.memberSince": { en: "Member since", ar: "العضو منذ" },
+   427→  "billing.paymentMethod": { en: "Payment method", ar: "طريقة الدفع" },
+   428→  "billing.noPayment": { en: "No payment method", ar: "لا توجد طريقة دفع" },
+   429→  "billing.noPaymentDesc": { en: "Add a card to subscribe to Pro", ar: "أضف بطاقة للاشتراك في الباقة الاحترافية" },
+   430→  "billing.addCard": { en: "Add card", ar: "إضافة بطاقة" },
+   431→  "billing.invoices": { en: "Invoices", ar: "الفواتير" },
+   432→  "billing.paid": { en: "Paid", ar: "مدفوع" },
+   433→
+   434→  // Usage
+   435→  "usage.title": { en: "Usage", ar: "الاستخدام" },
+   436→  "usage.subtitle": { en: "Your current consumption and plan limits", ar: "استهلاكك الحالي ومحددات باقتك" },
+   437→  "usage.planUsage": { en: "Plan usage", ar: "استخدام الباقة" },
+   438→  "usage.usageDesc": { en: "You're using {pct}% of your free plan resources", ar: "أنت تستخدم {pct}% من موارد باقتك المجانية" },
+   439→  "usage.auditsThisMonth": { en: "Audits this month", ar: "تحليلات هذا الشهر" },
+   440→  "usage.aiGenerations": { en: "AI generations", ar: "توليدات AI" },
+   441→  "usage.pagesWatched": { en: "Pages watched", ar: "صفحات تحت المراقبة" },
+   442→  "usage.competitorComparisons": { en: "Competitor comparisons", ar: "مقارنات المنافسين" },
+   443→  "usage.used": { en: "{used} used", ar: "{used} مستخدم" },
+   444→  "usage.apiUsage": { en: "API usage", ar: "استخدام API" },
+   445→  "usage.calls": { en: "{used} / {limit} calls", ar: "{used} / {limit} استدعاء" },
+   446→
+   447→  // ===== Docs =====
+   448→  "docs.title": { en: "Documentation", ar: "التوثيق" },
+   449→  "docs.subtitle": { en: "Everything you need to know about StoreAudit AI", ar: "كل ما تحتاج لمعرفته عن StoreAudit AI" },
+   450→  "docs.quickStart": { en: "Quick start", ar: "البدء السريع" },
+   451→  "docs.quickStartDesc": { en: "Create your account and run your first audit in 2 minutes", ar: "أنشئ حسابك وأجرِ أول تحليل خلال دقيقتين" },
+   452→  "docs.understandScores": { en: "Understanding scores", ar: "فهم الدرجات" },
+   453→  "docs.understandScoresDesc": { en: "How we calculate conversion, SEO, GEO and trust scores", ar: "كيف نحسب درجات التحويل وSEO وGEO والثقة" },
+   454→  "docs.aiGenerator": { en: "AI Generator", ar: "مولد الذكاء الاصطناعي" },
+   455→  "docs.aiGeneratorDesc": { en: "Generate titles, descriptions, FAQs and ad copy", ar: "أنشئ عناوين وأوصاف وأسئلة شائعة وإعلانات" },
+   456→  "docs.watchAlerts": { en: "Watch & alerts", ar: "المراقبة والتنبيهات" },
+   457→  "docs.watchAlertsDesc": { en: "Monitor your pages automatically and get alerts", ar: "راقب صفحاتك تلقائياً واحصل على تنبيهات" },
+   458→  "docs.api": { en: "API reference", ar: "واجهة API" },
+   459→  "docs.apiDesc": { en: "Integrate StoreAudit AI into your applications", ar: "ادمج StoreAudit AI في تطبيقاتك" },
+   460→  "docs.quickExample": { en: "Quick example", ar: "مثال سريع" },
+   461→
+   462→  // ===== Blog =====
+   463→  "blog.title": { en: "Blog", ar: "المدونة" },
+   464→  "blog.subtitle": { en: "Insights and guides to grow your e-commerce store", ar: "رؤى وأدلة لتنمية متجرك الإلكتروني" },
+   465→  "blog.readMore": { en: "Read article", ar: "اقرأ المقال" },
+   466→  "blog.minRead": { en: "{count} min read", ar: "{count} دقائق قراءة" },
+   467→  "blog.relatedPosts": { en: "Related posts", ar: "مقالات ذات صلة" },
+   468→  "blog.share": { en: "Share:", ar: "شارك:" },
+   469→  "blog.backToBlog": { en: "Back to blog", ar: "رجوع للمدونة" },
+   470→
+   471→  // ===== Affiliate =====
+   472→  "affiliate.title": { en: "Affiliate Program", ar: "برنامج التسويق بالعمولة" },
+   473→  "affiliate.subtitle": { en: "Earn 30% recurring commission on every customer you refer", ar: "اكسب 30% عمولة متكررة من كل عميل تحوّله" },
+   474→  "affiliate.recurringCommission": { en: "Recurring commission for life", ar: "عمولة متكررة مدى الحياة" },
+   475→  "affiliate.turnRec": { en: "Turn your recommendation into recurring income", ar: "حوّل توصيتك إلى دخل مستمر" },
+   476→  "affiliate.turnRecSub": { en: "Recommend StoreAudit AI to your friends, clients and community — earn 30% of every subscription, every month, for life.", ar: "أوصِ StoreAudit AI لأصدقائك وعملائك ومجتمعك — واحصل على 30% من كل اشتراك، كل شهر، مدى الحياة." },
+   477→  "affiliate.signup": { en: "Sign up as affiliate", ar: "سجّل كمسوّق" },
+   478→  "affiliate.activeCustomers": { en: "Active customers", ar: "عملاؤك النشطون" },
+   479→  "affiliate.clicksMonth": { en: "Clicks this month", ar: "نقرات هذا الشهر" },
+   480→  "affiliate.pendingEarnings": { en: "Pending earnings", ar: "أرباحك المعلّقة" },
+   481→  "affiliate.totalPaid": { en: "Total paid", ar: "إجمالي المدفوع" },
+   482→  "affiliate.whyJoin": { en: "Why join our program?", ar: "لماذا انضمامك لبرنامجنا؟" },
+   483→  "affiliate.30Recurring": { en: "30% recurring commission", ar: "عمولة 30% متكررة" },
+   484→  "affiliate.30RecurringDesc": { en: "Earn 30% of every subscription — for life. Every month.", ar: "احصل على 30% من كل اشتراك — مدى الحياة. كل شهر." },
+   485→  "affiliate.90Days": { en: "90-day cookies", ar: "كوكيز 90 يوماً" },
+   486→  "affiliate.90DaysDesc": { en: "Any user who signs up via your link within 90 days is yours.", ar: "أي مستخدم يسجل عبر رابطك خلال 90 يوماً يكون لك." },
+   487→  "affiliate.realTime": { en: "Real-time dashboard", ar: "لوحة تحكم لحظية" },
+   488→  "affiliate.realTimeDesc": { en: "Track your clicks, signups and earnings in real time.", ar: "تتبّع نقراتك وتسجيلاتك وأرباحك في الوقت الفعلي." },
+   489→  "affiliate.perks": { en: "Performance bonuses", ar: "مكافآت الأداء" },
+   490→  "affiliate.perksDesc": { en: "Cash bonuses at 50, 100 and 500 active customers.", ar: "مكافآت نقدية عند الوصول لـ 50 و100 و500 عميل نشط." },
+   491→  "affiliate.tiers": { en: "Commission tiers", ar: "مستويات العمولة" },
+   492→  "affiliate.tier": { en: "Tier", ar: "المستوى" },
+   493→  "affiliate.customers": { en: "Active customers", ar: "العملاء النشطون" },
+   494→  "affiliate.commission": { en: "Commission", ar: "نسبة العمولة" },
+   495→  "affiliate.bonus": { en: "Bonus", ar: "المكافأة" },
+   496→  "affiliate.startNow": { en: "Start marketing now", ar: "ابدأ التسويق الآن" },
+   497→  "affiliate.noApproval": { en: "No approval needed — start immediately after signup", ar: "لا حاجة لموافقة — ابدأ فوراً بعد التسجيل" },
+   498→
+   499→  // ===== Pricing page (standalone) =====
+   500→  "pricing.title": { en: "Pricing", ar: "الأسعار" },
+   501→  "pricing.subtitle": { en: "Plans that pay for themselves on the first audit — start free", ar: "خطط تدفع ثمنها من أول تحليل — ابدأ مجاناً" },
+   502→  "pricing.free": { en: "Free", ar: "مجاني" },
+   503→  "pricing.pro": { en: "Pro", ar: "احترافي" },
+   504→  "pricing.business": { en: "Business", ar: "أعمال" },
+   505→  "pricing.forever": { en: "forever", ar: "للأبد" },
+   506→  "pricing.perMonth": { en: "/ month", ar: "/ شهر" },
+   507→  "pricing.freeTagline": { en: "Test the waters with your first audits", ar: "ابدأ بتجربة المنصة" },
+   508→  "pricing.proTagline": { en: "For growing stores that want to win", ar: "للمتاجر النامية" },
+   509→  "pricing.businessTagline": { en: "Scale across teams, stores & markets", ar: "للفرق والشركات" },
+   510→  "pricing.3Audits": { en: "3 audits / month", ar: "3 تحليلات / شهر" },
+   511→  "pricing.unlimitedAudits": { en: "Unlimited audits", ar: "تحليلات غير محدودة" },
+   512→  "pricing.everythingPro": { en: "Everything in Pro", ar: "كل ميزات الاحترافي" },
+   513→  "pricing.startFree": { en: "Start Free", ar: "ابدأ مجاناً" },
+   514→  "pricing.goPro": { en: "Go Pro", ar: "اشترك الآن" },
+   515→  "pricing.startBusiness": { en: "Start Business", ar: "ابدأ الأعمال" },
+   516→  "pricing.mostPopular": { en: "Most popular", ar: "الأكثر شيوعاً" },
+   517→  "pricing.securePaddle": { en: "Secure checkout via Paddle", ar: "دفع آمن عبر Paddle" },
+   518→  "pricing.billedUSD": { en: "Billed in USD", ar: "العملة: دولار أمريكي" },
+   519→  "pricing.cancelAnytime": { en: "Cancel anytime", ar: "إلغاء في أي وقت" },
+   520→
+   521→  // Pricing plan features (per-feature keys for i18n)
+   522→  "pricing.free.f1": { en: "3 audits per month", ar: "3 تحليلات شهرياً" },
+   523→  "pricing.free.f2": { en: "Conversion, SEO, GEO & Trust scores", ar: "درجات التحويل وSEO وGEO والثقة" },
+   524→  "pricing.free.f3": { en: "Top 5 recommendations", ar: "أهم 5 توصيات" },
+   525→  "pricing.free.f4": { en: "Single store", ar: "متجر واحد" },
+   526→  "pricing.free.f5": { en: "Email support", ar: "دعم بريد إلكتروني" },
+   527→
+   528→  "pricing.pro.f1": { en: "Unlimited audits", ar: "تحليلات غير محدودة" },
+   529→  "pricing.pro.f2": { en: "Competitor comparison", ar: "مقارنة المنافسين" },
+   530→  "pricing.pro.f3": { en: "AI Generator", ar: "مولد الذكاء الاصطناعي" },
+   531→  "pricing.pro.f4": { en: "All recommendations", ar: "جميع التوصيات" },
+   532→  "pricing.pro.f5": { en: "3 stores", ar: "3 متاجر" },
+   533→  "pricing.pro.f6": { en: "Priority support", ar: "دعم أولوية" },
+   534→
+   535→  "pricing.business.f1": { en: "Unlimited stores", ar: "متاجر غير محدودة" },
+   536→  "pricing.business.f2": { en: "5 team seats", ar: "5 مقاعد للفريق" },
+   537→  "pricing.business.f3": { en: "White-label PDF reports", ar: "تقارير PDF بعلامتك" },
+   538→  "pricing.business.f4": { en: "Automated monitoring", ar: "مراقبة تلقائية" },
+   539→  "pricing.business.f5": { en: "API access", ar: "وصول API" },
+   540→  "pricing.business.f6": { en: "Dedicated success manager", ar: "مدير نجاح مخصص" },
+   541→} as const;
+   542→
+   543→export type TranslationKey = keyof typeof translations;
+   544→
+   545→/** Format a string with {placeholder} substitution. */
+   546→function format(str: string, params?: Record<string, string | number>): string {
+   547→  if (!params) return str;
+   548→  return str.replace(/\{(\w+)\}/g, (_, key) => String(params[key] ?? ""));
+   549→}
+   550→
+   551→/**
+   552→ * Hook to get the translation function.
+   553→ * Usage:
+   554→ *   const t = useT();
+   555→ *   t("nav.dashboard")           // → "Dashboard" or "لوحة التحكم"
+   556→ *   t("dashboard.welcome", { name: "Youssef" })  // → "Welcome back, Youssef 👋"
+   557→ */
+   558→export function useT() {
+   559→  const language = useLanguageStore((s) => s.language);
+   560→
+   561→  return function t(key: TranslationKey, params?: Record<string, string | number>): string {
+   562→    const entry = translations[key];
+   563→    if (!entry) return key;
+   564→    const text = entry[language] ?? entry.en;
+   565→    return format(text, params);
+   566→  };
+   567→}
+   568→
+   569→/** Get translation without React hook (for non-component use). */
+   570→export function translate(key: TranslationKey, language: Language, params?: Record<string, string | number>): string {
+   571→  const entry = translations[key];
+   572→  if (!entry) return key;
+   573→  const text = entry[language] ?? entry.en;
+   574→  return format(text, params);
+   575→}
+   576→
