@@ -1,56 +1,120 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Clock, ArrowUpRight, ArrowRight, Filter } from "lucide-react";
+import { Clock, ArrowUpRight, Filter, Loader2 } from "lucide-react";
 import { PageShell, PageHeader, PageContent } from "@/components/app/page-shell";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/app/empty-state";
 import { ScoreRadial } from "@/components/common/score-viz";
-import { useT, type TranslationKey } from "@/lib/i18n";
+import { useT } from "@/lib/i18n";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { getPlanLimits } from "@/lib/billing/entitlements";
+import { resolveEffectivePlan } from "@/lib/billing/dev-unlock";
+import { crumbsForPath } from "@/lib/nav-config";
+import { formatDistanceToNow } from "date-fns";
 
-const AUDITS: { id: string; name: string; store: string; score: number; dateKey: TranslationKey; dateParams?: Record<string, string | number>; delta: number; statusKey: TranslationKey }[] = [
-  { id: "demo", name: "سيروم الأركان للوجه 30مل", store: "ArganBloom", score: 82, dateKey: "history.dateToday", delta: 8, statusKey: "history.complete" },
-  { id: "2", name: "تونر ماء الورد 200مل", store: "ArganBloom", score: 76, dateKey: "dashboard.yesterday", delta: 3, statusKey: "history.complete" },
-  { id: "3", name: "زيت الحبة السوداء للشعر", store: "ArganBloom", score: 71, dateKey: "dashboard.daysAgo", dateParams: { count: 2 }, delta: -2, statusKey: "history.complete" },
-  { id: "4", name: "بخاخ الكركديه للوجه", store: "ArganBloom", score: 88, dateKey: "dashboard.daysAgo", dateParams: { count: 5 }, delta: 12, statusKey: "history.complete" },
-  { id: "5", name: "كريم الإضاءة بالزعفران", store: "ArganBloom", score: 69, dateKey: "dashboard.weekAgo", delta: 0, statusKey: "history.complete" },
-  { id: "6", name: "شامبو الصبار العضوي", store: "ArganBloom", score: 74, dateKey: "history.weeksAgo", dateParams: { count: 2 }, delta: 5, statusKey: "history.complete" },
-];
+interface AuditRow {
+  id: string;
+  product_name: string | null;
+  store_name: string | null;
+  overall_score: number | null;
+  status: string;
+  created_at: string;
+  product_url: string;
+}
 
 export default function HistoryPage() {
   const t = useT();
+  const sb = React.useMemo(() => getSupabaseBrowser(), []);
+  const [audits, setAudits] = React.useState<AuditRow[]>([]);
+  const [loading, setLoading] = React.useState(!!sb);
+
+  React.useEffect(() => {
+    if (!sb) return;
+
+    sb.auth
+      .getUser()
+      .then(async ({ data: { user } }) => {
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        const profileRes = await sb.from("profiles").select("plan").eq("id", user.id).single();
+        const historyLimit = getPlanLimits(
+          resolveEffectivePlan((profileRes.data?.plan as "free" | "pro" | "business") ?? "free")
+        ).historyLimit;
+
+        let query = sb
+          .from("audits")
+          .select("id, product_name, store_name, overall_score, status, created_at, product_url")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (historyLimit !== null) {
+          query = query.limit(historyLimit);
+        } else {
+          query = query.limit(50);
+        }
+
+        const { data } = await query;
+        setAudits(data ?? []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [sb]);
 
   return (
     <PageShell>
-      <PageHeader title={t("history.title")} subtitle={t("history.subtitle")} icon={Clock} back="/dashboard" actions={<Button variant="outline" size="sm" className="rounded-full"><Filter className="size-4 ml-1" /> {t("history.filter")}</Button>} />
+      <PageHeader title={t("history.title")} subtitle={t("history.subtitle")} icon={Clock} back="/dashboard" crumbs={crumbsForPath("/history")} actions={<Button variant="outline" size="sm" className="rounded-full"><Filter className="size-4 ml-1" /> {t("history.filter")}</Button>} />
       <PageContent>
-        <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
-          <div className="hidden sm:grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-6 py-3 border-b border-border/60 bg-muted/30 text-xs font-semibold text-muted-foreground">
-            <span>{t("history.score")}</span><span>{t("history.product")}</span><span>{t("history.date")}</span><span>{t("history.change")}</span><span></span>
+        {loading ? (
+          <div className="flex justify-center py-20"><Loader2 className="size-8 animate-spin text-primary" /></div>
+        ) : audits.length === 0 ? (
+          <EmptyState
+            title={t("empty.noHistory")}
+            ctaLabel={t("empty.noHistory.cta")}
+            ctaHref="/audit/new"
+          />
+        ) : (
+          <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
+            <div className="hidden sm:grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-6 py-3 border-b border-border/60 bg-muted/30 text-xs font-semibold text-muted-foreground">
+              <span>{t("history.score")}</span><span>{t("history.product")}</span><span>{t("history.date")}</span><span>{t("history.change")}</span><span></span>
+            </div>
+            <div className="divide-y divide-border/50">
+              {audits.map((a, i) => (
+                <motion.div key={a.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}>
+                  <Link href={`/audit/${a.id}/report`} className="grid sm:grid-cols-[auto_1fr_auto_auto_auto] grid-cols-[auto_1fr_auto] gap-4 items-center px-6 py-4 hover:bg-accent/40 transition-colors text-right">
+                    <ScoreRadial score={a.overall_score ?? 0} size={44} stroke={4.5} animate={false} />
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold truncate">{a.product_name || extractName(a.product_url)}</div>
+                      <div className="text-xs text-muted-foreground">{a.store_name || "—"}</div>
+                    </div>
+                    <div className="hidden sm:block text-xs text-muted-foreground whitespace-nowrap">
+                      {formatDistanceToNow(new Date(a.created_at), { addSuffix: true })}
+                    </div>
+                    <div className="hidden sm:flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full text-muted-foreground bg-muted">
+                      {a.status === "complete" ? "Done" : a.status}
+                    </div>
+                    <ArrowUpRight className="size-4 text-muted-foreground" />
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
           </div>
-          <div className="divide-y divide-border/50">
-            {AUDITS.map((a, i) => (
-              <motion.div key={a.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}>
-                <Link href={`/audit/${a.id}/report`} className="grid sm:grid-cols-[auto_1fr_auto_auto_auto] grid-cols-[auto_1fr_auto] gap-4 items-center px-6 py-4 hover:bg-accent/40 transition-colors text-right">
-                  <ScoreRadial score={a.score} size={44} stroke={4.5} animate={false} />
-                  <div className="min-w-0">
-                    <div className="text-sm font-semibold truncate">{a.name}</div>
-                    <div className="text-xs text-muted-foreground">{a.store}</div>
-                  </div>
-                  <div className="hidden sm:block text-xs text-muted-foreground whitespace-nowrap">{t(a.dateKey, a.dateParams)}</div>
-                  <div className={`hidden sm:flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${a.delta > 0 ? "text-primary bg-primary/10" : a.delta < 0 ? "text-rose-500 bg-rose-500/10" : "text-muted-foreground bg-muted"}`}>
-                    {a.delta > 0 ? `+${a.delta}` : a.delta}
-                  </div>
-                  <ArrowUpRight className="size-4 text-muted-foreground" />
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-        <div className="mt-6 text-center">
-          <Button asChild variant="outline" className="rounded-full"><Link href="/audit/new"><ArrowRight className="size-4 ml-1 rotate-180" /> {t("report.newAudit")}</Link></Button>
-        </div>
+        )}
       </PageContent>
     </PageShell>
   );
+}
+
+function extractName(url: string): string {
+  try {
+    const seg = new URL(url).pathname.split("/").filter(Boolean).pop() || "";
+    return seg.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Product";
+  } catch {
+    return "Product";
+  }
 }

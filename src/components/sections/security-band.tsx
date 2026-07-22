@@ -16,7 +16,7 @@ const ITEMS = [
 export function SecurityBand() {
   const t = useT();
   return (
-    <section className="py-20 sm:py-28 bg-muted/20 border-y border-border/40 relative overflow-hidden">
+    <section id="security" className="py-20 sm:py-28 bg-muted/20 border-y border-border/40 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/8 blur-[120px] rounded-full -z-10" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-[1fr_1.4fr] gap-12 items-start">

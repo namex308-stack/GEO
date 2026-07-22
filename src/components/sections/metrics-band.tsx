@@ -50,7 +50,7 @@ function MetricItem({
         <Icon className="size-5" />
       </div>
       <div
-        ref={ref}
+        ref={ref as React.Ref<HTMLDivElement>}
         className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tabular-nums tracking-tight"
         style={{ color }}
       >

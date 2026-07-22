@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "StorePulse AI";
+export const alt = "convaudit";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -38,7 +38,7 @@ export default async function TwitterImage() {
           S
         </div>
         <div style={{ fontSize: 56, fontWeight: 800, color: "white", lineHeight: 1.1, display: "flex" }}>
-          StorePulse AI
+          convaudit
         </div>
         <div style={{ fontSize: 24, color: "#929292", marginTop: 16, display: "flex" }}>
           AI-Powered E-commerce Audit &amp; Optimization

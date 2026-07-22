@@ -61,5 +61,12 @@ export async function checkRateLimit(
     // Demo mode — allow everything.
     return { success: true, limit: Infinity, remaining: Infinity, reset: 0 };
   }
-  return limiter.limit(identifier);
+  try {
+    return await limiter.limit(identifier);
+  } catch (err) {
+    // Upstash misconfigured or unreachable — fail open so a broken rate
+    // limiter never takes down the core product feature it's protecting.
+    console.error("[rate-limit] Upstash request failed, allowing request:", err);
+    return { success: true, limit: Infinity, remaining: Infinity, reset: 0 };
+  }
 }

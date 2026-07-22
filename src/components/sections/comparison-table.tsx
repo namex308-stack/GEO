@@ -8,7 +8,7 @@ import { useT } from "@/lib/i18n";
 const COLS = [
   { key: "diy", nameKey: "compTable.diy", icon: User, tone: "muted" },
   { key: "agency", nameKey: "compTable.agency", icon: Building2, tone: "muted" },
-  { key: "storepulse", nameKey: "compTable.storepulse", icon: Sparkles, tone: "brand" },
+  { key: "convaudit", nameKey: "compTable.convaudit", icon: Sparkles, tone: "brand" },
 ] as const;
 
 type Cell = { v: "yes" | "no" | "partial"; textKey?: "compTable.daysWeeks" | "compTable.weeks" | "compTable.seconds" | "compTable.freeTime" | "compTable.costAgency" | "compTable.from0" | "compTable.manual" | "compTable.extraCost" | "compTable.retainer" | "compTable.onYou" | "compTable.varies" };
@@ -16,42 +16,42 @@ type Cell = { v: "yes" | "no" | "partial"; textKey?: "compTable.daysWeeks" | "co
 const ROWS: { labelKey: "compTable.row1" | "compTable.row2" | "compTable.row3" | "compTable.row4" | "compTable.row5" | "compTable.row6" | "compTable.row7" | "compTable.row8"; cells: Record<string, Cell> }[] = [
   {
     labelKey: "compTable.row1",
-    cells: { diy: { v: "no", textKey: "compTable.daysWeeks" }, agency: { v: "partial", textKey: "compTable.weeks" }, storepulse: { v: "yes", textKey: "compTable.seconds" } },
+    cells: { diy: { v: "no", textKey: "compTable.daysWeeks" }, agency: { v: "partial", textKey: "compTable.weeks" }, convaudit: { v: "yes", textKey: "compTable.seconds" } },
   },
   {
     labelKey: "compTable.row2",
-    cells: { diy: { v: "partial", textKey: "compTable.freeTime" }, agency: { v: "no", textKey: "compTable.costAgency" }, storepulse: { v: "yes", textKey: "compTable.from0" } },
+    cells: { diy: { v: "partial", textKey: "compTable.freeTime" }, agency: { v: "no", textKey: "compTable.costAgency" }, convaudit: { v: "yes", textKey: "compTable.from0" } },
   },
   {
     labelKey: "compTable.row3",
-    cells: { diy: { v: "no" }, agency: { v: "no" }, storepulse: { v: "yes" } },
+    cells: { diy: { v: "no" }, agency: { v: "no" }, convaudit: { v: "yes" } },
   },
   {
     labelKey: "compTable.row4",
-    cells: { diy: { v: "partial", textKey: "compTable.manual" }, agency: { v: "yes" }, storepulse: { v: "yes" } },
+    cells: { diy: { v: "partial", textKey: "compTable.manual" }, agency: { v: "yes" }, convaudit: { v: "yes" } },
   },
   {
     labelKey: "compTable.row5",
-    cells: { diy: { v: "no" }, agency: { v: "partial", textKey: "compTable.extraCost" }, storepulse: { v: "yes" } },
+    cells: { diy: { v: "no" }, agency: { v: "partial", textKey: "compTable.extraCost" }, convaudit: { v: "yes" } },
   },
   {
     labelKey: "compTable.row6",
-    cells: { diy: { v: "no" }, agency: { v: "partial", textKey: "compTable.retainer" }, storepulse: { v: "yes" } },
+    cells: { diy: { v: "no" }, agency: { v: "partial", textKey: "compTable.retainer" }, convaudit: { v: "yes" } },
   },
   {
     labelKey: "compTable.row7",
-    cells: { diy: { v: "partial", textKey: "compTable.manual" }, agency: { v: "yes" }, storepulse: { v: "yes" } },
+    cells: { diy: { v: "partial", textKey: "compTable.manual" }, agency: { v: "yes" }, convaudit: { v: "yes" } },
   },
   {
     labelKey: "compTable.row8",
-    cells: { diy: { v: "partial", textKey: "compTable.onYou" }, agency: { v: "partial", textKey: "compTable.varies" }, storepulse: { v: "yes" } },
+    cells: { diy: { v: "partial", textKey: "compTable.onYou" }, agency: { v: "partial", textKey: "compTable.varies" }, convaudit: { v: "yes" } },
   },
 ] as const;
 
 export function ComparisonTable() {
   const t = useT();
   return (
-    <section className="py-20 sm:py-28">
+    <section id="comparison" className="py-20 sm:py-28">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="text-sm font-semibold uppercase tracking-wider text-primary">{t("compTable.eyebrow")}</span>

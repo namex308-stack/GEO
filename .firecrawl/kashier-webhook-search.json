@@ -1,0 +1,46 @@
+Webhook requires HMAC-SHA256 signature for verification
+  URL: https://forum.bubble.io/t/webhook-requires-hmac-sha256-signature-for-verification/220750
+  “A HMAC-SHA256 signature will be sent based on the shared secret and the request body. That signature will then be placed in a X-Hook-Signature ...
+
+Webhooks | Certifier API Documentation
+  URL: https://developers.certifier.io/docs/api-reference/webhooks
+  Each webhook request includes an X-Webhook-Signature header, which contains a SHA256 HMAC signature of the request payload, signed with your ...
+
+Verify webhook signatures using HMAC
+  URL: https://qlik.dev/apis/event/verify-webhook-signatures-hmac/
+  # Verify webhook signatures using HMAC
+## [what is hmac permalink](https://qlik.dev/apis/event/verify-webhook-signatures-hmac/#what-is-hmac) What is HMAC?
+- Taking your secret key and the webhook payload
+
+Verify HMAC signatures
+  URL: https://docs.adyen.com/development-resources/webhooks/secure-webhooks/verify-hmac-signatures
+  # Verify HMAC signatures
+Verify the integrity of webhook events using HMAC signatures.
+
+Copy as Markdown
+
+To protect your server from unauthorised webhook events, we strongly recommend that you use [Hash-based message authentication code](https://en.wikipedia.org/wiki/HMAC) (HMAC) signatures for our webhooks that support it. For the ones that support [enabling HMAC signatures](https://docs.adyen.com/development-resources/webhooks/secure-webhooks/verify-hmac-signatures#enable-hmac-signatures), each webhook event will include a signature calculated using a secret HMAC key and a payload from the webhook. By verifying this signature, you confirm that the webhook was sent by Adyen, and was not modified during transmission.
+
+## [Anchor](https://docs.adyen.com/development-resources/webhooks/secure-webhooks/verify-hmac-signatures#verify-using-your-own-solution) Verify using your own solution
+### [Anchor](https://docs.adyen.com/development-resources/webhooks/secure-webhooks/verify-hmac-signatures#example) Example
+```bash
+
+Copy code
+
+44782DEF547AAA06C910C43932B1EB0C71FC68D9D0C057550C48EC2ACF6BA056
+```
+
+How to Secure Webhook Endpoints with HMAC
+  URL: https://prismatic.io/blog/how-secure-webhook-endpoints-hmac/
+  # How to Secure Webhook Endpoints with HMAC
+## HMAC has broad language support
+Seee our [HMAC documentation](https://prismatic.io/docs/integrations/triggers/webhook/what-is-hmac/) for how to configure it without writing custom verification code.
+
+## Example code for HMAC
+```
+1234
+curl https://my.webhook.endpoint.com/callback \
+  --request POST \
+  --header "x-hmac-hash: d12f95e3f98240cff00b2743160455fdf70cb8d431db2981a9af8414fc4ad5f8" \
+  --data '{"event":"REFUND_REQUEST","user":"realcustomer@notabaddie.com","amount":"50.25"}'
+```

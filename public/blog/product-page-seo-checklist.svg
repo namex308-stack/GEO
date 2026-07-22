@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Product page SEO checklist">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d1f21"/>
+      <stop offset="100%" stop-color="#252830"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF6600"/>
+      <stop offset="100%" stop-color="#ff983f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="80" y="90" fill="#929292" font-family="system-ui,sans-serif" font-size="14" font-weight="600" letter-spacing="2">CONVAUDIT BLOG � SEO</text>
+  <text x="80" y="170" fill="white" font-family="system-ui,sans-serif" font-size="46" font-weight="800">Product Page SEO</text>
+  <text x="80" y="230" fill="url(#accent)" font-family="system-ui,sans-serif" font-size="46" font-weight="800">Checklist</text>
+  <text x="80" y="290" fill="#929292" font-family="system-ui,sans-serif" font-size="20">15-point guide for higher rankings</text>
+  <g transform="translate(620,80)">
+    <rect width="500" height="470" rx="24" fill="#ffffff" opacity="0.04" stroke="#FF6600" stroke-opacity="0.25" stroke-width="2"/>
+    <text x="40" y="50" fill="white" font-family="system-ui,sans-serif" font-size="18" font-weight="700">On-Page Essentials</text>
+    <g transform="translate(40,80)">
+      <rect width="20" height="20" rx="4" fill="url(#accent)"/>
+      <text x="10" y="15" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-size="12" font-weight="700"></text>
+      <text x="32" y="16" fill="#cccccc" font-family="system-ui,sans-serif" font-size="15">Title tag (5060 chars)</text>
+    </g>
+    <g transform="translate(40,120)">
+      <rect width="20" height="20" rx="4" fill="url(#accent)"/>
+      <text x="10" y="15" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-size="12" font-weight="700"></text>
+      <text x="32" y="16" fill="#cccccc" font-family="system-ui,sans-serif" font-size="15">Meta description + keywords</text>
+    </g>
+    <g transform="translate(40,160)">
+      <rect width="20" height="20" rx="4" fill="url(#accent)"/>
+      <text x="10" y="15" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-size="12" font-weight="700"></text>
+      <text x="32" y="16" fill="#cccccc" font-family="system-ui,sans-serif" font-size="15">H1 matching product name</text>
+    </g>
+    <g transform="translate(40,200)">
+      <rect width="20" height="20" rx="4" fill="url(#accent)"/>
+      <text x="10" y="15" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-size="12" font-weight="700"></text>
+      <text x="32" y="16" fill="#cccccc" font-family="system-ui,sans-serif" font-size="15">Product schema (JSON-LD)</text>
+    </g>
+    <g transform="translate(40,240)">
+      <rect width="20" height="20" rx="4" fill="url(#accent)"/>
+      <text x="10" y="15" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-size="12" font-weight="700"></text>
+      <text x="32" y="16" fill="#cccccc" font-family="system-ui,sans-serif" font-size="15">Image alt text</text>
+    </g>
+    <g transform="translate(40,280)">
+      <rect width="20" height="20" rx="4" fill="url(#accent)"/>
+      <text x="10" y="15" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-size="12" font-weight="700"></text>
+      <text x="32" y="16" fill="#cccccc" font-family="system-ui,sans-serif" font-size="15">Core Web Vitals &lt; 2.5s LCP</text>
+    </g>
+    <g transform="translate(40,320)">
+      <rect width="20" height="20" rx="4" fill="url(#accent)"/>
+      <text x="10" y="15" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-size="12" font-weight="700"></text>
+      <text x="32" y="16" fill="#cccccc" font-family="system-ui,sans-serif" font-size="15">Internal links from categories</text>
+    </g>
+    <rect x="40" y="380" width="420" height="50" rx="12" fill="url(#accent)" opacity="0.15"/>
+    <text x="250" y="412" text-anchor="middle" fill="#FF6600" font-family="system-ui,sans-serif" font-size="16" font-weight="700">Download full checklist �</text>
+  </g>
+</svg>

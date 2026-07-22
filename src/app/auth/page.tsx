@@ -2,15 +2,42 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Mail, Lock, Eye, EyeOff, ShieldCheck, ArrowLeft, Sparkles } from "lucide-react";
-import { PageShell } from "@/components/app/page-shell";
+import { usePathname, useRouter } from "next/navigation";
+import { Mail, Lock, Eye, EyeOff, ShieldCheck, ArrowLeft, Sparkles, Loader2 } from "lucide-react";
+import { AuthShell } from "@/components/app/page-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/brand/logo";
-import { useNavigateAfterAction } from "@/lib/use-navigate";
 import { useT, type TranslationKey } from "@/lib/i18n";
+import { toast } from "sonner";
+import { getSupabaseBrowser, setAuthRedirectCookie } from "@/lib/supabase-browser";
+import {
+  isGuidedFlowComplete,
+  resumePathForFlow,
+} from "@/lib/workflow/flow-state";
+
+/**
+ * Where to land after a successful sign-in: resume the guided flow
+ * (quiz → connect → first audit → report) if it isn't finished yet,
+ * otherwise honor the requested redirect.
+ */
+async function resolvePostLoginPath(fallback: string): Promise<string> {
+  try {
+    const res = await fetch("/api/onboarding");
+    if (!res.ok) return fallback;
+    const data = await res.json();
+    const onboarding =
+      (data.onboarding as Record<string, string> | null) ?? {};
+    if (!isGuidedFlowComplete(onboarding)) {
+      return resumePathForFlow(onboarding);
+    }
+  } catch {
+    /* fall through to requested redirect */
+  }
+  return fallback;
+}
 
 type StatItem = { v: string; lKey: TranslationKey };
 
@@ -23,38 +50,106 @@ const STATS: StatItem[] = [
 
 export default function AuthPage() {
   const t = useT();
-  const { loginAndNavigate } = useNavigateAfterAction();
-  const [mode, setMode] = React.useState<"login" | "signup">("login");
+  const router = useRouter();
+  const pathname = usePathname();
+  // Read query params from window instead of useSearchParams() so this page
+  // renders immediately on the server instead of suspending into the root
+  // loading fallback ("Loading convaudit…") until client JS hydrates.
+  const [redirectTo] = React.useState(() => {
+    if (typeof window === "undefined") return "/dashboard";
+    const params = new URLSearchParams(window.location.search);
+    return params.get("redirect") || "/dashboard";
+  });
+
+  const [mode, setMode] = React.useState<"login" | "signup">(
+    pathname === "/signup" ? "signup" : "login"
+  );
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [remember, setRemember] = React.useState(true);
   const [loading, setLoading] = React.useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    const err = params.get("error");
+    if (err === "server_error") {
+      toast.error("Sign-in failed: account setup error. Run: npm run db:fix-auth — then paste the SQL in Supabase SQL Editor.");
+    } else if (err) {
+      toast.error(`Sign-in failed (${err}). Please try again.`);
+    }
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    const supabase = getSupabaseBrowser();
+    if (!supabase) {
+      toast.error("Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local");
+      return;
+    }
+
+    setAuthRedirectCookie(redirectTo);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email || !password) { toast.error("Please enter email and password"); return; }
+
     setLoading(true);
-    setTimeout(() => loginAndNavigate(), 800);
+    const supabase = getSupabaseBrowser();
+    if (!supabase) {
+      toast.error("Supabase is not configured");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (mode === "signup") {
+        setAuthRedirectCookie(redirectTo);
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+        });
+        if (error) throw error;
+        toast.success("Check your email to confirm your account");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        const destination = await resolvePostLoginPath(redirectTo);
+        router.push(destination);
+        router.refresh();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Authentication failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isLogin = mode === "login";
 
   return (
-    <PageShell>
-      <div className="min-h-[calc(100vh-4rem)] grid lg:grid-cols-2">
-        {/* ===== LEFT: Hero (desktop only — full height marketing panel) ===== */}
+    <AuthShell>
+      <div className="min-h-screen grid lg:grid-cols-2">
         <div className="relative hidden lg:flex flex-col justify-between p-10 xl:p-14 overflow-hidden">
-          {/* Ambient background */}
           <div className="absolute inset-0 -z-10 bg-grid [mask-image:radial-gradient(ellipse_at_top_left,black_20%,transparent_70%)]" />
           <div className="absolute top-0 left-0 w-96 h-96 bg-primary/15 blur-[120px] rounded-full -z-10" />
           <div className="absolute bottom-0 right-0 w-80 h-80 bg-brand/10 blur-[100px] rounded-full -z-10" />
 
-          {/* Top: logo */}
-          <Link href="/" className="relative">
-            <Logo />
-          </Link>
+          <Link href="/" className="relative"><Logo /></Link>
 
-          {/* Middle: headline */}
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-semibold text-white gradient-brand mb-4">
               <Sparkles className="size-3.5" /> {t("auth.badge")}
@@ -62,12 +157,9 @@ export default function AuthPage() {
             <h1 className="font-display text-4xl xl:text-5xl font-extrabold leading-[1.1] tracking-tight">
               {t("auth.headlineLead")}<br />{t("auth.headlineMid")}<span className="gradient-text">{t("auth.headlineAccent")}</span><br />{t("auth.headlineTail")}
             </h1>
-            <p className="mt-5 text-lg text-muted-foreground max-w-md">
-              {t("auth.subheadline")}
-            </p>
+            <p className="mt-5 text-lg text-muted-foreground max-w-md">{t("auth.subheadline")}</p>
           </div>
 
-          {/* Bottom: stats */}
           <div className="relative grid grid-cols-4 gap-3 max-w-md">
             {STATS.map((s) => (
               <div key={s.lKey} className="rounded-xl bg-card border border-border/50 p-3 text-center">
@@ -78,13 +170,9 @@ export default function AuthPage() {
           </div>
         </div>
 
-        {/* ===== RIGHT: Login form (visible on all screen sizes) ===== */}
         <div className="relative flex items-center justify-center p-4 sm:p-8 lg:p-10 overflow-y-auto">
-          {/* Ambient glow for mobile */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/8 blur-[100px] rounded-full -z-10 lg:hidden" />
-
           <div className="w-full max-w-md py-6 lg:py-0">
-            {/* Mobile-only condensed hero (above the form) */}
             <div className="lg:hidden mb-6">
               <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
                 <ArrowLeft className="size-4" /> {t("auth.backToHome")}
@@ -93,13 +181,9 @@ export default function AuthPage() {
                 <Sparkles className="size-3" /> {t("auth.badge")}
               </div>
               <h1 className="font-display text-2xl sm:text-3xl font-extrabold leading-tight tracking-tight">
-                {t("auth.headlineLead")}{" "}
-                <span className="gradient-text">{t("auth.headlineAccent")}</span>
+                {t("auth.headlineLead")} <span className="gradient-text">{t("auth.headlineAccent")}</span>
               </h1>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                {t("auth.subheadline")}
-              </p>
-              {/* Condensed stats — 4 in a row on mobile */}
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{t("auth.subheadline")}</p>
               <div className="grid grid-cols-4 gap-2 mt-4">
                 {STATS.map((s) => (
                   <div key={s.lKey} className="rounded-lg bg-card border border-border/50 p-2 text-center">
@@ -110,67 +194,39 @@ export default function AuthPage() {
               </div>
             </div>
 
-            {/* Login card */}
             <div className="rounded-2xl bg-card border border-border/60 p-5 sm:p-8 shadow-lg">
-              {/* Header */}
               <div className="mb-6">
                 <h2 className="font-display text-2xl font-bold">{isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}</h2>
                 <p className="text-sm mt-1 text-muted-foreground">{isLogin ? t("auth.signInToContinue") : t("auth.startFreeToday")}</p>
               </div>
 
-              {/* Google button */}
               <button
-                onClick={loginAndNavigate}
+                onClick={handleGoogleLogin}
                 className="w-full h-12 rounded-xl border border-border bg-background hover:bg-accent transition-colors flex items-center justify-center gap-2.5 font-medium text-sm"
               >
                 <GoogleIcon className="size-5" /> {t("auth.continueWithGoogle")}
               </button>
 
-              {/* Divider */}
               <div className="flex items-center gap-3 my-5">
                 <div className="flex-1 h-px bg-border" />
                 <span className="text-xs font-medium text-muted-foreground">{t("auth.or")}</span>
                 <div className="flex-1 h-px bg-border" />
               </div>
 
-              {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
-                {!isLogin && (
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-medium text-muted-foreground">{t("auth.fullName")}</Label>
-                    <Input placeholder={t("auth.enterName")} className="h-12 rounded-xl text-sm" />
-                  </div>
-                )}
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium text-muted-foreground">{t("auth.email")}</Label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-5 text-muted-foreground/60" />
-                    <Input
-                      type="email"
-                      placeholder={t("auth.enterEmail")}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="h-12 rounded-xl pl-11 text-sm"
-                    />
+                    <Input type="email" placeholder={t("auth.enterEmail")} value={email} onChange={(e) => setEmail(e.target.value)} className="h-12 rounded-xl pl-11 text-sm" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium text-muted-foreground">{t("auth.password")}</Label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-5 text-muted-foreground/60" />
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder={t("auth.enterPassword")}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 rounded-xl pl-11 pr-11 text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors"
-                      aria-label={t("auth.showPassword")}
-                    >
+                    <Input type={showPassword ? "text" : "password"} placeholder={t("auth.enterPassword")} value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 rounded-xl pl-11 pr-11 text-sm" />
+                    <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors" aria-label={t("auth.showPassword")}>
                       {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                     </button>
                   </div>
@@ -185,11 +241,11 @@ export default function AuthPage() {
                   </div>
                 )}
                 <Button type="submit" disabled={loading} className="w-full h-12 rounded-xl font-semibold text-sm shadow-glow">
+                  {loading ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
                   {loading ? t("auth.signingIn") : isLogin ? t("auth.signIn") : t("auth.createAccount")}
                 </Button>
               </form>
 
-              {/* Sign up / login link */}
               <p className="text-center text-sm mt-5 text-muted-foreground">
                 {isLogin ? t("auth.noAccount") : t("auth.haveAccount")}{" "}
                 <button onClick={() => setMode(isLogin ? "signup" : "login")} className="font-semibold text-primary hover:underline">
@@ -197,24 +253,19 @@ export default function AuthPage() {
                 </button>
               </p>
 
-              {/* Security note */}
               <div className="flex items-center justify-center gap-1.5 mt-5 pt-5 border-t border-border/60">
                 <ShieldCheck className="size-3.5 text-muted-foreground/70" />
                 <span className="text-xs text-muted-foreground/70">{t("auth.securityNote")}</span>
               </div>
             </div>
 
-            {/* Back to home — desktop */}
-            <button
-              onClick={() => window.history.back()}
-              className="hidden lg:flex items-center justify-center gap-1.5 mx-auto mt-6 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
+            <button onClick={() => window.history.back()} className="hidden lg:flex items-center justify-center gap-1.5 mx-auto mt-6 text-xs text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="size-3.5" /> {t("auth.backToHome")}
             </button>
           </div>
         </div>
       </div>
-    </PageShell>
+    </AuthShell>
   );
 }
 

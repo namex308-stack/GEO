@@ -1,63 +1,4 @@
-import type { AuditData, Plan, Recommendation } from "./types";
-
-export const PLANS: Plan[] = [
-  {
-    id: "free",
-    name: "Starter",
-    price: 0,
-    priceLabel: "$0",
-    period: "forever",
-    tagline: "Test the waters with your first audits.",
-    auditsPerMonth: "3 audits / month",
-    features: [
-      "3 full audits per month",
-      "Conversion, SEO, GEO & Trust scores",
-      "Top 5 AI recommendations",
-      "Single store",
-      "Email support",
-    ],
-    cta: "Start Free",
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: 29,
-    priceLabel: "$29",
-    period: "per month",
-    tagline: "For growing stores that want to win every page.",
-    auditsPerMonth: "Unlimited audits",
-    features: [
-      "Unlimited audits",
-      "Competitor comparison",
-      "AI Generator (titles, descriptions, FAQ, meta, ad copy)",
-      "All 20+ recommendations per audit",
-      "GEO readability for ChatGPT, Perplexity & Google AI",
-      "3 stores",
-      "Priority support",
-    ],
-    highlight: true,
-    cta: "Go Pro",
-  },
-  {
-    id: "business",
-    name: "Business",
-    price: 79,
-    priceLabel: "$79",
-    period: "per month",
-    tagline: "Scale across teams, stores & markets.",
-    auditsPerMonth: "Everything in Pro",
-    features: [
-      "Unlimited stores",
-      "5 team seats included",
-      "White-label PDF reports",
-      "Scheduled re-audits & monitoring",
-      "API access (1,000 calls/mo)",
-      "Dedicated success manager",
-      "Custom GEO market targeting",
-    ],
-    cta: "Start Business",
-  },
-];
+import type { AuditData, Recommendation } from "./types";
 
 export const SAMPLE_AUDIT: AuditData = {
   productUrl: "https://shop.example.com/products/argan-glow-serum",
@@ -251,6 +192,11 @@ ArganBloom's Pure Argan Glow Serum is cold-pressed from Moroccan argan kernels a
   ],
   metaDescription:
     "Cold-pressed Moroccan argan oil serum for dry & sensitive skin. Fragrance-free, non-comedogenic. Visible hydration in 7 nights. Ships in 24h across GCC & Egypt.",
+  altTexts: [
+    "Argan Glow Serum 30ml bottle on white marble with soft golden lighting",
+    "Close-up of cold-pressed argan oil dropper applying serum to skin",
+    "Moroccan argan kernels and serum bottle — natural ingredients flat lay",
+  ],
   adCopy: [
     {
       platform: "Meta / Instagram",

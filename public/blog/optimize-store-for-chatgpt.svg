@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Optimize store for ChatGPT">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f1419"/>
+      <stop offset="100%" stop-color="#1a2332"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10a37f"/>
+      <stop offset="100%" stop-color="#1ed4a4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1000" cy="500" r="200" fill="#10a37f" opacity="0.06"/>
+  <text x="80" y="90" fill="#929292" font-family="system-ui,sans-serif" font-size="14" font-weight="600" letter-spacing="2">CONVAUDIT BLOG � AI</text>
+  <text x="80" y="170" fill="white" font-family="system-ui,sans-serif" font-size="44" font-weight="800">Optimize Your Store</text>
+  <text x="80" y="230" fill="url(#accent)" font-family="system-ui,sans-serif" font-size="44" font-weight="800">for ChatGPT</text>
+  <text x="80" y="300" fill="#929292" font-family="system-ui,sans-serif" font-size="20">Make products readable &amp; recommendable by AI</text>
+  <g transform="translate(700,120)">
+    <rect width="400" height="420" rx="24" fill="#ffffff" opacity="0.05" stroke="#10a37f" stroke-opacity="0.3" stroke-width="2"/>
+    <circle cx="200" cy="80" r="40" fill="url(#accent)" opacity="0.2"/>
+    <text x="200" y="90" text-anchor="middle" fill="#1ed4a4" font-family="system-ui,sans-serif" font-size="24" font-weight="700">AI</text>
+    <rect x="40" y="140" width="320" height="12" rx="6" fill="#ffffff" opacity="0.08"/>
+    <rect x="40" y="140" width="260" height="12" rx="6" fill="url(#accent)" opacity="0.6"/>
+    <rect x="40" y="180" width="280" height="10" rx="5" fill="#ffffff" opacity="0.06"/>
+    <rect x="40" y="210" width="240" height="10" rx="5" fill="#ffffff" opacity="0.06"/>
+    <rect x="40" y="240" width="300" height="10" rx="5" fill="#ffffff" opacity="0.06"/>
+    <text x="200" y="300" text-anchor="middle" fill="#929292" font-family="system-ui,sans-serif" font-size="13">"Best moisturizer for dry skin?"</text>
+    <rect x="60" y="320" width="280" height="60" rx="12" fill="#10a37f" opacity="0.15"/>
+    <text x="200" y="358" text-anchor="middle" fill="#1ed4a4" font-family="system-ui,sans-serif" font-size="14" font-weight="600">Your product recommended </text>
+  </g>
+  <g transform="translate(80,380)">
+    <rect width="130" height="32" rx="16" fill="#10a37f" opacity="0.15"/>
+    <text x="65" y="21" text-anchor="middle" fill="#1ed4a4" font-family="system-ui,sans-serif" font-size="13" font-weight="600">FAQ Schema</text>
+    <rect x="150" width="130" height="32" rx="16" fill="#10a37f" opacity="0.15"/>
+    <text x="215" y="21" text-anchor="middle" fill="#1ed4a4" font-family="system-ui,sans-serif" font-size="13" font-weight="600">Product Specs</text>
+    <rect x="300" width="120" height="32" rx="16" fill="#10a37f" opacity="0.15"/>
+    <text x="360" y="21" text-anchor="middle" fill="#1ed4a4" font-family="system-ui,sans-serif" font-size="13" font-weight="600">JSON-LD</text>
+  </g>
+</svg>

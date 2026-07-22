@@ -1,0 +1,1323 @@
+[
+  {
+    "id": "TC001",
+    "title": "Create a single-page audit and view the completed report",
+    "description": "A user can submit a valid product URL, follow the scan flow, and open the finished audit report.",
+    "category": "Single-page and full-site audit workflow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /audit/new"
+      },
+      {
+        "type": "action",
+        "description": "Submit a valid product URL for a single-page audit"
+      },
+      {
+        "type": "action",
+        "description": "Open the scanning view for the new audit"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the audit to complete"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the audit report is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify audit scores and recommendations are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Create account and reach the dashboard",
+    "description": "A new user can sign up with email and password, complete onboarding, and arrive at the dashboard.",
+    "category": "Authentication and account access",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /signup"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the sign-up form"
+      },
+      {
+        "type": "action",
+        "description": "Complete the onboarding quiz"
+      },
+      {
+        "type": "action",
+        "description": "Finish onboarding"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Log in and load the dashboard",
+    "description": "A returning user can log in with email and password and access the dashboard.",
+    "category": "Authentication and account access",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Review a completed audit report",
+    "description": "A user can open an existing audit report and see the audit scores, pillar breakdown, issues, and recommendations.",
+    "category": "Audit report viewing and PDF export",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing audit report"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the audit scores, pillar breakdown, issues, and recommendations are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Complete onboarding and enter the product",
+    "description": "A new user can finish the onboarding quiz and be redirected into the dashboard experience.",
+    "category": "Onboarding",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /onboarding"
+      },
+      {
+        "type": "action",
+        "description": "Complete the platform step"
+      },
+      {
+        "type": "action",
+        "description": "Complete the store step"
+      },
+      {
+        "type": "action",
+        "description": "Complete the goals step"
+      },
+      {
+        "type": "action",
+        "description": "Finish onboarding"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Export an audit report as PDF",
+    "description": "A user can export a completed audit report as a PDF from the report page.",
+    "category": "Single-page and full-site audit workflow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /audit/new"
+      },
+      {
+        "type": "action",
+        "description": "Submit a valid product URL for a single-page audit"
+      },
+      {
+        "type": "action",
+        "description": "Open the scanning view for the new audit"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the audit to complete"
+      },
+      {
+        "type": "action",
+        "description": "Export the audit report as PDF"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a PDF export confirmation is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Track crawl progress for a store audit",
+    "description": "A user can submit a store URL for a full-site crawl and see crawl progress updates before completion.",
+    "category": "Single-page and full-site audit workflow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /audit/new"
+      },
+      {
+        "type": "action",
+        "description": "Submit a valid store URL for a full-site crawl"
+      },
+      {
+        "type": "action",
+        "description": "Open the crawl progress view for the new job"
+      },
+      {
+        "type": "action",
+        "description": "Wait for progress to update"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify crawl progress is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the crawl completes successfully"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Review recent audits and usage on the dashboard",
+    "description": "This verifies that a returning user can open the dashboard and see recent audits, score trends, and plan usage summary information.",
+    "category": "Dashboard and audit history",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the dashboard link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify recent audits are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify score trend information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Show an authentication error for invalid credentials",
+    "description": "A user who enters invalid login credentials sees an authentication error and remains on the login screen.",
+    "category": "Authentication and account access",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with an invalid email"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with an invalid password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an authentication error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login screen is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Open an audit from the history list",
+    "description": "This verifies that a returning user can view the audit history list and open a past audit to inspect its details.",
+    "category": "Dashboard and audit history",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the history link"
+      },
+      {
+        "type": "action",
+        "description": "Open a past audit from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify full audit details are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected audit content is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "View profile settings and usage",
+    "description": "This verifies that an authenticated user can open settings and see their profile information and usage data.",
+    "category": "Profile, settings, and usage",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings"
+      },
+      {
+        "type": "action",
+        "description": "Verify profile details are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings/usage"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify usage statistics are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify plan limits are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "Open audit history and review a past audit",
+    "description": "A returning user can open the audit history and view an existing audit from the list.",
+    "category": "Single-page and full-site audit workflow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /history"
+      },
+      {
+        "type": "action",
+        "description": "Open an existing audit from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected audit report is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "Update profile details successfully",
+    "description": "This verifies that an authenticated user can change profile details and see the updated information reflected in settings.",
+    "category": "Profile, settings, and usage",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings"
+      },
+      {
+        "type": "action",
+        "description": "Update a profile field with a new valid value"
+      },
+      {
+        "type": "action",
+        "description": "Submit the profile changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a success confirmation is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated profile information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC014",
+    "title": "Review plans on pricing and start checkout",
+    "description": "This verifies that a user can review pricing details and begin the upgrade checkout flow from the pricing page.",
+    "category": "Billing and checkout",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the pricing link"
+      },
+      {
+        "type": "action",
+        "description": "Start an upgrade checkout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the checkout flow is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify plan and usage information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC015",
+    "title": "Generate AI content from audit insights",
+    "description": "A user can choose a content target, generate optimized copy from an existing audit, and view the generated result.",
+    "category": "AI content generation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the AI content generation view for an existing audit"
+      },
+      {
+        "type": "action",
+        "description": "Choose a target page or content type"
+      },
+      {
+        "type": "action",
+        "description": "Submit the generation request"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify generated copy is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC016",
+    "title": "View billing settings and subscription status",
+    "description": "This verifies that a user can open billing settings and see their current subscription and usage limits.",
+    "category": "Billing and checkout",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the billing settings link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify subscription details are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify usage limits are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC017",
+    "title": "Switch the interface to Arabic",
+    "description": "This verifies that changing the language on the dashboard updates the visible UI language to Arabic and persists within the product session.",
+    "category": "Language and locale support",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Change the language to Arabic"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the navigation and visible labels are displayed in Arabic"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the language selection reflects Arabic"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC018",
+    "title": "Compare an audit against a competitor URL",
+    "description": "A user can submit a valid competitor URL and see benchmark differences against their audit results.",
+    "category": "Competitor comparison",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the competitor comparison view for an existing audit"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid competitor URL"
+      },
+      {
+        "type": "action",
+        "description": "Submit the comparison form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify competitor benchmark differences are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC019",
+    "title": "Update profile settings",
+    "description": "This verifies that a user can load profile settings, edit a profile field, and save the changes successfully.",
+    "category": "Billing and checkout",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the settings link"
+      },
+      {
+        "type": "action",
+        "description": "Update a profile field with a new value"
+      },
+      {
+        "type": "action",
+        "description": "Save the profile changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a success confirmation is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated profile information is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC020",
+    "title": "View active monitoring jobs",
+    "description": "This verifies that a user can open the monitoring page and see their active watchlist items and monitoring status.",
+    "category": "Monitoring and alerts",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the watchlist link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify active monitoring jobs are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify monitoring status information is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC021",
+    "title": "Improve store copy with AI",
+    "description": "This verifies that a Pro user can submit source copy and receive improved AI-generated content on the content improver page.",
+    "category": "Content improver tool",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /tools/content-improver"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the source copy field with a short product description"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the improvement goal field with conversion-focused ecommerce copy"
+      },
+      {
+        "type": "action",
+        "description": "Submit the content improvement request"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify improved content is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the original input remains available in the editor"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC022",
+    "title": "Block onboarding when required answers are missing",
+    "description": "A user who tries to continue onboarding without required answers sees validation feedback and stays on onboarding.",
+    "category": "Onboarding",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /onboarding"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to continue without completing required answers"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation errors are visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the onboarding screen is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC023",
+    "title": "See an error when opening a missing audit report",
+    "description": "A user who opens an unavailable or unauthorized audit report sees an error state instead of the report content.",
+    "category": "Audit report viewing and PDF export",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open a missing or unauthorized audit report"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an error state is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC024",
+    "title": "See an empty dashboard when no audits exist",
+    "description": "This verifies that a user with no audit history sees a clear empty-state message on the dashboard instead of audit summaries.",
+    "category": "Dashboard and audit history",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the dashboard link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an empty state message is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify recent audits are not displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC025",
+    "title": "Review monitoring alerts and score changes",
+    "description": "This verifies that a user can open the alerts page and review historical monitoring alerts with score change information.",
+    "category": "Monitoring and alerts",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the monitoring alerts link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify monitoring alerts are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify score change events are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC026",
+    "title": "Reject an invalid audit URL",
+    "description": "A user who submits a malformed or unsupported audit URL sees inline validation and cannot start the audit.",
+    "category": "Single-page and full-site audit workflow",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /audit/new"
+      },
+      {
+        "type": "action",
+        "description": "Submit an invalid URL for an audit"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a URL validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the audit was not started"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC027",
+    "title": "See guidance when content generation is missing audit context",
+    "description": "A user who tries to generate content without the required audit context sees an error prompt and can retry.",
+    "category": "AI content generation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the AI content generation view without audit context"
+      },
+      {
+        "type": "action",
+        "description": "Submit the generation request"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an error prompt is displayed and the generation view remains available"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC028",
+    "title": "Open a monitoring job diff view",
+    "description": "This verifies that a user can open a monitoring job and inspect the score diff details for that job.",
+    "category": "Monitoring and alerts",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the watchlist link"
+      },
+      {
+        "type": "action",
+        "description": "Open a monitoring job diff view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify score diff details are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify score changes are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC029",
+    "title": "Reject an invalid monitoring target",
+    "description": "This verifies that adding an invalid monitoring target shows validation feedback and does not add a new watchlist item.",
+    "category": "Monitoring and alerts",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the watchlist link"
+      },
+      {
+        "type": "action",
+        "description": "Start adding a new monitoring target"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the monitoring target field with an invalid value"
+      },
+      {
+        "type": "action",
+        "description": "Submit the monitoring target form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the watchlist is not updated"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC030",
+    "title": "Keep the competitor comparison form visible for an invalid URL",
+    "description": "A user who submits an invalid competitor URL sees validation feedback and can correct the form without losing their inputs.",
+    "category": "Competitor comparison",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the competitor comparison view for an existing audit"
+      },
+      {
+        "type": "action",
+        "description": "Fill in an invalid competitor URL"
+      },
+      {
+        "type": "action",
+        "description": "Submit the comparison form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is displayed and the comparison form remains visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC031",
+    "title": "Keep profile values on invalid update",
+    "description": "This verifies that invalid profile changes are rejected on settings and the existing values remain unchanged.",
+    "category": "Profile, settings, and usage",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings"
+      },
+      {
+        "type": "action",
+        "description": "Clear or enter an invalid value in a profile field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the profile changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the previous profile values are still displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC032",
+    "title": "Keep content editor state on invalid input",
+    "description": "This verifies that submitting empty or unsupported content on the content improver page shows validation feedback and preserves the editor state.",
+    "category": "Content improver tool",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /tools/content-improver"
+      },
+      {
+        "type": "action",
+        "description": "Submit the content improvement request without entering source copy"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the editor remains ready for input"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC033",
+    "title": "Reject unsupported language selection",
+    "description": "This verifies that choosing an unsupported locale on settings shows a validation error and keeps the current language unchanged.",
+    "category": "Language and locale support",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings"
+      },
+      {
+        "type": "action",
+        "description": "Select an unsupported language value"
+      },
+      {
+        "type": "action",
+        "description": "Submit the language change"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the current language remains unchanged"
+      }
+    ],
+    "priority": "Low"
+  }
+]

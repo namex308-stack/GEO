@@ -1,13 +1,13 @@
-export type View =
-  | "landing"
-  | "login"
-  | "onboarding"
-  | "audit"
-  | "results"
-  | "dashboard"
-  | "pricing";
-
 export type ScorePillar = "conversion" | "seo" | "geo" | "trust";
+
+export interface ScrapedPage {
+  url: string;
+  title: string;
+  description: string;
+  markdown: string;
+  html?: string;
+  images?: string[];
+}
 
 export interface ScoreBreakdown {
   pillar: ScorePillar;
@@ -17,16 +17,65 @@ export interface ScoreBreakdown {
   summary: string;
 }
 
+export interface QuickFixPayload {
+  title: string;
+  description: string;
+  codeSnippet: string;
+  steps: string[];
+}
+
 export interface Recommendation {
   id: string;
   pillar: ScorePillar;
   severity: "critical" | "warning" | "opportunity";
   problem: string;
+  why?: string;
   solution: string;
   impact: "high" | "medium" | "low";
   effort?: "quick" | "medium" | "involved";
   estimatedLift?: string;
   category?: string;
+  /** Quick Fixes enrichment — attached by enrichIssues() based on plan */
+  hasFix?: boolean;
+  upgradeRequired?: boolean;
+  issueCode?: string;
+  quickFix?: QuickFixPayload;
+}
+
+export interface CustomerEyeTest {
+  confusionScore: number; // 0-100
+  mainBlocker: string; // جملة واحدة بالعربي
+  firstImpression: string; // ماذا يفهم العميل في 3 ثوان
+  trustLevel: "low" | "mid" | "high";
+  buyingIntent: "low" | "mid" | "high";
+  topQuestion: string; // السؤال الأكثر إلحاحاً في ذهن العميل
+}
+
+export interface AuditEngineResultsPayload {
+  version: 1;
+  generatedAt: string;
+  aiEnhanced: boolean;
+  engines: {
+    overallScore: number;
+    breakdown: unknown;
+    competitorScore?: number;
+    competitorBreakdown?: unknown;
+  };
+  categories?: unknown;
+  validation?: unknown;
+  explainability?: unknown;
+  contentAnalysis?: unknown;
+  insights?: unknown;
+  geoReadability?: {
+    chatgpt: number;
+    perplexity: number;
+    googleAI: number;
+  };
+  interpretation?: {
+    pillarSummaries?: Record<string, string>;
+    compareGaps?: unknown;
+  };
+  customerEyeTest?: CustomerEyeTest;
 }
 
 export interface AuditData {
@@ -46,6 +95,28 @@ export interface AuditData {
     googleAI: number;
   };
   createdAt: string;
+  /** True when Gemini successfully interpreted results; false when rule-based fallback was used. */
+  aiEnhanced?: boolean;
+  engineResults?: AuditEngineResultsPayload;
+  /** First-impression customer eye test (Arabic). */
+  customerEyeTest?: CustomerEyeTest;
+  crawlSummary?: {
+    totalPages: number;
+    pagesWithIssues: number;
+    averageScore: number;
+    bestPage: { url: string; title: string; score: number } | null;
+    worstPage: { url: string; title: string; score: number } | null;
+    pillarAverages: Record<string, number>;
+  };
+}
+
+export interface OnboardingAnswers {
+  platform: string;
+  storeStage: string;
+  challenge: string;
+  primaryGoal: string;
+  priceRange: string;
+  trafficSource: string;
 }
 
 export interface Plan {

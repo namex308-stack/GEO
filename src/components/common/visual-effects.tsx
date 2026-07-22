@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { useMounted } from "@/hooks/use-mounted";
 
 /* ============================================================
    FloatingOrbs — ambient gradient blobs that drift slowly
@@ -59,34 +60,40 @@ export function FloatingOrbs({
 /* ============================================================
    ParticleField — subtle floating dots
    ============================================================ */
+/** Deterministic 0–1 value so SSR and client hydration match. */
+function seededUnit(seed: number): number {
+  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function generateDots(count: number) {
+  return Array.from({ length: count }).map((_, i) => ({
+    id: i,
+    x: seededUnit(i * 5 + 1) * 100,
+    y: seededUnit(i * 5 + 2) * 100,
+    size: 1 + seededUnit(i * 5 + 3) * 2.5,
+    duration: 8 + seededUnit(i * 5 + 4) * 10,
+    delay: seededUnit(i * 5 + 5) * 5,
+  }));
+}
+
 export function ParticleField({ count = 24, className }: { count?: number; className?: string }) {
-  const [dots, setDots] = React.useState<{ id: number; x: number; y: number; size: number; duration: number; delay: number }[]>([]);
+  const mounted = useMounted();
+  const dots = React.useMemo(() => generateDots(count), [count]);
 
-  React.useEffect(() => {
-    setDots(
-      Array.from({ length: count }).map((_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        size: 1 + Math.random() * 2.5,
-        duration: 8 + Math.random() * 10,
-        delay: Math.random() * 5,
-      }))
-    );
-  }, [count]);
-
-  if (dots.length === 0) return null;
   return (
     <div className={`pointer-events-none absolute inset-0 overflow-hidden -z-10 ${className ?? ""}`} aria-hidden>
-      {dots.map((d) => (
-        <motion.span
-          key={d.id}
-          className="absolute rounded-full bg-primary/40"
-          style={{ left: `${d.x}%`, top: `${d.y}%`, width: d.size, height: d.size }}
-          animate={{ y: [0, -30, 0], opacity: [0.2, 0.7, 0.2] }}
-          transition={{ duration: d.duration, delay: d.delay, repeat: Infinity, ease: "easeInOut" }}
-        />
-      ))}
+      {mounted
+        ? dots.map((d) => (
+            <motion.span
+              key={d.id}
+              className="absolute rounded-full bg-primary/40"
+              style={{ left: `${d.x}%`, top: `${d.y}%`, width: d.size, height: d.size }}
+              animate={{ y: [0, -30, 0], opacity: [0.2, 0.7, 0.2] }}
+              transition={{ duration: d.duration, delay: d.delay, repeat: Infinity, ease: "easeInOut" }}
+            />
+          ))
+        : null}
     </div>
   );
 }

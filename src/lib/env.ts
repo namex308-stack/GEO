@@ -5,8 +5,9 @@ export type ServiceKey =
   | "google"
   | "gemini"
   | "firecrawl"
-  | "paddle"
-  | "redis";
+  | "kashier"
+  | "redis"
+  | "resend";
 
 export interface ServiceStatus {
   key: ServiceKey;
@@ -37,15 +38,20 @@ const CHECKS: Record<ServiceKey, { name: string; vars: string[]; docs: string }>
     vars: ["FIRECRAWL_API_KEY"],
     docs: "https://www.firecrawl.dev/",
   },
-  paddle: {
-    name: "Paddle",
-    vars: ["PADDLE_VENDOR_ID", "PADDLE_VENDOR_AUTH_CODE", "PADDLE_PUBLIC_KEY", "NEXT_PUBLIC_PADDLE_CLIENT_TOKEN"],
-    docs: "https://vendors.paddle.com/developer-tools/authentication",
+  kashier: {
+    name: "Kashier",
+    vars: ["KASHIER_MERCHANT_ID", "KASHIER_API_KEY", "KASHIER_SECRET_KEY"],
+    docs: "https://merchant.kashier.io/",
   },
   redis: {
     name: "Upstash Redis",
     vars: ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"],
     docs: "https://console.upstash.com/",
+  },
+  resend: {
+    name: "Resend Email",
+    vars: ["RESEND_API_KEY"],
+    docs: "https://resend.com/",
   },
 };
 

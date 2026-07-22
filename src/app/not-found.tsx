@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Home, Search, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Page Not Found",
+  robots: { index: false, follow: true },
+};
 
 export default function NotFound() {
   return (
@@ -14,8 +20,8 @@ export default function NotFound() {
         <div className="font-display text-7xl font-extrabold gradient-text mb-2">404</div>
         <h1 className="font-display text-2xl font-bold">Page not found</h1>
         <p className="mt-2 text-sm text-muted-foreground text-pretty">
-          The page you're looking for doesn't exist or has been moved.
-          Let's get you back on track.
+          The page you&apos;re looking for doesn&apos;t exist or has been moved.
+          Let&apos;s get you back on track.
         </p>
 
         <div className="mt-6 flex flex-col sm:flex-row gap-2 justify-center">
@@ -25,8 +31,13 @@ export default function NotFound() {
             </Link>
           </Button>
           <Button variant="outline" asChild className="rounded-full">
-            <Link href="/#pricing">
+            <Link href="/pricing">
               View pricing <ArrowRight className="size-4 ml-1.5" />
+            </Link>
+          </Button>
+          <Button variant="ghost" asChild className="rounded-full">
+            <Link href="/docs">
+              <Search className="size-4 mr-1.5" /> Docs
             </Link>
           </Button>
         </div>
