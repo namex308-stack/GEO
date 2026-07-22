@@ -13,7 +13,7 @@ export default function Loading() {
           <span className="size-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
           <span className="size-2 rounded-full bg-primary animate-bounce" />
         </div>
-        <p className="text-sm text-muted-foreground">Loading StorePulse…</p>
+        <p className="text-sm text-muted-foreground">Loading convaudit…</p>
       </div>
     </div>
   );

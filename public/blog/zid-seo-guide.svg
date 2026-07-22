@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Zid SEO guide">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1028"/>
+      <stop offset="100%" stop-color="#2a1a3d"/>
+    </linearGradient>
+    <linearGradient id="zid" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="80" y="90" fill="#929292" font-family="system-ui,sans-serif" font-size="14" font-weight="600" letter-spacing="2">CONVAUDIT BLOG � PLATFORMS</text>
+  <text x="80" y="170" fill="white" font-family="system-ui,sans-serif" font-size="48" font-weight="800">Zid SEO Guide</text>
+  <text x="80" y="230" fill="url(#zid)" font-family="system-ui,sans-serif" font-size="28" font-weight="700">Saudi &amp; GCC Organic Growth</text>
+  <text x="80" y="290" fill="#929292" font-family="system-ui,sans-serif" font-size="20">Arabic SEO � Size guides � GEO catalog</text>
+  <g transform="translate(680,100)">
+    <rect width="440" height="430" rx="24" fill="#ffffff" opacity="0.04" stroke="#7c3aed" stroke-opacity="0.35" stroke-width="2"/>
+    <text x="220" y="90" text-anchor="middle" fill="#a78bfa" font-family="system-ui,sans-serif" font-size="56" font-weight="800">Z</text>
+    <text x="220" y="130" text-anchor="middle" fill="#929292" font-family="system-ui,sans-serif" font-size="16">Zid Platform</text>
+    <rect x="40" y="170" width="360" height="44" rx="10" fill="#7c3aed" opacity="0.15"/>
+    <text x="220" y="198" text-anchor="middle" fill="#a78bfa" font-family="system-ui,sans-serif" font-size="13" font-weight="600">Unique Arabic meta descriptions</text>
+    <rect x="40" y="230" width="360" height="44" rx="10" fill="#7c3aed" opacity="0.15"/>
+    <text x="220" y="258" text-anchor="middle" fill="#a78bfa" font-family="system-ui,sans-serif" font-size="13" font-weight="600">Size guides &amp; comparison tables</text>
+    <rect x="40" y="290" width="360" height="44" rx="10" fill="#7c3aed" opacity="0.15"/>
+    <text x="220" y="318" text-anchor="middle" fill="#a78bfa" font-family="system-ui,sans-serif" font-size="13" font-weight="600">Custom domain + SSL + sitemap</text>
+    <rect x="40" y="350" width="360" height="44" rx="10" fill="#7c3aed" opacity="0.15"/>
+    <text x="220" y="378" text-anchor="middle" fill="#a78bfa" font-family="system-ui,sans-serif" font-size="13" font-weight="600">Track GEO scores over time</text>
+  </g>
+</svg>

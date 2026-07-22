@@ -1,10 +1,26 @@
 import type { NextConfig } from "next";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  // Ensure Turbopack loads .env.local from this app (not a parent lockfile directory)
+  turbopack: {
+    root: projectRoot,
+  },
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_KASHIER_MERCHANT_ID: process.env.NEXT_PUBLIC_KASHIER_MERCHANT_ID,
+    NEXT_PUBLIC_KASHIER_MODE: process.env.KASHIER_MODE ?? "test",
+  },
   output: "standalone",
   reactStrictMode: false,
+  poweredByHeader: false,
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   // Allow the preview panel origin to access the dev server
   allowedDevOrigins: [
@@ -24,9 +40,19 @@ const nextConfig: NextConfig = {
   },
   // Compress responses
   compress: true,
+  async redirects() {
+    return [
+      { source: "/onboarding/platform", destination: "/onboarding", permanent: true },
+      { source: "/onboarding/store", destination: "/onboarding", permanent: true },
+      { source: "/onboarding/goals", destination: "/onboarding", permanent: true },
+      { source: "/onboarding/done", destination: "/dashboard", permanent: true },
+      { source: "/refund-policy", destination: "/legal/refund-policy", permanent: true },
+      { source: "/quiz", destination: "/onboarding", permanent: false },
+    ];
+  },
   // Security & performance headers
   async headers() {
-    return [
+    const securityHeaders = [
       {
         source: "/(.*)",
         headers: [
@@ -55,14 +81,34 @@ const nextConfig: NextConfig = {
           { key: "X-DNS-Prefetch-Control", value: "on" },
         ],
       },
-      {
-        // Static assets — long cache
-        source: "/_next/static/(.*)",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
-        ],
-      },
     ];
+
+    // Long-lived cache for hashed static assets — production only.
+    // Applying this in dev breaks Turbopack's React Client Manifest (stale chunks).
+    if (process.env.NODE_ENV === "production") {
+      securityHeaders.push(
+        {
+          source: "/_next/static/(.*)",
+          headers: [
+            { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+          ],
+        },
+        {
+          source: "/blog/(.*)",
+          headers: [
+            { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
+          ],
+        },
+        {
+          source: "/icon.svg",
+          headers: [
+            { key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" },
+          ],
+        },
+      );
+    }
+
+    return securityHeaders;
   },
 };
 

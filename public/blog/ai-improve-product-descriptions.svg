@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="AI product descriptions">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d1f21"/>
+      <stop offset="100%" stop-color="#2a2040"/>
+    </linearGradient>
+    <linearGradient id="ai" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF6600"/>
+      <stop offset="100%" stop-color="#ff983f"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="80" y="90" fill="#929292" font-family="system-ui,sans-serif" font-size="14" font-weight="600" letter-spacing="2">CONVAUDIT BLOG � AI</text>
+  <text x="80" y="170" fill="white" font-family="system-ui,sans-serif" font-size="44" font-weight="800">AI Product</text>
+  <text x="80" y="230" fill="url(#ai)" font-family="system-ui,sans-serif" font-size="44" font-weight="800">Descriptions</text>
+  <text x="80" y="290" fill="#929292" font-family="system-ui,sans-serif" font-size="20">Write copy that ranks on Google &amp; gets cited by AI</text>
+  <g transform="translate(620,80)">
+    <rect width="500" height="470" rx="24" fill="#ffffff" opacity="0.04" stroke="#FF6600" stroke-opacity="0.3" stroke-width="2"/>
+    <rect x="40" y="40" width="420" height="120" rx="16" fill="#FF6600" opacity="0.08"/>
+    <text x="60" y="80" fill="#929292" font-family="system-ui,sans-serif" font-size="13">Prompt:</text>
+    <text x="60" y="110" fill="#cccccc" font-family="system-ui,sans-serif" font-size="14">"Write SEO + GEO product description</text>
+    <text x="60" y="135" fill="#cccccc" font-family="system-ui,sans-serif" font-size="14">with FAQ, specs, and meta tags..."</text>
+    <rect x="40" y="190" width="420" height="200" rx="16" fill="#ffffff" opacity="0.03"/>
+    <text x="60" y="230" fill="#FF6600" font-family="system-ui,sans-serif" font-size="13" font-weight="600">AI Output:</text>
+    <text x="60" y="260" fill="#cccccc" font-family="system-ui,sans-serif" font-size="14"> Positioning sentence</text>
+    <text x="60" y="290" fill="#cccccc" font-family="system-ui,sans-serif" font-size="14"> Spec bullets + FAQ pair</text>
+    <text x="60" y="320" fill="#cccccc" font-family="system-ui,sans-serif" font-size="14"> Meta description (155 chars)</text>
+    <text x="60" y="350" fill="#cccccc" font-family="system-ui,sans-serif" font-size="14"> Human review required</text>
+    <rect x="40" y="410" width="200" height="36" rx="18" fill="url(#ai)" opacity="0.2"/>
+    <text x="140" y="434" text-anchor="middle" fill="#FF6600" font-family="system-ui,sans-serif" font-size="13" font-weight="600">SEO + GEO</text>
+    <rect x="260" y="410" width="200" height="36" rx="18" fill="url(#ai)" opacity="0.2"/>
+    <text x="360" y="434" text-anchor="middle" fill="#FF6600" font-family="system-ui,sans-serif" font-size="13" font-weight="600">Scale Catalog</text>
+  </g>
+</svg>

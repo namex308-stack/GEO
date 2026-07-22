@@ -22,7 +22,7 @@ const ICONS: Record<string, typeof Database> = {
   google: ShieldCheck,
   gemini: Bot,
   firecrawl: Globe2,
-  paddle: CreditCard,
+  kashier: CreditCard,
   redis: Gauge,
 };
 

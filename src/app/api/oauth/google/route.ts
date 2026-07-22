@@ -1,27 +1,64 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
+const AUTH_REDIRECT_COOKIE = "auth_redirect";
 
 /**
- * Initiate Google OAuth via Supabase.
- * Redirects the browser to Supabase's hosted Google OAuth flow.
- * In demo mode (Supabase not configured), returns a helpful message.
+ * Start Supabase Google OAuth and redirect the browser to Google.
+ * Callback lands on /api/oauth/callback (session exchange → app).
  */
-export async function GET() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const redirectTo = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+export async function GET(req: NextRequest) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl) {
-    return NextResponse.json(
-      {
-        error: "Supabase is not configured.",
-        hint: "Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local",
+    if (!url || !anonKey) {
+      return NextResponse.redirect(
+        `${appUrl}/login?error=supabase_not_configured`
+      );
+    }
+
+    const redirectParam = req.nextUrl.searchParams.get("redirect") || "/dashboard";
+    const safeRedirect = redirectParam.startsWith("/") ? redirectParam : "/dashboard";
+
+    const cookieStore = await cookies();
+    const supabase = createServerClient(url, anonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          for (const { name, value, options } of cookiesToSet) {
+            cookieStore.set(name, value, options);
+          }
+        },
       },
-      { status: 503 }
-    );
+    });
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${appUrl}/api/oauth/callback`,
+        skipBrowserRedirect: true,
+      },
+    });
+
+    if (error || !data.url) {
+      console.error("[api/oauth/google] OAuth start failed:", error?.message);
+      return NextResponse.redirect(`${appUrl}/login?error=oauth_start_failed`);
+    }
+
+    const response = NextResponse.redirect(data.url);
+    response.cookies.set(AUTH_REDIRECT_COOKIE, encodeURIComponent(safeRedirect), {
+      path: "/",
+      maxAge: 600,
+      sameSite: "lax",
+    });
+    return response;
+  } catch (err) {
+    console.error("[api/oauth/google] GET error:", err);
+    return NextResponse.redirect(`${appUrl}/login?error=oauth_start_failed`);
   }
-
-  const callbackUrl = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(
-    `${redirectTo}/api/oauth/callback`
-  )}`;
-
-  return NextResponse.redirect(callbackUrl);
 }

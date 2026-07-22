@@ -102,6 +102,15 @@ export function Hero() {
           </Button>
         </motion.div>
 
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.22 }}
+          className="mt-4 text-center text-sm text-muted-foreground"
+        >
+          {t("hero.trustBadge")}
+        </motion.p>
+
         {/* Trust line */}
         <motion.div
           initial={{ opacity: 0 }}

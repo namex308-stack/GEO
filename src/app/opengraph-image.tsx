@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "StorePulse AI — AI-Powered E-commerce Audit & Optimization";
+export const alt = "convaudit — AI-Powered E-commerce Audit & Optimization";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -39,7 +39,7 @@ export default async function OgImage() {
             S
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: 30, fontWeight: 800, color: "white", lineHeight: 1 }}>StorePulse</div>
+            <div style={{ fontSize: 30, fontWeight: 800, color: "white", lineHeight: 1 }}>convaudit</div>
             <div style={{ fontSize: 13, fontWeight: 600, color: "#FF6600", letterSpacing: 2, marginTop: 4, display: "flex" }}>
               AI INTELLIGENCE
             </div>

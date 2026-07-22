@@ -59,7 +59,7 @@ export function Testimonials() {
   const rest = TESTIMONIALS.slice(1);
 
   return (
-    <section className="py-20 sm:py-28 bg-muted/20 border-y border-border/40">
+    <section id="testimonials" className="py-20 sm:py-28 bg-muted/20 border-y border-border/40">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto">
           <div className="flex items-center justify-center gap-1 mb-3">

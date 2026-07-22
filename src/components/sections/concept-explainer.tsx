@@ -58,7 +58,7 @@ export function ConceptExplainer() {
   const current = PHASES[phase];
 
   return (
-    <section className="py-20 sm:py-28 relative overflow-hidden">
+    <section id="concept" className="py-20 sm:py-28 relative overflow-hidden">
       <FloatingOrbs count={2} />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-12">
@@ -128,7 +128,7 @@ export function ConceptExplainer() {
                   <span className="size-2.5 rounded-full bg-amber-400" />
                   <span className="size-2.5 rounded-full bg-emerald-400" />
                 </div>
-                <span className="text-xs font-mono text-muted-foreground">storepulse.ai/audit</span>
+                <span className="text-xs font-mono text-muted-foreground">convaudit.ai/audit</span>
                 <span className="text-xs text-muted-foreground">{phase + 1} / {PHASES.length}</span>
               </div>
 

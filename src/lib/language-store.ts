@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { create } from "zustand";
+import { useMounted } from "@/hooks/use-mounted";
 import { persist } from "zustand/middleware";
 
 export type Language = "en" | "ar";
@@ -19,7 +19,7 @@ export const useLanguageStore = create<LanguageState>()(
       setLanguage: (lang) => set({ language: lang }),
       toggleLanguage: () => set({ language: get().language === "en" ? "ar" : "en" }),
     }),
-    { name: "storepulse-language" }
+    { name: "convaudit-language" }
   )
 );
 
@@ -32,11 +32,7 @@ export const useLanguageStore = create<LanguageState>()(
  */
 export function useLanguage() {
   const language = useLanguageStore((s) => s.language);
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
 
   const activeLanguage: Language = mounted ? language : "en";
   return {

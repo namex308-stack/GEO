@@ -47,10 +47,10 @@ export function Logo({ className, showWordmark = true, size = 36 }: LogoProps) {
       {showWordmark && (
         <div className="flex flex-col leading-none">
           <span className="font-display font-extrabold text-[17px] tracking-tight text-foreground">
-            StorePulse
+            convaudit
           </span>
           <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">
-            AI Intelligence
+            AI Audit Platform
           </span>
         </div>
       )}

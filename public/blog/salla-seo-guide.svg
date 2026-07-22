@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="Salla SEO guide">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="100%" stop-color="#152238"/>
+    </linearGradient>
+    <linearGradient id="salla" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#004FFF"/>
+      <stop offset="100%" stop-color="#3d7aff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="80" y="90" fill="#929292" font-family="system-ui,sans-serif" font-size="14" font-weight="600" letter-spacing="2">CONVAUDIT BLOG � PLATFORMS</text>
+  <text x="80" y="170" fill="white" font-family="system-ui,sans-serif" font-size="48" font-weight="800">Salla SEO Guide</text>
+  <text x="80" y="230" fill="url(#salla)" font-family="system-ui,sans-serif" font-size="28" font-weight="700">Saudi &amp; Gulf E-commerce</text>
+  <text x="80" y="290" fill="#929292" font-family="system-ui,sans-serif" font-size="20">Arabic keywords � Trust pages � AI visibility</text>
+  <g transform="translate(680,100)">
+    <rect width="440" height="430" rx="24" fill="#ffffff" opacity="0.04" stroke="#004FFF" stroke-opacity="0.35" stroke-width="2"/>
+    <text x="220" y="80" text-anchor="middle" fill="#3d7aff" font-family="system-ui,sans-serif" font-size="48" font-weight="800" direction="rtl">3D)</text>
+    <text x="220" y="130" text-anchor="middle" fill="#929292" font-family="system-ui,sans-serif" font-size="16">Salla Platform</text>
+    <rect x="40" y="170" width="360" height="50" rx="12" fill="#004FFF" opacity="0.15"/>
+    <text x="220" y="202" text-anchor="middle" fill="#3d7aff" font-family="system-ui,sans-serif" font-size="14" font-weight="600">Arabic Keyword Strategy</text>
+    <rect x="40" y="240" width="360" height="50" rx="12" fill="#004FFF" opacity="0.15"/>
+    <text x="220" y="272" text-anchor="middle" fill="#3d7aff" font-family="system-ui,sans-serif" font-size="14" font-weight="600">Tamara / Tabby Trust Badges</text>
+    <rect x="40" y="310" width="360" height="50" rx="12" fill="#004FFF" opacity="0.15"/>
+    <text x="220" y="342" text-anchor="middle" fill="#3d7aff" font-family="system-ui,sans-serif" font-size="14" font-weight="600">Google Search Console Setup</text>
+    <rect x="40" y="380" width="360" height="50" rx="12" fill="#004FFF" opacity="0.15"/>
+    <text x="220" y="412" text-anchor="middle" fill="#3d7aff" font-family="system-ui,sans-serif" font-size="14" font-weight="600">GEO Audits for Top SKUs</text>
+  </g>
+</svg>

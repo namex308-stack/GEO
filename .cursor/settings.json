@@ -2,6 +2,9 @@
   "plugins": {
     "firecrawl": {
       "enabled": true
+    },
+    "supabase": {
+      "enabled": true
     }
   }
 }

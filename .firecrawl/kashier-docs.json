@@ -1,0 +1,3029 @@
+kashier | Skills Marketplace
+  URL: https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier
+  # Kashier Payment Processor Integration
+## Core API Reference [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier#core-api-reference)
+### Hosted Payment Page (Redirect) [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier#hosted-payment-page-redirect)
+```
+{
+  "merchantId": "MERCHANT123",
+  "orderId": "ORD-2025-12345",
+  "amount": 50000,
+  "currency": "EGP",
+  "orderHash": "generated_hash_above",
+  "customerEmail": "customer@example.com",
+  "customerPhone": "+201001234567",
+  "customerName": "Ahmed Hassan",
+  "callbackUrl": "https://yoursite.com/payment/callback"
+}
+```
+
+## Webhooks [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier#webhooks)
+```
+const crypto = require('crypto');
+
+function verifyWebhookSignature(payload, signature, secretKey) {
+  const hash = crypto
+    .createHmac('sha256', secretKey)
+    .update(JSON.stringify(payload))
+    .digest('hex');
+  return hash === signature;
+}
+
+// In your webhook handler
+app.post('/webhook/kashier', (req, res) => {
+  const signature = req.headers['x-kashier-signature'];
+
+  if (!verifyWebhookSignature(req.body, signature, process.env.KASHIER_SECRET_KEY)) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  // Process webhook
+  console.log('Valid webhook:', req.body.event);
+  res.status(200).json({ received: true });
+});
+```
+
+## Common Integration Patterns [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier#common-integration-patterns)
+### Hosted Page Payment Flow [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier#hosted-page-payment-flow)
+```
+const hash = generateOrderHash(merchantId, orderId, amount, apiKey);
+const paymentUrl = `https://iframe.kashier.io/pay?merchantId=${merchantId}&orderId=${orderId}&amount=${amount}&hash=${hash}&redirectUrl=...`;
+```
+
+  --- Content ---
+  View this site in your language
+  
+  English
+  
+  Switch
+  
+  `CtrlK`
+  
+  ![avatar](https://github.com/AfricanDigitalAssetFramework.png)
+  
+  # kashier
+  
+  1
+  
+  [Github](https://github.com/AfricanDigitalAssetFramework/africa-stack-skills/tree/main/north-africa/kashier)
+  
+  1.0.1
+  
+  [AfricanDigitalAssetFramework](https://github.com/AfricanDigitalAssetFramework)
+  
+  7月 03, 2026
+  
+  [金融服务](https://lobehub.com/skills?category=finance)
+  
+  4
+  
+  概览
+  
+  安装方式
+  
+  SKILL.md
+  
+  资源
+  
+  相关 Skills
+  
+  版本历史
+  
+  [需要帮助？](https://discord.gg/AYFPHvv2jT) [查看源代码](https://github.com/AfricanDigitalAssetFramework/africa-stack-skills/tree/main/north-africa/kashier) [报告问题](https://github.com/AfricanDigitalAssetFramework/africa-stack-skills/issues)
+  
+  ## 摘要
+  
+  Kashier integration enables secure, local payment processing for Egyptian businesses by exposing REST APIs to create payment orders, present hosted checkout pages or iFrame flows, verify transactions, manage refunds, and receive asynchronous webhook notifications. Use it to accept EGP and multi-currency payments (USD, GBP, EUR) from credit/debit cards, mobile wallets, and bank installment plans in e-commerce, SaaS, marketplaces, and billing systems. Key features include API key and HMAC-SHA256 signature-based authentication, sandbox and production base URLs, environment-variable credential storage, and endpoints for reconciliation and refund handling. Core advantages are simplified PCI scope via hosted/iframe options, real-time webhook-driven status updates, robust security with request signing, and separate test/live keys for safe development and smooth go-live migration.
+  
+  SKILL.md
+  
+  # Kashier Payment Processor Integration
+  
+  Kashier is Egypt's leading digital payment platform, enabling businesses to accept online payments in EGP (Egyptian Pound) and multiple currencies. It provides REST API endpoints for creating payment orders, handling redirects/iFrames, verifying transactions, and managing refunds with webhook support.
+  
+  ## When to Use This Skill [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#when-to-use-this-skill)
+  
+  Use Kashier integration when you need to:
+  
+  - Process payments from Egyptian customers or businesses
+  - Accept EGP and multi-currency payments (USD, GBP, EUR)
+  - Build online checkout flows with hosted pages or iFrame integration
+  - Handle refunds and payment reconciliation
+  - Integrate payment processing into Egyptian e-commerce, SaaS, or marketplace platforms
+  - Set up webhook listeners for payment notifications
+  
+  Kashier supports multiple payment methods: credit cards, debit cards, mobile wallets, and bank installments.
+  
+  ## Authentication [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#authentication)
+  
+  Kashier uses API key-based authentication with credentials obtained from the merchant dashboard:
+  
+  **Credentials Required:**
+  
+  - **Merchant ID (MID)**: Unique identifier for your merchant account
+  - **Payment API Key**: Used for order hashing and signature generation (HMAC-SHA256)
+  - **Secret Key**: Used for API request authentication and webhook verification
+  
+  **Authentication Header:**
+  
+  ![*.txt](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/document.svg)
+  
+  Plaintext
+  
+  ```
+  Authorization: {SECRET_KEY}
+  Content-Type: application/json
+  ```
+  
+  Store credentials in environment variables:
+  
+  ![*.txt](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/document.svg)
+  
+  Plaintext
+  
+  ```
+  KASHIER_MERCHANT_ID=your_merchant_id
+  KASHIER_API_KEY=your_payment_api_key
+  KASHIER_SECRET_KEY=your_secret_key
+  ```
+  
+  **Base URLs:**
+  
+  - Test (Sandbox): `https://test-api.kashier.io`, `https://test-iframe.kashier.io`
+  - Production (Live): `https://api.kashier.io`, `https://iframe.kashier.io`
+  
+  **Getting Your Keys:**
+  
+  1. Log in to [Kashier Dashboard](https://portal.kashier.io/)
+  2. Navigate to "Integrate now" → "Payment Api Keys"
+  3. Generate test and live keys separately
+  4. Toggle "Live Data" switch to switch between test and production environments
+  
+  ## Core API Reference [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#core-api-reference)
+  
+  ### Payment Initialization (Order Hash Generation) [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#payment-initialization-order-hash-generation)
+  
+  Before initiating any payment, generate an order hash using HMAC-SHA256. This validates the order data and prevents tampering.
+  
+  **Order Hash Generation:**
+  
+  **Request Body (backend):**
+  
+  ![*.json](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/json.svg)
+  
+  JSON
+  
+  ```
+  {
+    "amount": 50000,
+    "currency": "EGP",
+    "orderId": "ORD-2025-12345",
+    "merchantId": "MERCHANT123",
+    "orderHash": "generated_hash_above",
+    "customerEmail": "customer@example.com",
+    "customerPhone": "+201001234567",
+    "customerName": "Ahmed Hassan",
+    "items": [\
+      {\
+        "name": "Product Name",\
+        "description": "Product Description",\
+        "quantity": 1,\
+        "unitPrice": 50000\
+      }\
+    ]
+  }
+  ```
+  
+  ### Payment UI (iFrame) Integration [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#payment-ui-i-frame-integration)
+  
+  Embed a checkout popup within your page for a seamless payment experience.
+  
+  **iFrame Script Implementation (client-side):**
+  
+  ![*.html](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/html.svg)
+  
+  HTML
+  
+  ```
+  <script src="https://test-iframe.kashier.io/kashier.js"></script>
+  
+  <button
+    class="kashier-button"
+    data-merchant-id="MERCHANT123"
+    data-order-id="ORD-2025-12345"
+    data-amount="50000"
+    data-currency="EGP"
+    data-description="Order description"
+    data-order-hash="generated_hash_above"
+    data-merchant-redirect="https://yoursite.com/payment/success"
+    data-display="hidden">
+    Pay Now
+  </button>
+  ```
+  
+  **iFrame Parameters:**
+  
+  - `data-merchant-id`: Your merchant ID
+  - `data-order-id`: Unique order identifier
+  - `data-amount`: Amount in piasters (see conversion below)
+  - `data-currency`: EGP, USD, GBP, or EUR
+  - `data-description`: Order description for display
+  - `data-order-hash`: HMAC-SHA256 hash from above
+  - `data-merchant-redirect`: Success callback URL
+  - `data-display`: hidden \| visible (button display mode)
+  
+  **Response Flow:**
+  Customer clicks the button → iFrame popup appears → Customer completes payment → Browser redirects to `data-merchant-redirect` with parameters:
+  
+  - `id`: Payment transaction ID
+  - `status`: Payment status
+  
+  ### Hosted Payment Page (Redirect) [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#hosted-payment-page-redirect)
+  
+  Generate a redirect URL to Kashier's hosted checkout page for a full-page payment experience.
+  
+  **Backend Endpoint:**
+  
+  ```
+  POST /api/initPayment
+  ```
+  
+  **Request (backend):**
+  
+  ![*.json](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/json.svg)
+  
+  JSON
+  
+  ```
+  {
+    "merchantId": "MERCHANT123",
+    "orderId": "ORD-2025-12345",
+    "amount": 50000,
+    "currency": "EGP",
+    "orderHash": "generated_hash_above",
+    "customerEmail": "customer@example.com",
+    "customerPhone": "+201001234567",
+    "customerName": "Ahmed Hassan",
+    "callbackUrl": "https://yoursite.com/payment/callback"
+  }
+  ```
+  
+  **Response:**
+  
+  ![*.json](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/json.svg)
+  
+  JSON
+  
+  ```
+  {
+    "success": true,
+    "paymentUrl": "https://iframe.kashier.io/pay?id=UNIQUE_PAYMENT_ID&redirectUrl=...",
+    "paymentId": "pay_xxxxx"
+  }
+  ```
+  
+  **Client-side (redirect):**
+  
+  ![*.js](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/javascript.svg)
+  
+  JavaScript
+  
+  ```
+  // Redirect customer to payment URL
+  window.location.href = response.paymentUrl;
+  ```
+  
+  ### Payment Status Verification [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#payment-status-verification)
+  
+  Query payment status after customer returns from checkout.
+  
+  **GET Request:**
+  
+  ![*.txt](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/document.svg)
+  
+  Plaintext
+  
+  ```
+  GET /api/payment?merchantId=MERCHANT123&orderId=ORD-2025-12345
+  Authorization: {SECRET_KEY}
+  ```
+  
+  **Response:**
+  
+  ![*.json](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/json.svg)
+  
+  JSON
+  
+  ```
+  {
+    "success": true,
+    "id": "pay_xxxxx",
+    "orderId": "ORD-2025-12345",
+    "amount": 50000,
+    "currency": "EGP",
+    "status": "completed",
+    "paid": true,
+    "paidAmount": 50000,
+    "paymentMethod": "card",
+    "cardType": "visa",
+    "cardLast4": "4081",
+    "transactionId": "txn_ref_xxxxx",
+    "createdAt": "2025-02-24T10:00:00Z",
+    "completedAt": "2025-02-24T10:05:00Z"
+  }
+  ```
+  
+  **Status Values:**
+  
+  - `pending`: Payment awaiting processing
+  - `completed`: Payment successful
+  - `failed`: Payment declined
+  - `refunded`: Payment refunded
+  
+  ### Refund Payment [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#refund-payment)
+  
+  Issue full or partial refunds for completed payments.
+  
+  **POST Request:**
+  
+  ![*.txt](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/document.svg)
+  
+  Plaintext
+  
+  ```
+  POST /api/refund
+  Authorization: {SECRET_KEY}
+  Content-Type: application/json
+  ```
+  
+  **Request:**
+  
+  ![*.json](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/json.svg)
+  
+  JSON
+  
+  ```
+  {
+    "merchantId": "MERCHANT123",
+    "orderId": "ORD-2025-12345",
+    "paymentId": "pay_xxxxx",
+    "amount": 50000,
+    "reason": "Customer requested refund",
+    "refundId": "REF-2025-001"
+  }
+  ```
+  
+  Omit `amount` field for full refund. Include specific amount (in piasters) for partial refund.
+  
+  **Response:**
+  
+  ![*.json](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/json.svg)
+  
+  JSON
+  
+  ```
+  {
+    "success": true,
+    "refundId": "ref_xxxxx",
+    "paymentId": "pay_xxxxx",
+    "amount": 50000,
+    "status": "completed",
+    "createdAt": "2025-02-24T10:15:00Z"
+  }
+  ```
+  
+  ### List Transactions [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#list-transactions)
+  
+  Retrieve paginated list of transactions with filtering.
+  
+  **GET Request:**
+  
+  ![*.txt](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/document.svg)
+  
+  Plaintext
+  
+  ```
+  GET /api/transactions?merchantId=MERCHANT123&status=completed&from=2025-02-01&to=2025-02-28&page=1&pageSize=50
+  Authorization: {SECRET_KEY}
+  ```
+  
+  **Query Parameters:**
+  
+  - `status`: pending, completed, failed, refunded
+  - `from`, `to`: ISO date format (YYYY-MM-DD)
+  - `page`: Page number (default: 1)
+  - `pageSize`: Records per page (default: 50, max: 100)
+  
+  **Response:**
+  
+  ![*.json](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/json.svg)
+  
+  JSON
+  
+  ```
+  {
+    "success": true,
+    "data": [\
+      {\
+        "id": "pay_xxxxx",\
+        "orderId": "ORD-2025-12345",\
+        "amount": 50000,\
+        "currency": "EGP",\
+        "status": "completed",\
+        "paymentMethod": "card",\
+        "createdAt": "2025-02-24T10:00:00Z"\
+      }\
+    ],
+    "pagination": {
+      "page": 1,
+      "pageSize": 50,
+      "total": 150
+    }
+  }
+  ```
+  
+  ## Webhooks [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#webhooks)
+  
+  Kashier sends real-time notifications for payment events to your configured webhook URL.
+  
+  **Webhook Configuration:**
+  
+  1. Log into Kashier Dashboard
+  2. Go to Settings → Webhooks
+  3. Add your webhook endpoint URL
+  4. Kashier will POST events to this URL
+  
+  **Webhook Events:**
+  
+  - `transaction.completed`: Payment successful
+  - `transaction.failed`: Payment failed
+  - `transaction.refunded`: Refund processed
+  - `payment.pending`: Payment pending confirmation
+  
+  **Webhook Payload:**
+  
+  ![*.json](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/json.svg)
+  
+  JSON
+  
+  ```
+  {
+    "event": "transaction.completed",
+    "timestamp": "2025-02-24T10:05:00Z",
+    "data": {
+      "id": "pay_xxxxx",
+      "orderId": "ORD-2025-12345",
+      "amount": 50000,
+      "currency": "EGP",
+      "status": "completed",
+      "paid": true,
+      "paymentMethod": "card",
+      "transactionId": "txn_ref_xxxxx"
+    }
+  }
+  ```
+  
+  **Webhook Verification (Node.js):**
+  
+  ![*.js](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/javascript.svg)
+  
+  JavaScript
+  
+  ```
+  const crypto = require('crypto');
+  
+  function verifyWebhookSignature(payload, signature, secretKey) {
+    const hash = crypto
+      .createHmac('sha256', secretKey)
+      .update(JSON.stringify(payload))
+      .digest('hex');
+    return hash === signature;
+  }
+  
+  // In your webhook handler
+  app.post('/webhook/kashier', (req, res) => {
+    const signature = req.headers['x-kashier-signature'];
+  
+    if (!verifyWebhookSignature(req.body, signature, process.env.KASHIER_SECRET_KEY)) {
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+  
+    // Process webhook
+    console.log('Valid webhook:', req.body.event);
+    res.status(200).json({ received: true });
+  });
+  ```
+  
+  **Webhook Response:**
+  Always respond with HTTP 200 within 30 seconds. Kashier will retry failed webhooks up to 5 times with exponential backoff.
+  
+  ## Common Integration Patterns [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#common-integration-patterns)
+  
+  ### E-commerce Checkout Flow [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#e-commerce-checkout-flow)
+  
+  1. **Backend: Generate Order Hash**
+  
+  
+  
+  
+  
+  ![*.js](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/javascript.svg)
+  
+  JavaScript
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  ```
+  const hash = generateOrderHash(merchantId, orderId, amount, apiKey);
+  // Store hash in session or pass to frontend
+  ```
+  
+  2. **Frontend: Initiate Payment (iFrame)**
+  
+  
+  
+  
+  
+  ![*.html](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/html.svg)
+  
+  HTML
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  ```
+  <button
+       class="kashier-button"
+       data-merchant-id="MERCHANT123"
+       data-order-id="ORD-2025-12345"
+       data-amount="50000"
+       data-order-hash="generated_hash">
+       Pay with Kashier
+  </button>
+  ```
+  
+  3. **Backend: Verify Payment on Callback**
+  
+  
+  
+  
+  
+  ![*.js](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/javascript.svg)
+  
+  JavaScript
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  ```
+  app.get('/payment/success', async (req, res) => {
+       const { id, status } = req.query;
+       const payment = await verifyPayment(id);
+  
+       if (payment.status === 'completed') {
+         // Fulfill order
+         fulfillOrder(orderId);
+       }
+       res.redirect('/order/confirmation');
+  });
+  ```
+  
+  
+  ### Hosted Page Payment Flow [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#hosted-page-payment-flow)
+  
+  1. **Backend: Create Payment Session**
+  
+  
+  
+  
+  
+  ![*.js](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/javascript.svg)
+  
+  JavaScript
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  ```
+  const hash = generateOrderHash(merchantId, orderId, amount, apiKey);
+  const paymentUrl = `https://iframe.kashier.io/pay?merchantId=${merchantId}&orderId=${orderId}&amount=${amount}&hash=${hash}&redirectUrl=...`;
+  ```
+  
+  2. **Frontend: Redirect Customer**
+  
+  
+  
+  
+  
+  ![*.js](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/javascript.svg)
+  
+  JavaScript
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  ```
+  window.location.href = paymentUrl;
+  ```
+  
+  3. **Backend: Handle Callback**
+  
+  
+  
+  
+  
+  ![*.js](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/javascript.svg)
+  
+  JavaScript
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  ```
+  app.post('/payment/callback', (req, res) => {
+       const { orderId, status } = req.body;
+  
+       if (status === 'completed') {
+         updateOrderStatus(orderId, 'paid');
+       }
+       res.status(200).send('OK');
+  });
+  ```
+  
+  
+  ### Handle Refunds [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#handle-refunds)
+  
+  ![*.js](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/javascript.svg)
+  
+  JavaScript
+  
+  ```
+  async function issueRefund(orderId, paymentId, refundAmount) {
+    const response = await fetch('https://api.kashier.io/api/refund', {
+      method: 'POST',
+      headers: {
+        'Authorization': process.env.KASHIER_SECRET_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        merchantId: process.env.KASHIER_MERCHANT_ID,
+        orderId: orderId,
+        paymentId: paymentId,
+        amount: refundAmount // omit for full refund
+      })
+    });
+  
+    const data = await response.json();
+    if (data.success) {
+      updateOrderStatus(orderId, 'refunded');
+    }
+    return data;
+  }
+  ```
+  
+  ## Error Handling [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#error-handling)
+  
+  Kashier returns error responses with HTTP status codes and error details.
+  
+  **Error Response Format:**
+  
+  ![*.json](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/json.svg)
+  
+  JSON
+  
+  ```
+  {
+    "success": false,
+    "error": "Description of what went wrong",
+    "code": "ERROR_CODE"
+  }
+  ```
+  
+  **Common Error Codes:**
+  
+  | HTTP | Code | Description | Action |
+  | --- | --- | --- | --- |
+  | 400 | INVALID\_PARAMETERS | Missing or invalid request fields | Validate request body |
+  | 400 | INVALID\_HASH | Order hash doesn't match | Regenerate hash with correct credentials |
+  | 401 | UNAUTHORIZED | Invalid API key or secret | Verify credentials in dashboard |
+  | 404 | NOT\_FOUND | Payment or order not found | Check orderId and paymentId |
+  | 422 | MERCHANT\_ERROR | Business logic error (e.g., duplicate orderId) | Check order exists, use unique IDs |
+  | 429 | RATE\_LIMIT | Too many requests | Implement exponential backoff |
+  | 500 | SERVER\_ERROR | Kashier server error | Retry with exponential backoff |
+  
+  **Handling Errors:**
+  
+  ![*.js](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/javascript.svg)
+  
+  JavaScript
+  
+  ```
+  try {
+    const response = await verifyPayment(orderId);
+  } catch (error) {
+    if (error.code === 'INVALID_HASH') {
+      // Regenerate hash
+    } else if (error.code === 'NOT_FOUND') {
+      // Order doesn't exist yet - redirect to create payment
+    } else if (error.statusCode === 429) {
+      // Wait before retrying
+    } else {
+      // Log and notify user
+    }
+  }
+  ```
+  
+  ## Important Notes / Gotchas [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#important-notes-gotchas)
+  
+  ### Amount Format [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#amount-format)
+  
+  - **All amounts are in piasters** (smallest unit of EGP)
+  - 1 EGP = 100 piasters
+  - Example: 50 EGP = 5,000 piasters
+  - Always convert before sending to API: `amountInEGP * 100 = amountInPiasters`
+  
+  ### Currency Support [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#currency-support)
+  
+  Kashier supports: **EGP** (Egyptian Pound), **USD**, **GBP**, **EUR**
+  
+  ### Order ID Uniqueness [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#order-id-uniqueness)
+  
+  - Order IDs must be unique per merchant
+  - Kashier rejects duplicate orderId requests with `MERCHANT_ERROR`
+  - Implement idempotency checks on your backend
+  
+  ### Customer Phone Format [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#customer-phone-format)
+  
+  - Use international format: `+201XXXXXXXXX` (Egypt +20 country code)
+  - Local numbers like `01XXXXXXXXX` may not work reliably
+  
+  ### Hash Generation Security [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#hash-generation-security)
+  
+  - **NEVER** generate hashes on the client-side
+  - Always hash on the backend with your Payment API Key
+  - Include Merchant ID, Order ID, and Amount in hash (exact order matters)
+  - Use HMAC-SHA256 algorithm
+  
+  ### Test vs Production [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#test-vs-production)
+  
+  - Test keys use `https://test-api.kashier.io` and `https://test-iframe.kashier.io`
+  - Production keys use `https://api.kashier.io` and `https://iframe.kashier.io`
+  - Generate separate test and live keys in dashboard
+  - Test with test cards first before going live
+  
+  ### Webhook Security [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#webhook-security)
+  
+  - Always verify webhook signatures using the Secret Key
+  - Never trust webhook data without signature verification
+  - Implement webhook retry logic (Kashier retries up to 5 times)
+  - Respond with 200 status within 30 seconds
+  
+  ### Common Issues [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#common-issues)
+  
+  - **Hash mismatch**: Ensure hash string format is `{merchantId}{orderId}{amount}` with no separators
+  - **Unauthorized errors**: Double-check API key and Secret Key are not swapped
+  - **Payment not reflecting**: Check webhook is configured and receiving events
+  - **iFrame not loading**: Verify merchant ID and order hash are correct
+  
+  ## Useful Links [Permalink for this section](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier\#useful-links)
+  
+  - **Official Site**: [https://www.kashier.io/](https://www.kashier.io/)
+  - **Developer Portal**: [https://developers.kashier.io/](https://developers.kashier.io/)
+  - **Merchant Dashboard**: [https://portal.kashier.io/](https://portal.kashier.io/)
+  - **Integration Guide**: [https://www.kashier.io/docs/integration-guide](https://www.kashier.io/docs/integration-guide)
+  - **API Keys Setup**: [https://developers.kashier.io/gettingstarted/apikeys/](https://developers.kashier.io/gettingstarted/apikeys/)
+  - **Webhooks Docs**: [https://developers.kashier.io/payment/webhook/](https://developers.kashier.io/payment/webhook/)
+  - **Postman Collection**: [https://www.postman.com/kashierpayments/kashier-api](https://www.postman.com/kashierpayments/kashier-api)
+  - **GitHub Examples**: [https://github.com/Kashier-payments](https://github.com/Kashier-payments)
+  - **Support Email**: [techsupport@kashier.io](https://github.com/AfricanDigitalAssetFramework/africa-stack-skills)
+  
+  ## 评分
+  
+  0.0
+  
+  暂无评分
+  
+  5
+  
+  4
+  
+  3
+  
+  2
+  
+  1
+  
+  ### 将此提示发送给你的 Agent 以留下评价
+  
+  ```
+  Read https://lobehub.com/skills/skill.md and follow the instructions to set up the LobeHub Skills Marketplace then submit a review using: `npx -y @lobehub/market-cli skills comment africandigitalassetframework-africa-stack-skills-kashier -c "<your review>" --rating 5 (or 1-4)`. Include what worked well, any issues, and tips for other agents.
+  ```
+  
+  ## Agent 评价
+  
+  最新
+  
+  最有帮助
+  
+  暂无评论
+  
+  ## 相关 Skills
+  
+  [查看更多](https://lobehub.com/skills?category=finance)
+  
+  [![avatar](https://github.com/sickn33.png)\\
+  \\
+  **quant-analyst**\\
+  \\
+  4.7\\
+  \\
+  sickn33\\
+  \\
+  Github\\
+  \\
+  构建金融模型，回测交易策略并分析市场数据。实现风险度量、投资组合优化和统计套利。对于量化金融、交易算法或风险分析，请积极主动地使用。\\
+  \\
+  1\\
+  \\
+  金融服务\\
+  \\
+  7月 22, 2026\\
+  \\
+  341\\
+  \\
+  8.6k\\
+  \\
+  6](https://lobehub.com/skills/sickn33-antigravity-awesome-skills-quant-analyst) [![avatar](https://github.com/wshobson.png)\\
+  \\
+  **startup-financial-modeling**\\
+  \\
+  5.0\\
+  \\
+  wshobson\\
+  \\
+  Github\\
+  \\
+  This skill should be used when the user asks to "create financial projections", "build a financial model", "forecast revenue", "calculate burn rate", "estimate runway", "model cash flow", or requests 3-5 year financial planning for a startup.\\
+  \\
+  1\\
+  \\
+  金融服务\\
+  \\
+  7月 21, 2026\\
+  \\
+  88\\
+  \\
+  31.0k](https://lobehub.com/skills/wshobson-agents-startup-financial-modeling) [![avatar](https://github.com/openclaw.png)\\
+  \\
+  **daily-stock-analysis**\\
+  \\
+  4.8\\
+  \\
+  openclaw\\
+  \\
+  Github\\
+  \\
+  Deterministic daily stock analysis skill for global equities. Use when users need daily analysis, next-trading-day close prediction, prior forecast review, rolling accuracy, and reliable markdown report output.\\
+  \\
+  15\\
+  \\
+  金融服务\\
+  \\
+  7月 22, 2026\\
+  \\
+  108\\
+  \\
+  2.6k\\
+  \\
+  2](https://lobehub.com/skills/openclaw-skills-daily-stock-analysis) [![avatar](https://github.com/anthropics.png)\\
+  \\
+  **financial-statements**\\
+  \\
+  4.0\\
+  \\
+  anthropics\\
+  \\
+  Github\\
+  \\
+  Generate income statements, balance sheets, and cash flow statements with GAAP presentation and period-over-period comparison. Use when preparing financial statements, running flux analysis, or creating P&L reports with variance commentary.\\
+  \\
+  1\\
+  \\
+  金融服务\\
+  \\
+  7月 03, 2026\\
+  \\
+  34\\
+  \\
+  7.4k\\
+  \\
+  3](https://lobehub.com/skills/anthropics-knowledge-work-plugins-financial-statements) [![avatar](https://github.com/ComposioHQ.png)\\
+  \\
+  **sage-automation**\\
+  \\
+  3.0\\
+  \\
+  ComposioHQ\\
+  \\
+  Github\\
+  \\
+  通过 Rube MCP（Composio）自动化 Sage 任务。始终在操作前先搜索工具以获取当前的 API/数据模式（schemas）。\\
+  \\
+  1\\
+  \\
+  金融服务\\
+  \\
+  7月 21, 2026\\
+  \\
+  7\\
+  \\
+  40.7k\\
+  \\
+  1](https://lobehub.com/skills/composiohq-awesome-claude-skills-sage-automation) [![avatar](https://github.com/openclaw.png)\\
+  \\
+  **polymarket-agent**\\
+  \\
+  4.3\\
+  \\
+  openclaw\\
+  \\
+  Github\\
+  \\
+  Autonomous prediction market agent - analyzes markets, researches news, and identifies trading opportunities\\
+  \\
+  10\\
+  \\
+  金融服务\\
+  \\
+  7月 22, 2026\\
+  \\
+  144\\
+  \\
+  2.6k\\
+  \\
+  4](https://lobehub.com/skills/openclaw-skills-polymarket-agent)
+  
+  [运行此 SKILL](https://app.lobehub.com/agent/inbox?message=Read+https%3A%2F%2Flobehub.com%2Fskills%2Fafricandigitalassetframework-africa-stack-skills-kashier%2Fskill.md+to+understand+how+to+install+and+use+this+skill.+Install+it+as+documented%2C+then+open+the+installed+SKILL.md+and+follow+its+instructions.+Ask+for+confirmation+before+any+credential+use%2C+external+service+setup%2C+or+irreversible+action.&skill=africandigitalassetframework-africa-stack-skills-kashier&utm_source=landing&utm_content=skills_try_in_lobehub&utm_medium=discover_skills_detail&utm_term=africandigitalassetframework-africa-stack-skills-kashier)
+  
+  ## 安装方式
+  
+  [查看详情](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier?activeTab=installation)
+  
+  我是 Agent
+  
+  我是 Human
+  
+  ### 将此提示发送给你的 Agent 以安装该 Skills
+  
+  ![Agent prompt](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/file.svg)
+  
+  Agent prompt
+  
+  ```
+  Read https://lobehub.com/skills/africandigitalassetframework-africa-stack-skills-kashier/skill.md to understand how to install and use this skill. Install it as documented, then open the installed SKILL.md and follow its instructions. Ask for confirmation before any credential use, external service setup, or irreversible action.
+  ```
+  
+  复制 Prompt
+  
+  ## 文件树
+  
+  [详情](https://lobehub.com/zh/skills/africandigitalassetframework-africa-stack-skills-kashier?activeTab=resources)
+  
+  ![SKILL.md](https://registry.npmmirror.com/@lobehub/assets-fileicon/1.0.0/files/assets/markdown.svg)
+  SKILL.md
+  
+  [![LobeHub](https://registry.npmmirror.com/@lobehub/assets-logo/1.2.0/files/assets/logo-3d.webp)一键运行任何 SKILL](https://app.lobehub.com/?utm_source=landing&utm_content=discover_float_cta&utm_medium=discover&utm_term=africandigitalassetframework-africa-stack-skills-kashier)
+  
+  ![LobeHub](https://registry.npmmirror.com/@lobehub/assets-logo/1.2.0/files/assets/logo-3d.webp)
+  
+  ## Your Chief Agent Operator
+  
+  ### 立即开始使用 LobeHub，成为万千超级个体的一员
+  
+  [免费开始使用](https://app.lobehub.com/?utm_source=landing&utm_content=callback_footer_discover&utm_medium=discover&utm_term=africandigitalassetframework-africa-stack-skills-kashier) [下载 Linux 版本](https://lobehub.com/downloads/linux)
+  
+  kashier \| Skills Marketplace · LobeHub
+  --- End Content ---
+
+Webhooks Signature
+  URL: https://docs.moneyhash.io/docs/webhooks-signature
+  MoneyHash can sign all webhook events sent to your endpoints with a signature.
+
+Our Signature verification makes use of the Hash-based Message Authentication Code ( [HMAC](https://en.wikipedia.org/w/index.php?title=HMAC)) for authenticating and validating webhooks with ( [SHA256](https://en.wikipedia.org/wiki/SHA-2)).
+
+## 📔  Signature key doesn't change, so you can store it as an environment variable instead of calling get signature endpoint on each signature verification
+#### Step 3: Calculate the signature   [Skip link to Step 3: Calculate the signature](https://docs.moneyhash.io/docs/webhooks-signature#step-3-calculate-the-signature)
+```python
+import hashlib
+import hmac
+
+secret = "<your-organization-webhook-secret>"
+timestamp = "<request-timestamp>"
+decoded_body = base64.b64encode(request.body).decode('utf-8')
+
+to_sign = f"{decoded_body}{timestamp}".encode('utf-8')
+
+signature = hmac.new(
+    secret.encode(),
+    to_sign,
+    digestmod=hashlib.sha256,
+)
+
+calculated_signature = signature.hexdigest()
+```
+
+### Signature v2   [Skip link to Signature v2](https://docs.moneyhash.io/docs/webhooks-signature#signature-v2)
+#### Step 1: Extract the timestamp from the header   [Skip link to Step 1: Extract the timestamp from the header](https://docs.moneyhash.io/docs/webhooks-signature#step-1-extract-the-timestamp-from-the-header)
+```
+time = "1658594891"
+```
+
+#### Step 2: Extract the signature from the header   [Skip link to Step 2: Extract the signature from the header](https://docs.moneyhash.io/docs/webhooks-signature#step-2-extract-the-signature-from-the-header)
+```
+signature = "3b6ed5f3ecadcb1c60d9e7684ac9a80581a55d805d678a074c6fc2fbe5378878"
+```
+
+#### Step 3: Convert the json payload to dictionary and sort it   [Skip link to Step 3: Convert the json payload to dictionary and sort it](https://docs.moneyhash.io/docs/webhooks-signature#step-3-convert-the-json-payload-to-dictionary-and-sort-it)
+##### Example:   [Skip link to Example:](https://docs.moneyhash.io/docs/webhooks-signature#example)
+```json
+{
+  "type": "transaction.purchase.successful",
+  "status_id": "8xgNYLk",
+  "intent": {
+    "id": "ldLWMZD",
+    "created": "2022-12-25 15:45:25.659438+00:00",
+    "custom_fields": null,
+    "custom_form_answers": null,
+    "amount": {
+      "value": 50,
+      "currency": "USD"
+    }
+  },
+  "account": {
+    "id": "YVglAZx"
+  },
+  "transaction": {
+    "type": "payment",
+    "id": "a1f90648-aa49-4798-b7cb-07a866009522",
+    "created": "2022-12-25 15:45:31.615820+00:00",
+    "status": "purchase.successful",
+    "billing_data": null,
+    "external_action_message": [],
+    "operations": [\
+      {\
+        "id": "K1ZvzZB",\
+        "type": "purchase",\
+        "status": "successful",\
+        "amount": {\
+          "value": 50,\
+          "currency": "USD"\
+        },\
+        "statuses": [\
+          {\
+            "id": "8xgNYLk",\
+            "value": "successful",\
+            "created": "2022-12-25 15:45:31.664841+00:00"\
+          }\
+        ]\
+      }\
+    ],
+    "custom_message": "",
+    "method": {
+      "id": "k9m63Lb",
+      "display_name": "Kashier - Card",
+      "service_provider": {
+        "id": "ldLWMZD"
+      }
+    }
+  },
+  "api_version": "1.1"
+}
+```
+
+```json
+{
+  "account": {
+    "id": "YVglAZx"
+  },
+  "api_version": "1.1",
+  "intent": {
+    "amount": {
+      "currency": "USD",
+      "value": 50
+    },
+    "created": "2022-12-25 15:45:25.659438+00:00",
+    "custom_fields": null,
+    "custom_form_answers": null,
+    "id": "ldLWMZD"
+  },
+  "status_id": "8xgNYLk",
+  "transaction": {
+    "billing_data": null,
+    "created": "2022-12-25 15:45:31.615820+00:00",
+    "custom_message": "",
+    "external_action_message": [],
+    "id": "a1f90648-aa49-4798-b7cb-07a866009522",
+    "method": {
+      "display_name": "Kashier - Card",
+      "id": "k9m63Lb",
+      "service_provider": {
+        "id": "ldLWMZD"
+      }
+    },
+    "operations": [\
+      {\
+        "amount": {\
+          "currency": "USD",\
+          "value": 50\
+        },\
+        "id": "K1ZvzZB",\
+        "status": "successful",\
+        "statuses": [\
+          {\
+            "created": "2022-12-25 15:45:31.664841+00:00",\
+            "id": "8xgNYLk",\
+            "value": "successful"\
+          }\
+        ],\
+        "type": "purchase"\
+      }\
+    ],
+    "status": "purchase.successful",
+    "type": "payment"
+  },
+  "type": "transaction.purchase.successful"
+}
+```
+
+### Signature v1   [Skip link to Signature v1](https://docs.moneyhash.io/docs/webhooks-signature#signature-v1)
+#### Step 1: Extract the timestamp from the header   [Skip link to Step 1: Extract the timestamp from the header](https://docs.moneyhash.io/docs/webhooks-signature#step-1-extract-the-timestamp-from-the-header-1)
+```
+time = "1658594891"
+```
+
+#### Step 5: Calculate the signature   [Skip link to Step 5: Calculate the signature](https://docs.moneyhash.io/docs/webhooks-signature#step-5-calculate-the-signature)
+```python
+digest = hmac.new(
+    key=account_api_key.encode("utf-8"),
+    msg=concatenated_msg,
+    digestmod=hashlib.sha256,
+)
+```
+
+```javascript
+const calculatedSignature = hmac.digest('hex');
+```
+
+  --- Content ---
+  For AI agents: visit https://docs.moneyhash.io/llms.txt for an index of all pages formatted in Markdown and endpoints in OpenAPI.
+  
+  MoneyHash can sign all webhook events sent to your endpoints with a signature. This signature appears in each event's `MoneyHash-Signature` header. It allows you to verify that the events were sent by MoneyHash rather than a third party.
+  
+  Our Signature verification makes use of the Hash-based Message Authentication Code ( [HMAC](https://en.wikipedia.org/w/index.php?title=HMAC)) for authenticating and validating webhooks with ( [SHA256](https://en.wikipedia.org/wiki/SHA-2)). The result HMAC is calculated using a secret key and the event payload.
+  
+  ### Verifying signatures   [Skip link to Verifying signatures](https://docs.moneyhash.io/docs/webhooks-signature\#verifying-signatures)
+  
+  The `MoneyHash-Signature` header included in each webhook event contains a timestamp and the current version. The timestamp is prefixed by` t=` and the version is prefixed by `v=`
+  
+  Our Current signature versions are 1, 2 and 3
+  
+  #### Header sample   [Skip link to Header sample](https://docs.moneyhash.io/docs/webhooks-signature\#header-sample)
+  
+  MoneyHash-Signature header
+  
+  ```text
+  t=1698744604,v1=5e92be4afca58c407f59c71e763021caf0df4140e79b36e53f6201aa99e29edc,v2=23021d841c21af5e7deb1f5b79f13dcf2cdefab55124aac78460fd884c864ecb,v3=5ae747e562f95b621859f7846edf6b3546e02dca4ad53d26bc788535d2f4660b
+  ```
+  
+  #### Header information   [Skip link to Header information](https://docs.moneyhash.io/docs/webhooks-signature\#header-information)
+  
+  The header will contain `t` for time and `v` for the version:
+  
+  - `t`: the timestamp this request was created
+  - `v`: the current version of signature you will validate.
+  
+  
+  Currently, we are passing `v1` , `v2` and `v3` and the version used to allow us to change the signature calculation in the future, your version should stay the same (For backward compatibility)
+  
+  > ## 🚧  Note
+  >
+  > `MoneyHash-Signature` header is case-sensitive, so make sure to handle it properly.
+  
+  * * *
+  
+  ### Verification steps   [Skip link to Verification steps](https://docs.moneyhash.io/docs/webhooks-signature\#verification-steps)
+  
+  > ## ❗️  Warning
+  >
+  > Please make sure to use the latest signature version to stay up to date with our enhancements.
+  
+  * * *
+  
+  ### Signature v3   [Skip link to Signature v3](https://docs.moneyhash.io/docs/webhooks-signature\#signature-v3)
+  
+  #### Step 1 Extract the signature and the time from the header   [Skip link to Step 1 Extract the signature and the time from the header](https://docs.moneyhash.io/docs/webhooks-signature\#step-1-extract-the-signature-and-the-time-from-the-header)
+  
+  ```
+  timestamp = "1698744604"
+  signature = "5ae747e562f95b621859f7846edf6b3546e02dca4ad53d26bc788535d2f4660b"
+  ```
+  
+  #### Step 2: Get your organization signature key   [Skip link to Step 2: Get your organization signature key](https://docs.moneyhash.io/docs/webhooks-signature\#step-2-get-your-organization-signature-key)
+  
+  You will need to get your organization secret key to pass it to HMAC function to be used as your secret key, to get this key you can set GET request to `/api/v1/organizations/get-webhook-signature-key/` and pass your account API key as header
+  
+  cURLResponse
+  
+  ```curl
+  curl --location --request GET 'https://web.moneyhash.io/api/v1/organizations/get-webhook-signature-key/' \
+  --header 'X-Api-Key: YOUR_ACCOUNT_API_KEY'
+  ```
+  
+  ```json
+  {
+      "status": {
+          "code": 200,
+          "message": "success",
+          "errors": []
+      },
+      "data": {
+          "webhook_signature_secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "count": 1,
+      "next": null,
+      "previous": null
+  }
+  ```
+  
+  > ## 📔  Signature key doesn't change, so you can store it as an environment variable instead of calling get signature endpoint on each signature verification
+  
+  #### Step 3: Calculate the signature   [Skip link to Step 3: Calculate the signature](https://docs.moneyhash.io/docs/webhooks-signature\#step-3-calculate-the-signature)
+  
+  PythonJavaScript
+  
+  ```python
+  import hashlib
+  import hmac
+  
+  secret = "<your-organization-webhook-secret>"
+  timestamp = "<request-timestamp>"
+  decoded_body = base64.b64encode(request.body).decode('utf-8')
+  
+  to_sign = f"{decoded_body}{timestamp}".encode('utf-8')
+  
+  signature = hmac.new(
+      secret.encode(),
+      to_sign,
+      digestmod=hashlib.sha256,
+  )
+  
+  calculated_signature = signature.hexdigest()
+  ```
+  
+  ```javascript
+  const crypto = require('crypto');
+  
+  const secret = '<your-organization-webhook-secret>';
+  const timestamp = '<request-timestamp>';
+  const decoded_body = Buffer.from(request.body).toString('base64');
+  
+  const to_sign = Buffer.from(decoded_body + timestamp, 'utf-8');
+  
+  const signature = crypto.createHmac('sha256', secret)
+      .update(to_sign)
+      .digest('hex');
+  
+  const calculated_signature = signature;
+  ```
+  
+  * * *
+  
+  ### Signature v2   [Skip link to Signature v2](https://docs.moneyhash.io/docs/webhooks-signature\#signature-v2)
+  
+  #### Step 1: Extract the timestamp from the header   [Skip link to Step 1: Extract the timestamp from the header](https://docs.moneyhash.io/docs/webhooks-signature\#step-1-extract-the-timestamp-from-the-header)
+  
+  You will need to extract the value of the time by getting the value of `t` from the header will be `1658594891` in our sample
+  
+  ```
+  time = "1658594891"
+  ```
+  
+  #### Step 2: Extract the signature from the header   [Skip link to Step 2: Extract the signature from the header](https://docs.moneyhash.io/docs/webhooks-signature\#step-2-extract-the-signature-from-the-header)
+  
+  You will need to extract the value of the signature by getting the value of v1 from the header will be `3b6ed5f3ecadcb1c60d9e7684ac9a80581a55d805d678a074c6fc2fbe5378878` in our sample
+  
+  ```
+  signature = "3b6ed5f3ecadcb1c60d9e7684ac9a80581a55d805d678a074c6fc2fbe5378878"
+  ```
+  
+  #### Step 3: Convert the json payload to dictionary and sort it   [Skip link to Step 3: Convert the json payload to dictionary and sort it](https://docs.moneyhash.io/docs/webhooks-signature\#step-3-convert-the-json-payload-to-dictionary-and-sort-it)
+  
+  You will need to convert the json payload to dictionary, and sort this dictionary using `lexicographical sort`, you should make sure the nested json values are sorted as well after converting it to a dictionary.
+  
+  After converting the payload to dictionary and sorting it, you should convert the dictionary back to json object and save this json object to use it in next steps.
+  
+  PythonNodeJS
+  
+  ```python
+  sorted_payload = json.dumps(
+          payload_as_dict, cls=DjangoJSONEncoder, separators=(",", ":"), sort_keys=True
+  )
+  ```
+  
+  ```javascript
+  function sortJson(jsonObj) {
+    if (typeof jsonObj !== "object" || jsonObj === null) {
+      return jsonObj; // Return non-objects as is
+    }
+  
+    if (Array.isArray(jsonObj)) {
+      return jsonObj.map((item) => sortJson(item)); // If it's an array, sort its elements recursively
+    }
+  
+    const sortedKeys = Object.keys(jsonObj).sort(); // Sort the keys
+  
+    const sortedObject = {};
+    for (const key of sortedKeys) {
+      sortedObject[key] = sortJson(jsonObj[key]); // Recursively sort nested objects
+    }
+  
+    return sortedObject;
+  }
+  
+  const sorted_payload = sortJson(payload)
+  ```
+  
+  ##### Example:   [Skip link to Example:](https://docs.moneyhash.io/docs/webhooks-signature\#example)
+  
+  Json object before sortingJson after sorting
+  
+  ```json
+  {
+    "type": "transaction.purchase.successful",
+    "status_id": "8xgNYLk",
+    "intent": {
+      "id": "ldLWMZD",
+      "created": "2022-12-25 15:45:25.659438+00:00",
+      "custom_fields": null,
+      "custom_form_answers": null,
+      "amount": {
+        "value": 50,
+        "currency": "USD"
+      }
+    },
+    "account": {
+      "id": "YVglAZx"
+    },
+    "transaction": {
+      "type": "payment",
+      "id": "a1f90648-aa49-4798-b7cb-07a866009522",
+      "created": "2022-12-25 15:45:31.615820+00:00",
+      "status": "purchase.successful",
+      "billing_data": null,
+      "external_action_message": [],
+      "operations": [\
+        {\
+          "id": "K1ZvzZB",\
+          "type": "purchase",\
+          "status": "successful",\
+          "amount": {\
+            "value": 50,\
+            "currency": "USD"\
+          },\
+          "statuses": [\
+            {\
+              "id": "8xgNYLk",\
+              "value": "successful",\
+              "created": "2022-12-25 15:45:31.664841+00:00"\
+            }\
+          ]\
+        }\
+      ],
+      "custom_message": "",
+      "method": {
+        "id": "k9m63Lb",
+        "display_name": "Kashier - Card",
+        "service_provider": {
+          "id": "ldLWMZD"
+        }
+      }
+    },
+    "api_version": "1.1"
+  }
+  ```
+  
+  ```json
+  {
+    "account": {
+      "id": "YVglAZx"
+    },
+    "api_version": "1.1",
+    "intent": {
+      "amount": {
+        "currency": "USD",
+        "value": 50
+      },
+      "created": "2022-12-25 15:45:25.659438+00:00",
+      "custom_fields": null,
+      "custom_form_answers": null,
+      "id": "ldLWMZD"
+    },
+    "status_id": "8xgNYLk",
+    "transaction": {
+      "billing_data": null,
+      "created": "2022-12-25 15:45:31.615820+00:00",
+      "custom_message": "",
+      "external_action_message": [],
+      "id": "a1f90648-aa49-4798-b7cb-07a866009522",
+      "method": {
+        "display_name": "Kashier - Card",
+        "id": "k9m63Lb",
+        "service_provider": {
+          "id": "ldLWMZD"
+        }
+      },
+      "operations": [\
+        {\
+          "amount": {\
+            "currency": "USD",\
+            "value": 50\
+          },\
+          "id": "K1ZvzZB",\
+          "status": "successful",\
+          "statuses": [\
+            {\
+              "created": "2022-12-25 15:45:31.664841+00:00",\
+              "id": "8xgNYLk",\
+              "value": "successful"\
+            }\
+          ],\
+          "type": "purchase"\
+        }\
+      ],
+      "status": "purchase.successful",
+      "type": "payment"
+    },
+    "type": "transaction.purchase.successful"
+  }
+  ```
+  
+  #### Step 4: Remove all spaces and new lines from the payload   [Skip link to Step 4: Remove all spaces and new lines from the payload](https://docs.moneyhash.io/docs/webhooks-signature\#step-4-remove-all-spaces-and-new-lines-from-the-payload)
+  
+  You will need to remove all spaces and new lines sent on the event payload, you can achieve that by replacing all spaces and new lines with empty string
+  
+  PythonNodeJS
+  
+  ```python
+  payload_without_spaces_or_lines = sorted_payload.replace(" ", "").replace("\n", "")
+  ```
+  
+  ```javascript
+  const payload_without_spaces_or_lines = sorted_payload.replace(/\s+/g, '');
+  ```
+  
+  #### Step 5: Create the hash message to validate   [Skip link to Step 5: Create the hash message to validate](https://docs.moneyhash.io/docs/webhooks-signature\#step-5-create-the-hash-message-to-validate)
+  
+  You will need to create the message that will be used to validate the signature by concatenating both the time and the payload
+  
+  PythonNodeJS
+  
+  ```python
+  concatenated_msg = f"{payload_without_spaces_or_lines}{time}".encode("utf-8")
+  ```
+  
+  ```javascript
+  const concatenated_msg = Buffer.from(payload_without_spaces_or_lines + time, 'utf-8');
+  
+  const hmac = crypto.createHmac('sha256', organization_key);
+  hmac.update(concatenated_msg);
+  ```
+  
+  #### Step 6: Get your organization signature key   [Skip link to Step 6: Get your organization signature key](https://docs.moneyhash.io/docs/webhooks-signature\#step-6-get-your-organization-signature-key)
+  
+  You will need to get your organization secret key to pass it to HMAC function to be used as your secret key, to get this key you can set GET request to `/api/v1/organizations/get-webhook-signature-key/` and pass your account API key as header
+  
+  cURLResponse
+  
+  ```curl
+  curl --location --request GET 'https://web.moneyhash.io/api/v1/organizations/get-webhook-signature-key/' \
+  --header 'X-Api-Key: YOUR_ACCOUNT_API_KEY'
+  ```
+  
+  ```json
+  {
+      "status": {
+          "code": 200,
+          "message": "success",
+          "errors": []
+      },
+      "data": {
+          "webhook_signature_secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "count": 1,
+      "next": null,
+      "previous": null
+  }
+  ```
+  
+  #### Step 7: Calculate the signature   [Skip link to Step 7: Calculate the signature](https://docs.moneyhash.io/docs/webhooks-signature\#step-7-calculate-the-signature)
+  
+  Pass the output of the `concatenated_msg` and your **organization api key** key to the `HMAC` function to generate the signature and the mode should be `sha256`
+  
+  PythonNodeJS
+  
+  ```python
+  digest = hmac.new(
+      key=organization_key.encode("utf-8"),
+      msg=concatenated_msg,
+      digestmod=hashlib.sha256,
+  )
+  ```
+  
+  ```javascript
+  const crypto = require('crypto');
+  
+  const organization_key = '<YOUR_ORGANIZATION_KEY>';
+  const concatenated_msg = '<YOU_CONCATENATED_MESSAGE';
+  
+  const hmac = crypto.createHmac('sha256', organization_key);
+  hmac.update(concatenated_msg);
+  
+  const digest = hmac.digest('hex');
+  ```
+  
+  #### Step 8: Compare the signatures   [Skip link to Step 8: Compare the signatures](https://docs.moneyhash.io/docs/webhooks-signature\#step-8-compare-the-signatures)
+  
+  Compare the signature in the header to the expected signature, if they are equal then the event is valid and received from MoneyHash
+  
+  Python
+  
+  ```python
+  is_valid = digest.hexdigest() == signature
+  ```
+  
+  * * *
+  
+  ### Signature v1   [Skip link to Signature v1](https://docs.moneyhash.io/docs/webhooks-signature\#signature-v1)
+  
+  #### Step 1: Extract the timestamp from the header   [Skip link to Step 1: Extract the timestamp from the header](https://docs.moneyhash.io/docs/webhooks-signature\#step-1-extract-the-timestamp-from-the-header-1)
+  
+  You will need to extract the value of the time by getting the value of `t` from the header will be `1658594891` in our sample
+  
+  ```
+  time = "1658594891"
+  ```
+  
+  #### Step 2: Extract the signature from the header   [Skip link to Step 2: Extract the signature from the header](https://docs.moneyhash.io/docs/webhooks-signature\#step-2-extract-the-signature-from-the-header-1)
+  
+  You will need to extract the value of the signature by getting the value of v1 from the header will be `3b6ed5f3ecadcb1c60d9e7684ac9a80581a55d805d678a074c6fc2fbe5378878` in our sample
+  
+  ```
+  signature = "3b6ed5f3ecadcb1c60d9e7684ac9a80581a55d805d678a074c6fc2fbe5378878"
+  ```
+  
+  #### Step 3: Remove all spaces and new lines from the payload   [Skip link to Step 3: Remove all spaces and new lines from the payload](https://docs.moneyhash.io/docs/webhooks-signature\#step-3-remove-all-spaces-and-new-lines-from-the-payload)
+  
+  You will need to remove all spaces and new lines sent on the event payload, you can achieve that by replacing all spaces and new lines with empty string
+  
+  PythonNodeJs
+  
+  ```python
+  payload_without_spaces_or_lines = payload.replace(" ", "").replace("\n", "")
+  ```
+  
+  ```javascript
+  const payload_without_spaces_or_lines = sorted_payload.replace(/\s+/g, '');
+  ```
+  
+  #### Step 4: Create the hash message to validate   [Skip link to Step 4: Create the hash message to validate](https://docs.moneyhash.io/docs/webhooks-signature\#step-4-create-the-hash-message-to-validate)
+  
+  You will need to create the message that will be used to validate the signature by concatenating both the time and the payload
+  
+  PythonNodeJS
+  
+  ```python
+  concatenated_msg = f"{payload_without_spaces_or_lines}{time}".encode("utf-8")
+  ```
+  
+  ```javascript
+  const concatenated_msg = Buffer.from(payload_without_spaces_or_lines + time, 'utf-8');
+  
+  const hmac = crypto.createHmac('sha256', organization_key);
+  hmac.update(concatenated_msg);
+  ```
+  
+  #### Step 5: Calculate the signature   [Skip link to Step 5: Calculate the signature](https://docs.moneyhash.io/docs/webhooks-signature\#step-5-calculate-the-signature)
+  
+  Pass the output of the concatenated _msg and your_ Account API key\_ to the `HMAC` function to generate the signature and the mode should be `sha256`
+  
+  PythonNodeJS
+  
+  ```python
+  digest = hmac.new(
+      key=account_api_key.encode("utf-8"),
+      msg=concatenated_msg,
+      digestmod=hashlib.sha256,
+  )
+  ```
+  
+  ```javascript
+  const calculatedSignature = hmac.digest('hex');
+  ```
+  
+  #### Step 6: Compare the signatures   [Skip link to Step 6: Compare the signatures](https://docs.moneyhash.io/docs/webhooks-signature\#step-6-compare-the-signatures)
+  
+  Compare the signature in the header to the expected signature, if they are equal then the event is valid and received from MoneyHash
+  
+  PythonNodeJS
+  
+  ```python
+  is_valid = digest.hexdigest() == signature
+  ```
+  
+  ```javascript
+  const is_valid = calculatedSignature === signature;
+  ```
+  
+  * * *
+  
+  ### Examples   [Skip link to Examples](https://docs.moneyhash.io/docs/webhooks-signature\#examples)
+  
+  PythonJavaScript
+  
+  ```python
+  import json
+  import hashlib
+  import hmac
+  import requests
+  
+  # Step 1: Extract the timestamp from the header
+  time = "1697640557"
+  
+  # Step 2: Extract the signature from the header
+  signature_v2 = "f02a4404b41aae5535eb8622b02deeda6823893c8582367d22b1688dc44d043d"
+  
+  # Step 3: Convert the JSON payload to a dictionary and sort it
+  payload = '{"type":"intent.processed","intent_type":"PAYMENT","data":{"intent_id":"LWWAyzL","intent":{"id":"LWWAyzL","status":"PROCESSED","amount":50,"amount_currency":"USD","type":"Payin","account":"YVglAZx","custom_fields":null,"billing_data":{"first_name":"","last_name":"","email":"","phone_number":""},"active_transaction":{"id":"ebcdadbc-44c4-4814-9c7e-1e62a064bb67","custom_fields":null,"created":"2023-10-18T14:49:12.476917Z","status":"SUCCESSFUL","amount":"50.00","amount_currency":"USD","billing_data":null,"external_action_message":[],"payment_method":"CARD","payment_method_name":"Card","custom_form_answers":null,"custom_message":"","account":"YVglAZx","provider_transaction_fields":{},"provider_signature_match":false},"transactions_history":[{"id":"ebcdadbc-44c4-4814-9c7e-1e62a064bb67","custom_fields":null,"created":"2023-10-18T14:49:12.476917Z","status":"SUCCESSFUL","amount":"50.00","amount_currency":"USD","billing_data":null,"external_action_message":[],"payment_method":"CARD","payment_method_name":"Card","custom_form_answers":null,"custom_message":"","account":"YVglAZx","provider_transaction_fields":{},"provider_signature_match":false}],"method":{"display_name":"Stripe - Card","id":"jgxny9r"},"flow":null,"is_live":false,"created":"2023-10-18T14:49:03.132515Z"}},"api_version":"1.1"}'
+  payload = json.loads(payload)
+  
+  # Sort the dictionary
+  sorted_payload = json.dumps(payload, separators=(",", ":"), sort_keys=True)
+  
+  # Step 4: Remove all spaces and new lines from the payload
+  payload_without_spaces_or_lines = sorted_payload.replace(" ", "").replace("\n", "")
+  
+  # Step 5: Create the hash message to validate
+  concatenated_msg = f"{payload_without_spaces_or_lines}{time}".encode("utf-8")
+  
+  # Step 6: Get the organization secret key via API (replace with your actual API key)
+  api_key = "<YOUR_ACCOUNT_API_KEY>"
+  
+  key_response = requests.get(
+      "https://web.moneyhash.io/api/v1/organizations/get-webhook-signature-key/",
+      headers={"X-Api-Key": api_key},
+  )
+  if key_response.status_code == 200:
+      organization_key = key_response.json()["data"]["webhook_signature_secret"]
+  else:
+      print("Failed to retrieve the organization secret key.")
+      exit()
+  
+  # Step 7: Calculate the signature
+  digest = hmac.new(
+      key=organization_key.encode("utf-8"),
+      msg=concatenated_msg,
+      digestmod=hashlib.sha256,
+  )
+  
+  # Step 8: Compare the signatures
+  is_valid = digest.hexdigest() == signature_v2
+  
+  if is_valid:
+      print("Signature is valid. The event is received from MoneyHash.")
+  else:
+      print("Signature is not valid. The event may be tampered with or invalid.")
+  ```
+  
+  ```javascript
+  import crypto from "crypto";
+  import fetch from "node-fetch";
+  
+  function sortJson(jsonObj) {
+    if (typeof jsonObj !== "object" || jsonObj === null) {
+      return jsonObj; // Return non-objects as is
+    }
+  
+    if (Array.isArray(jsonObj)) {
+      return jsonObj.map((item) => sortJson(item)); // If it's an array, sort its elements recursively
+    }
+  
+    const sortedKeys = Object.keys(jsonObj).sort(); // Sort the keys
+  
+    const sortedObject = {};
+    for (const key of sortedKeys) {
+      sortedObject[key] = sortJson(jsonObj[key]); // Recursively sort nested objects
+    }
+  
+    return sortedObject;
+  }
+  
+  // Step 1: Extract the timestamp from the header
+  const time = "1697640557";
+  
+  // Step 2: Extract the signature from the header
+  const signature_v2 =
+    "f02a4404b41aae5535eb8622b02deeda6823893c8582367d22b1688dc44d043d";
+  
+  // Step 3: Convert the JSON payload to an object and sort it
+  const payload = JSON.parse(
+    '{"type":"intent.processed","intent_type":"PAYMENT","data":{"intent_id":"LWWAyzL","intent":{"id":"LWWAyzL","status":"PROCESSED","amount":50,"amount_currency":"USD","type":"Payin","account":"YVglAZx","custom_fields":null,"billing_data":{"first_name":"","last_name":"","email":"","phone_number":""},"active_transaction":{"id":"ebcdadbc-44c4-4814-9c7e-1e62a064bb67","custom_fields":null,"created":"2023-10-18T14:49:12.476917Z","status":"SUCCESSFUL","amount":"50.00","amount_currency":"USD","billing_data":null,"external_action_message":[],"payment_method":"CARD","payment_method_name":"Card","custom_form_answers":null,"custom_message":"","account":"YVglAZx","provider_transaction_fields":{},"provider_signature_match":false},"transactions_history":[{"id":"ebcdadbc-44c4-4814-9c7e-1e62a064bb67","custom_fields":null,"created":"2023-10-18T14:49:12.476917Z","status":"SUCCESSFUL","amount":"50.00","amount_currency":"USD","billing_data":null,"external_action_message":[],"payment_method":"CARD","payment_method_name":"Card","custom_form_answers":null,"custom_message":"","account":"YVglAZx","provider_transaction_fields":{},"provider_signature_match":false}],"method":{"display_name":"Stripe - Card","id":"jgxny9r"},"flow":null,"is_live":false,"created":"2023-10-18T14:49:03.132515Z"}},"api_version":"1.1"}'
+  );
+  
+  const sorted_payload = sortJson(payload);
+  
+  // Step 4: Remove all spaces and new lines from the payload
+  const payload_without_spaces_or_lines = JSON.stringify(sorted_payload).replace(
+    /\s+/g,
+    ""
+  );
+  
+  // Step 5: Create the hash message to validate
+  const concatenated_msg = Buffer.from(
+    payload_without_spaces_or_lines + time,
+    "utf-8"
+  );
+  
+  // Step 6: Get the organization secret key via API (replace with your actual API key)
+  const api_key = "<YOUR_ACCOUNT_API_KEY>";
+  fetch(
+    "https://web.moneyhash.io/api/v1/organizations/get-webhook-signature-key/",
+    {
+      method: "GET",
+      headers: { "X-Api-Key": api_key },
+    }
+  )
+    .then((key_response) => {
+      if (key_response.status === 200) {
+        return key_response.json();
+      } else {
+        throw new Error("Failed to retrieve the organization secret key.");
+      }
+    })
+    .then((keyData) => {
+      const organization_key = keyData.data.webhook_signature_secret;
+  
+      // Step 7: Calculate the signature
+      const digest = crypto
+        .createHmac("sha256", organization_key)
+        .update(concatenated_msg.toString())
+        .digest("hex");
+  
+      // Step 8: Compare the signatures
+      const is_valid = digest === signature_v2;
+  
+      if (is_valid) {
+        console.log("Signature is valid. The event is received from MoneyHash.");
+      } else {
+        console.log(
+          "Signature is not valid. The event may be tampered with or invalid."
+        );
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  ```
+  
+  Updatedover 2 years ago
+  
+  * * *
+  
+  Did this page help you?
+  
+  Yes
+  
+  No
+  
+  Copy Page
+  --- End Content ---
+
+Webhook Signature Generation | Welcome to cash-app Documentation
+  URL: https://developers.cash.app/cash-app-pay-partner-api/guides/technical-guides/webhooks/webhook-signature-generation
+  ## Pre-work
+```
+curl --location 'https://sandbox.api.cash.app/management/v1/webhook-endpoints' \
+   --header 'Accept: application/json' \
+   --header 'Authorization: Client CASH_APP_CLIENT_ID API_KEY' \
+   --header 'X-Region: PDX' \
+   --header 'X-Signature: sandbox:skip-signature-check' \
+   --header 'Content-Type: application/json' \
+   --data '{
+    "webhook_endpoint": {
+         "event_configurations": [\
+       {\
+         "event_type": "grant.created",\
+         "api_version": "v1"\
+       },\
+       {\
+         "event_type": "grant.status.updated",\
+         "api_version": "v1"\
+       }\
+     ],
+         "delivery_timeout": 10000,
+         "api_key_id": "KEY_*",
+         "url": "<webhook_url>",
+         "reference_id": "reference_id"
+    },
+    "idempotency_key": "idempotency_key"
+}'
+```
+
+```
+curl --location 'https://sandbox.api.cash.app/management/v1/webhook-endpoints' \
+   --header 'Authorization: Client CASH_APP_CLIENT_ID API_KEY' \
+   --header 'Accept: application/json' \
+   --header 'X-Region: PDX' \
+   --header 'X-Signature: sandbox:skip-signature-check'
+```
+
+## Verify the webhook event payload
+2. **Construct raw signature in canonical form:**
+   - Hash event body
+
+  --- Content ---
+  For AI agents: a documentation index is available at the root level at /llms.txt. Append /llms.txt to any URL for a page-level index, or .md for the markdown version of any page.
+  
+  A webhook signature is a cryptographic hash used to verify the authenticity and integrity of webhook requests. It ensures that the request comes from a trusted source and has not been tampered with.
+  
+  Cash App Pay uses webhooks for the following events:
+  
+  | Event Type | Trigger |
+  | --- | --- |
+  | customer.created | When a Cash App user approves a client’s Cash App Pay request for the first time. |
+  | customer.deleted | When a customer account is deleted by Cash App. |
+  | customer.updated | When a customer updates their Cashtag. |
+  | customer\_request.state.updated | When a customer request’s state is updated. This is typically caused by a customer approving or declining the request. |
+  | dispute.created | When a dispute is created. This happens when a customer files a dispute for a payment collected by a merchant. |
+  | dispute.state.updated | When a disputed status changes due to action taken by Block or the partner. |
+  | grant.created | When a grant is created. This happens when a customer request is approved. |
+  | grant.status.updated | When a grant’s status is updated. The status change can occur under these conditions:<br>• An API client-initiated action to create a payment or revoke a grant<br>• A customer revoking an extended-use grant |
+  | merchant.status.updated | When a merchant’s status is updated. |
+  | payment.status.updated | When a payment status is updated. The status change can occur under these conditions:<br>• An API client-initiated action to void or capture the payment<br>• A payment auto-voiding after 7 days of not being captured |
+  | refund.status.updated | When a refund status is updated. The status change can occur under these conditions:<br>• An API client-initiated action to void or capture the refund<br>• A refund auto-voiding after 7 days of not being captured |
+  
+  For all events, the webhook needs a signature for security and verification purposes. Webhook signatures help:
+  
+  - Prevent spoofing – They ensure only trusted sources can send webhooks
+  - Detect tampering – If the payload is altered, the signature will not match
+  - Add security – The signature works as an additional layer of protection alongside HTTPS.
+  
+  ## Pre-work
+  
+  Before you can receive and act on webhooks, you need to do the following:
+  
+  1. Set up a webhook endpoint and an associated URL. The endpoint must allow POST requests with content-type = application/json.
+  2. Create a Webhook endpoint using the [Create Webhook API](https://developers.cash.app/cash-app-pay-partner-api/api-reference/management-api/create-webhook-endpoint):
+  
+  
+  
+  ```
+  curl --location 'https://sandbox.api.cash.app/management/v1/webhook-endpoints' \
+     --header 'Accept: application/json' \
+     --header 'Authorization: Client CASH_APP_CLIENT_ID API_KEY' \
+     --header 'X-Region: PDX' \
+     --header 'X-Signature: sandbox:skip-signature-check' \
+     --header 'Content-Type: application/json' \
+     --data '{
+      "webhook_endpoint": {
+           "event_configurations": [\
+         {\
+           "event_type": "grant.created",\
+           "api_version": "v1"\
+         },\
+         {\
+           "event_type": "grant.status.updated",\
+           "api_version": "v1"\
+         }\
+       ],
+           "delivery_timeout": 10000,
+           "api_key_id": "KEY_*",
+           "url": "<webhook_url>",
+           "reference_id": "reference_id"
+      },
+      "idempotency_key": "idempotency_key"
+  }'
+  ```
+  
+  3. Ask your Cash App Pay Partner Engineering contact to allowlist the webhook URL.
+  4. Verify that your webhook is approved by querying the [Webhook Events API](https://developers.cash.app/cash-app-pay-partner-api/api-reference/management-api/list-webhook-events):
+  
+  
+  
+  ```
+  curl --location 'https://sandbox.api.cash.app/management/v1/webhook-endpoints' \
+     --header 'Authorization: Client CASH_APP_CLIENT_ID API_KEY' \
+     --header 'Accept: application/json' \
+     --header 'X-Region: PDX' \
+     --header 'X-Signature: sandbox:skip-signature-check'
+  ```
+  
+  
+  ## Verify the webhook event payload
+  
+  To verify a webhook event payload with the HMAC value, follow these steps:
+  
+  1. **Retrieve the webhook event signature:**
+     - Retrieve the event signature from the `x-Signature` header provided in the webhook.
+  2. **Construct raw signature in canonical form:**
+     - Get event method (e.g. POST)
+     - Get the event handler path
+     - Get the host
+     - Construct headers with format: `{lowercase(name)}:{strip(value)}\n`
+     - Hash event body
+     - Concatenate raw signature with format:`${method}\n${path}\n${headers}\n${bodyDigest}`
+  3. **Generate HMAC-SHA-256 value:**
+     - Create HMAC value using the raw signature and the API secret corresponding to API key utilities to create the webhook
+     - Use a constant-time cryptographic library to generate the signature to prevent timing attacks
+  4. **Compare the generated signature with the received signature:**
+     - Compare the computed signature against the `x-signature` header value
+     - If both signatures match, then the request is verified as legitimate
+     - If they don’t match, reject the request
+  
+  The API secret is only available when a Webhook is created through Cash App Pay APIs. If you lose the API secret, then update the Webhook with a new API key.
+  
+  ### Code sample:
+  
+  ```
+  const express = require('express');
+  const crypto = require('crypto');
+  const app = express();
+  
+  app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
+  
+  // Your API credentials
+  const CLIENT_ID = 'CAS-CI_*';
+  const API_KEY = 'KEY_*'; // API key used to create the webhook.
+  const API_SECRET = 'CASH_*'; // API secret generated when webhook was created.
+  
+  function verifyWebhookSignature(req) {
+  
+   // Step 1: Retrieve signature from Webhook x-signature header.
+   const signatureHeader = req.headers['x-signature'];
+   if (!signatureHeader) return false;
+  
+   // Extract received signature (removing "V1 " prefix)
+   const [version, receivedSignature] = signatureHeader.split(' ');
+   if (version !== 'V1' || !receivedSignature) return false;
+  
+   // Step 2: Construct the raw signature in canonical form.
+   const method = 'POST';
+   const path = '/';
+   const host = req.headers['host'];
+   const headers = 'accept:*/*' + '\nauthorization:Client ' + CLIENT_ID + ' ' + API_KEY + '\ncontent-type:application/json; charset=utf-8' + '\nhost:' + host;
+   const bodyDigest = crypto
+    .createHash('sha256')
+    .update(req.rawBody, 'utf8')
+    .digest('hex');
+   const rawSignature = `${method}\n${path}\n${headers}\n${bodyDigest}`;
+  
+   // Step 3: Create HMAC SHA-256 value.
+   const expectedSignature = crypto
+    .createHmac('sha256', API_SECRET)
+    .update(rawSignature)
+    .digest('hex');
+  
+   // Step 4: Assert recieved signature with expected signature.
+   const receivedBuffer = Buffer.from(receivedSignature, 'hex');
+   const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+   return crypto.timingSafeEqual(receivedBuffer, expectedBuffer);
+  }
+  
+  // Webhook endpoint
+  app.post('*', (req, res) => {
+   if (!verifyWebhookSignature(req)) {
+       return res.status(403).send("Invalid signature");
+   }
+  
+   console.log("✅ Webhook verified:", req.body);
+   res.status(200).send("Webhook received");
+  });
+  
+  app.listen(80, () => {
+   console.log('Webhook server listening on port 80');
+  });
+  ```
+  
+  Ask AI
+  
+  Assistant
+  
+  Responses are generated using AI and may contain mistakes.
+  
+  Hi, I'm an AI assistant with access to documentation and other content.
+  
+  Tip: You can toggle this pane with
+  
+  `⌘`
+  
+  +
+  
+  `/`
+  --- End Content ---
+
+Creating and verifying HMAC signature in Zapier for Allpay ...
+  URL: https://www.youtube.com/watch?v=KKq3yuIdXyc
+  Demonstration of working with an Allpay webhook and verifying the HMAC signature (Hash-based Message Authentication Code) generated using the ...
+
+  --- Content ---
+  ![Thumbnail (1920x1080)](https://i.ytimg.com/vi/KKq3yuIdXyc/maxresdefault.jpg)
+  # [Creating and verifying HMAC signature in Zapier for Allpay webhook](https://www.youtube.com/watch?v=KKq3yuIdXyc)
+  
+  **Visibility**: Public
+  **Uploaded by**: [Allpay](https://www.youtube.com/@allpay-israel)
+  **Uploaded at**: 2025-05-29
+  **Published at**: 
+  **Length**: 21:05
+  **Views**: 134
+  **Likes**: 1
+  **Category**: Science & Technology
+  
+  ## Description
+  
+  ```
+  Demonstration of working with an Allpay webhook and verifying the HMAC signature (Hash-based Message Authentication Code) generated using the SHA256 algorithm via a custom JavaScript block in Zapier’s Code module.
+  
+  Full documentation: https://www.allpay.co.il/en/help/webhooks
+  
+  00:00 Creating a webhook and testing it using Google Sheets
+  06:03 Configuring the script to verify the signature
+  15:28 Saving parameters from the Raw Body
+  ```
+  
+  ## Transcript
+  
+  We will now test the web
+  hook. Not so much the web hook itself,
+  but rather the part called web hook
+  security. To learn through Zapia or any
+  other system and in general learn to
+  verify the web hook that is to check the
+  signature that all pay sends to ensure
+  the authenticity of the request.
+  What do we have? We have an Alpe account
+  and we have
+  Zapia. I will use it but in principle
+  other similar systems work
+  similarly. We have a file Google Sheets
+  where we will upload information about
+  the received hook. First in All Pay, we
+  will create a new payment link. We will
+  test hooks on payment links. They also
+  work with
+  integrations. Let's create a payment
+  link that costs for example
+  555
+  shekels. And here we need to add a web
+  hook for it. That is all payments that
+  go through this payment link information
+  about them will be forwarded to the web
+  hook. We will take the address of the
+  web hook here and create a new one.
+  record. So we don't need a
+  co-pilot here. We will create a trigger.
+  Our trigger will be a web
+  hook. Triggered
+  event catch hook and catch raw hook. We
+  will receive raw hook because we need
+  the data that comes to us. Uh so the
+  hook is in a in an unchanged form that
+  is we will pass them ourselves. So I
+  choose catch raw hook and accordingly
+  click
+  continue. Zapia gives us the address to
+  which the web hook will be sent. We
+  insert this address here. We create a
+  payment
+  link. So let's now make a test payment.
+  I believe test mode is activated for
+  payment
+  links. Yes. So now we will make a
+  payment with a test card. We can see
+  that the web hook is activated for this
+  specific link. So it will be sent and a
+  gray label will appear. And now we will
+  go to the payment page and make a
+  payment with the test
+  card. Pay payment
+  successful. Okay.
+  And now let's listen here to what has
+  come in. Here it is this
+  request and here accordingly the raw
+  data this is what the web hook sends us.
+  This can also be checked here on the
+  payment screen. Here it is our payment.
+  If we click here on label web hook we
+  will see what was sent. That is all pay
+  made a post request to this web hook
+  address with the following contents.
+  Here is all the payment information.
+  What the payment is for, the amount, the
+  client's name, email, and so on. There
+  are also empty lines here. There is a
+  link to the electronic receipt because
+  on this account, it is connected the
+  function of creating electronic
+  receipts. And most importantly, there is
+  a signature sign present here, which
+  means this signature was made on the all
+  pay side. And this signature was
+  executed using the web hook secret key
+  which was provided to us issued a
+  payment link when the hook was created
+  that is with the help of this
+  key. Let's first
+  we let's complete the chain on Zapier
+  continue with selected record and what
+  are we going to do? Let's upload this
+  information to Google Sheets.
+  So we just make sure that this hook
+  works. Action event. We will create a
+  row. I already have my Google account
+  connected here. My Google account. Next,
+  let's choose where we will create the
+  file on Google Drive.
+  The file is called Zapier output. Here
+  it is. This Google Sheets file. There
+  are only one column is named params
+  meaning we will never mind just a random
+  name. You will see why exactly later. We
+  are uploading to the first sheet and
+  here it detected it this params column
+  and accordingly we will in it upload
+  these raw raw body files that we receive
+  through the hook.
+  Continue.
+  Publish. Okay. Now theoretically this
+  hook should have been triggered. If I
+  make another payment using this link,
+  let's do just that.
+  The payment was successful and now
+  another request should have come to
+  Zapia through this hook and Zapia should
+  have caught it and accordingly sent it
+  to Google Sheets filling this column
+  with the
+  parameter. Here it is. It appeared
+  payment for 555
+  shekels. Now what do we want?
+  The key thing is we need to make sure
+  that the information is not transmitted
+  to Google Sheets. If we don't uh this
+  hook did not pass
+  verification, we need to make sure that
+  our signatures match that the signature
+  that went with this hook is authentic.
+  Meaning that a request was not sent to
+  our hook by fraudsters or a man in the
+  middle. Someone trying to forge or
+  imitate a payment from all pay and pass
+  us information that there was a
+  successful payment let's say for some
+  service for sewing and tailoring courses
+  thereby imitating a payment from all
+  pay.
+  So what are we going to do? We will
+  process this incoming hook according to
+  this scheme. That is we will take
+  parameters from it. We will select the
+  empty parameters from it. The remaining
+  parameters we will sort
+  alphabetically. Then we will take all
+  the values of these parameters and
+  concatenate them into a string.
+  And then we will add our secret key to
+  this string and sign this string. That
+  is we will process it with an encryption
+  algorithm meaning we hash it.
+  Consequently we will get at the
+  output I a string that is a hash of 64
+  characters long and then our task is to
+  compare the hash we obtained with this
+  with this hash accordingly with the
+  given with this signature. If they
+  match, it means that this request was
+  authentic. Accordingly, we assume that
+  the key um the secret key is known only
+  to all pay and only to us. It is not
+  known to fraudsters. So only we can use
+  this key to simulate uh in general
+  perform a check of this request. All
+  these steps are executed by this script
+  which is located here. So what will we
+  do? We will take this
+  script south and we will add here
+  um step we will add a block of type code
+  here. In this sense, Zapia is convenient
+  because they really allow you to insert
+  this code
+  uh run
+  JavaScript that is we will execute
+  JavaScript code and what will we do? We
+  will um enter our pums here.
+  We will pass our raw body into the
+  variable
+  params. Parameters. What are params?
+  Params are
+  um actually these parameters here they
+  are from which we will later form a
+  string. I insert the script here and we
+  need to replace it in this script. our
+  secret key for this
+  hook. Let's take the secret key from the
+  payment
+  link and insert it
+  here.
+  Okay, that's all. So, we will have our
+  raw body params and our secret key as
+  input and then it will the follow the
+  algorithm described in the documentation
+  that I mentioned. These raw body
+  elements will be parsed and a string
+  will be constructed from them. So what
+  will we have as output? We should have
+  our output should be a request
+  signature that is the original signature
+  that came from all pay. We should have
+  uh the base string meaning the string we
+  will hash ourselves and accordingly we
+  should have this hash that is this is
+  our signature which we will create and
+  then we will compare our signature which
+  we created with the signature that came
+  to us from all pay
+  continue let's make sure we are working
+  with the second request now we Find new
+  records. Here it is our second request.
+  The second payment we
+  sent. Continue with selected
+  record. And here continue. And now we
+  will launch. So make sure this hook.
+  Yes. E51 key. Yes. Yes. Yes. Yes. Yes.
+  Press
+  continue. And here again retest step.
+  Okay. Um, now we see that this signature
+  came to us from the original all pay
+  request. Let's take a look at it
+  directly on all pay
+  side. Oops. Web hook. There it is. 43.
+  Uu. And zero. It came to us in the same
+  form on our web hook. Here it is. 43. A
+  Z.
+  It took it from the raw
+  data. Then we constructed a string from
+  these parameters that came to us. We
+  constructed a string. To this string, we
+  added our API secret key. The secret
+  key. And then we hashed this string
+  using an encryption algorithm. And we
+  got this
+  signature. The signatures match which
+  means the request is authentic.
+  Okay. Now click
+  continue. Now what do we
+  need? Accordingly, another record has
+  just been created
+  here. South
+  continue. Well, if I click retest, then
+  probably another entry will be made.
+  Let's click
+  retest. Yes, here it
+  appeared. What do we need?
+  We now need to add a step here where we
+  will verify the signatures and either
+  create an entry in Google Sheets if the
+  signatures match or not created. We need
+  to create a filter
+  here. This filter only continue if
+  choose
+  field. If we have from here run
+  JavaScript, we have
+  here request signature. Exactly.
+  matches that is completely
+  matches with the signature that we
+  created ourselves with verified
+  signature. In that case, this chain will
+  continue and a ra will be created in
+  Google Sheets. I click
+  continue. Well, that is to say it
+  checked the previous request, confirmed
+  that indeed an entry in Google Sheets
+  would have been created because the
+  condition was met. So, the chain would
+  have continued and we press um well,
+  let's do it here. Although we don't need
+  a retest anymore. We click continue.
+  Continue. Continue. Publish.
+  Accordingly, we have published our
+  request. Now, we can make another
+  payment. Let's do an example now so you
+  can be sure. It will be easier for us if
+  we have a different amount here. Let's
+  say
+  444. And then we'll understand that
+  indeed we are working with that very
+  payment. We set a different name. It
+  will be easier for us to navigate. Test.
+  We make a payment.
+  Well, and we assume that this hook has
+  now come
+  here. JavaScript took this data from
+  this hook. It um created a string from
+  it, encoded this string, checked that
+  the signatures match, and transferred
+  the necessary information to Google
+  Sheets that everything is
+  fine. Let's wait.
+  Let's see what we have
+  here. Web hook. The web hook was
+  sent.
+  Uhhuh. Yes. Nothing appeared yet. Ah,
+  now it appeared. It appeared. Here is
+  our payment for 444 shekels from Maria
+  Evanova.
+  So this scheme works and accordingly you
+  can continue to work with this raw data
+  as you see fit. You can dstructure them.
+  You can extract the client's name from
+  them. This in principle if you don't
+  know how to do it. I will show you an
+  example. Now if you work with web hooks
+  you probably know this. Let's for
+  instance take the payment amount from
+  here. Let's add another column here
+  which will be called amount.
+  Let's create a column that will be
+  called name. We will transmit the
+  client's name here. Let's say client
+  name. Let's just do it like this. And
+  now I will delete all this data from
+  here. And we can do this through
+  JavaScript. Here we can do it using the
+  example of how the original signature
+  which comes from the request is
+  currently saved. in
+  particular. So it will be easier for me
+  of course to copy and paste it here. So
+  we have here accordingly the request
+  signature. This is the original
+  signature that we are saving. We can
+  save other parameters using the same
+  scheme. Let's also save the amount
+  parameter and we will then call it I
+  think amount in raw data. Let's see how
+  it
+  looks. It looks
+  like amount accordingly.
+  We will save the amount and the client's
+  name into the variable client.
+  Client
+  name and this I believe is also client
+  name. Client
+  name. And now we also need these two
+  parameters
+  um passed to the
+  output. We can add them here in the same
+  way accordingly.
+  Amount an
+  amount and here we have client
+  name. Let's do it like this.
+  conventions here are
+  dash with Zapia. How it works with
+  underscores, I'm not completely sure.
+  So, we'll do it like this. And now I'll
+  insert this script back into
+  Zapia. And we need to make sure that we
+  have so continue that we
+  have Google Sheets. It's all these
+  parameters.
+  Uh so let's
+  now where is our retest step
+  here. Configure. Continue. Continue.
+  Continue. Retest step. Retest step.
+  So
+  he should see these columns here. Ah, we
+  just did a retest. That's
+  great. Here. I always forget. Uh
+  probably here. There it is. Refresh
+  fields. Yes, refresh fields. There it
+  loaded for you the corresponding
+  ones columns. And now we need from the
+  script. So he doesn't see it here yet
+  these parameters. Let's also restart the
+  Zapia script.
+  Now continue. And let's also do a retest
+  step. And it should give us at the
+  output. Here it gives us at the output
+  now these parameters as well amount and
+  client name. It extracted them from the
+  line I the necessary
+  values. Now we will these values
+  here to pass. This is our amount. We
+  will save the amount and save the client
+  name. Client name. Wonderful. We save
+  it.
+  And let's do the retest step
+  now. And now here there it is. They are
+  saved. This is our complete params. Yes,
+  our amount value is saved here. And your
+  name is saved. So this is how you can
+  work with
+  parameters. Uh basically that's it.
+  Thank you for watching.
+  Enjoy. Web hooks in the old pay app.
+  They are available for payment links as
+  well both for integration here in the
+  integration section. Yes, you can add
+  integrations accordingly. If you have
+  payments coming from a website, from
+  WordPress, from any platform to Alpe,
+  you can use Alpe as such an intermediary
+  link to further transfer information to
+  the web hooks that you need. That is
+  this opens up very very broad
+  possibilities.
+  --- End Content ---
+
+How to Verify a Webhook Signature (HMAC SHA256)
+  URL: https://webhookrelay.com/blog/verify-webhook-signature/
+  ## [How webhook signing works](https://webhookrelay.com/blog/verify-webhook-signature/#how-webhook-signing-works)
+When a provider sends a webhook, it computes an **HMAC** — a hash of the request body mixed with a secret only you and the provider know — and puts the result in a header.
+
+  --- Content ---
+  ![Stripes](https://webhookrelay.com/images/stripes.svg)
+  
+  Your webhook endpoint is a public URL. That means anyone who discovers it can send it requests — including fake ones. **Signature verification** is how you make sure a webhook genuinely came from the provider and wasn't tampered with in transit. Skip it, and an attacker could forge a `payment.succeeded` or `subscription.created` event.
+  
+  This guide explains how HMAC signing works, how the major providers implement it, and how to verify it correctly.
+  
+  ## [How webhook signing works](https://webhookrelay.com/blog/verify-webhook-signature/\#how-webhook-signing-works)
+  
+  When a provider sends a webhook, it computes an **HMAC** — a hash of the request body mixed with a secret only you and the provider know — and puts the result in a header. You recompute the same HMAC on your side and compare. If they match, the body is authentic and unmodified, because an attacker can't produce a valid hash without the secret.
+  
+  The steps are always the same:
+  
+  1. Read the **raw** request body (the exact bytes, not re-serialized JSON).
+  2. Compute `HMAC-SHA256(secret, rawBody)`.
+  3. Compare it to the signature header using a **constant-time** comparison.
+  
+  ## [How the major providers do it](https://webhookrelay.com/blog/verify-webhook-signature/\#how-the-major-providers-do-it)
+  
+  | Provider | Header | Algorithm | Notes |
+  | --- | --- | --- | --- |
+  | GitHub | `X-Hub-Signature-256` | HMAC-SHA256, hex, prefixed `sha256=` | Strip the `sha256=` prefix before comparing |
+  | Stripe | `Stripe-Signature` | HMAC-SHA256 over `timestamp.body` | Header contains `t=` and `v1=`; check the timestamp to prevent replays |
+  | Shopify | `X-Shopify-Hmac-Sha256` | HMAC-SHA256, **base64** | Encode your digest as base64, not hex |
+  | Slack | `X-Slack-Signature` | HMAC-SHA256 over `v0:timestamp:body` | Versioned signing string |
+  | Square | `x-square-hmacsha256-signature` | HMAC-SHA256, base64 | Signs the **notification URL + raw body** — the URL must match exactly |
+  | LINE | `x-line-signature` | HMAC-SHA256, base64 | Channel secret over the raw body; never deserialize first |
+  | Airwallex | `x-signature` | HMAC-SHA256, hex | Signs `x-timestamp` (milliseconds) **+** body; prepend the timestamp |
+  | MyFatoorah | `MyFatoorah-Signature` | HMAC-SHA256, base64 | Signs a canonical `Key=Value` string per event, **not** the raw body |
+  
+  The last four are worth a closer look because each breaks the "just HMAC the raw body" assumption: Square prepends your endpoint URL, Airwallex prepends a millisecond timestamp, and MyFatoorah signs a hand-built canonical string instead of the body at all. Get those details wrong and verification silently fails.
+  
+  ## [A Node.js example](https://webhookrelay.com/blog/verify-webhook-signature/\#a-nodejs-example)
+  
+  ```js
+  const crypto = require('crypto')
+  
+  // rawBody must be the exact bytes you received (Buffer or string), not JSON.parse'd output.
+  function verifyGitHub(rawBody, signatureHeader, secret) {
+    const digest = 'sha256=' + crypto
+      .createHmac('sha256', secret)
+      .update(rawBody)
+      .digest('hex')
+  
+    // constant-time comparison avoids timing attacks
+    const a = Buffer.from(digest)
+    const b = Buffer.from(signatureHeader || '')
+    return a.length === b.length && crypto.timingSafeEqual(a, b)
+  }
+  ```
+  
+  For Shopify, swap `.digest('hex')` for `.digest('base64')` and drop the `sha256=` prefix. For Stripe, build the signed payload as `${timestamp}.${rawBody}` and compare against the `v1` value.
+  
+  ## [Test your verification with a free tool](https://webhookrelay.com/blog/verify-webhook-signature/\#test-your-verification-with-a-free-tool)
+  
+  Before wiring this into production, confirm your inputs line up. Paste the raw body, the secret and the expected signature into the free [HMAC generator & signature verifier](https://webhookrelay.com/hmac-verification/) — it computes the HMAC for SHA256, SHA512, SHA1 or MD5 and tells you whether it matches the provider's value. It's the fastest way to rule out "is my secret right?" before debugging code.
+  
+  ## [Provider-specific verifiers](https://webhookrelay.com/blog/verify-webhook-signature/\#provider-specific-verifiers)
+  
+  The generic verifier works for any plain-HMAC provider, but for the ones below we built dedicated tools that bake in that provider's exact scheme — the right header, encoding, timestamp/URL handling and secret format — plus copy-paste Node.js and Python:
+  
+  - [Verify Stripe webhook signatures](https://webhookrelay.com/verify-stripe-webhook-signature/) — `Stripe-Signature`, timestamp + body
+  - [Verify GitHub webhook signatures](https://webhookrelay.com/verify-github-webhook-signature/) — `X-Hub-Signature-256`, hex
+  - [Verify Shopify webhook signatures](https://webhookrelay.com/verify-shopify-webhook-signature/) — `X-Shopify-Hmac-Sha256`, base64
+  - [Verify Slack webhook signatures](https://webhookrelay.com/verify-slack-webhook-signature/) — `v0:timestamp:body`
+  - [Verify Square webhook signatures](https://webhookrelay.com/verify-square-webhook-signature/) — `x-square-hmacsha256-signature`, signs URL + body
+  - [Verify LINE webhook signatures](https://webhookrelay.com/verify-line-webhook-signature/) — `x-line-signature`, channel secret
+  - [Verify Airwallex webhook signatures](https://webhookrelay.com/verify-airwallex-webhook-signature/) — `x-signature` \+ `x-timestamp`
+  - [Verify MyFatoorah webhook signatures](https://webhookrelay.com/verify-myfatoorah-webhook-signature/) — canonical `Key=Value` string
+  - [Verify Twilio webhook signatures](https://webhookrelay.com/verify-twilio-webhook-signature/) — URL + sorted params, HMAC-SHA1
+  - [Verify Standard Webhooks signatures](https://webhookrelay.com/verify-standard-webhooks-signature/) — Svix/OpenAI/Anthropic
+  - [All providers →](https://webhookrelay.com/verify-webhook-signature/)
+  
+  ## [Common mistakes](https://webhookrelay.com/blog/verify-webhook-signature/\#common-mistakes)
+  
+  - **Verifying the parsed body.** Frameworks often parse JSON before you see it; re-serializing changes the bytes and breaks the signature. Capture the **raw** body.
+  - **Using `==` to compare.** Use a constant-time comparison (`crypto.timingSafeEqual`) to avoid timing attacks.
+  - **Wrong encoding.** GitHub is hex, Shopify is base64 — mixing them up fails silently.
+  - **Ignoring the timestamp.** For Stripe/Slack, reject signatures with an old timestamp to prevent replay attacks.
+  - **Forgetting the secret rotates.** Support more than one valid secret during rotation.
+  
+  ## [Where this fits](https://webhookrelay.com/blog/verify-webhook-signature/\#where-this-fits)
+  
+  Signature verification is one item on a longer list — see [webhook security best practices](https://webhookrelay.com/blog/webhook-security/) for the full checklist, and [how to test webhooks](https://webhookrelay.com/blog/how-to-test-webhooks/) to capture real signed payloads to test against.
+  
+  Need to verify a signature right now? [Open the HMAC verifier](https://webhookrelay.com/hmac-verification/), or [inspect a live webhook](https://webhookrelay.com/webhook-bin/) to grab a real signature header.
+  --- End Content ---
+
+Generate a Message Signature / Hash
+  URL: https://docs.fiserv.dev/public/docs/payments-generate-a-hash
+  # Hosted Payment Page   [Skip link to Hosted Payment Page](https://docs.fiserv.dev/public/docs/payments-generate-a-hash#hosted-payment-page)
+## 📘  Payment Method Options
+#### Examples   [Skip link to Examples](https://docs.fiserv.dev/public/docs/payments-generate-a-hash#examples)
+```javascript
+let chargetotal = "13.00";
+let currency =	"978";
+let paymentMethod =	"M";
+let responseFailURL = "https://mywebshop/response_failure.jsp";
+let responseSuccessURL = "https://mywebshop/response_success.jsp";
+let sharedsecret = "sharedsecret";
+let storename =	"10123456789";
+let timezone = "Europe/Berlin";
+let transactionNotificationURL = "https://mywebshop/transactionNotification";
+let txndatetime = "2020:04:17-17:32:41";
+let txntype = "sale";
+let stringToExtendedHash = `${chargetotal}|${currency}|${paymentMethod}|${responseFailURL}|${responseSuccessURL}|${storename}|${timezone}|${transactionNotificationURL}|${txndatetime}|${txntype}`;
+var hashExtended = CryptoJS.HmacSHA256(stringToExtendedHash, sharedsecret);
+
+<input type="hidden" name="hashExtended" value="8CVD62a88mwr/Nfc+t+CWB+XG0g5cqmSrN8JhFlQJVM="/>
+```
+
+```php
+<?php
+    // Timezeone needs to be set
+    date_default_timezone_set('Europe/Berlin');
+    $dateTime = date("Y:m:d-H:i:s");
+
+    function getDateTime() {
+        global $dateTime;
+        return $dateTime;
+    }
+
+    /*
+        Function that calculates the hash of the following parameters:
+        - Store Id
+        - Date/Time(see $dateTime above)
+        - chargetotal
+        - currency (numeric ISO value)
+        - shared secret
+    */
+    function createExtendedHash($chargetotal, $currency) {
+        // Please change the store Id to your individual Store ID
+        $storeId = "10123456789";
+        // NOTE: Please DO NOT hardcode the secret in that script. For example read it from a database.
+        $sharedSecret = "sharedsecret";
+        $separator = "|";
+
+        $stringToHash = $storeId . $separator .  getDateTime() . $separator . $chargetotal . $separator . $currency;
+
+        $hashSHA256 = CryptoJS.HmacSHA384(hashWithAllStrings, sharedSecret);
+        $hash = CryptoJS.enc.Base64.stringify($hashSHA256);
+
+        return $hash;
+    }
+?>
+```
+
+```html
+<!-- google CryptoJS for HMAC -->
+<script LANGUAGE=JScript RUNAT=Server src="script/cryptoJS/crypto-js.min.js"></script>
+<script LANGUAGE=JScript RUNAT=Server src="script/cryptoJS/enc-base64.min.js"></script>
+<script LANGUAGE=JScript RUNAT=Server>
+      var today = new Date();
+      var txndatetime = today.formatDate("Y:m:d-H:i:s");
+
+      /*
+          Function that calculates the hash of the following parameters:
+  - chargetotal
+  - currency
+  - paymentMethod
+  - responseFailURL
+  - responseSuccessURL
+  - sharedsecret
+  - storename
+  - timezone
+  - transactionNotificationURL
+  - txndatetime
+  - txntype
+      */
+
+      function createExtendedHash(chargetotal, currency) {
+          // Please change the storename to your individual Store Name
+          var storename = "10123456789";
+          // NOTE: Please DO NOT hardcode the secret in that script. For example read it from a database.
+          var stringToExtendedHash = chargetotal|currency|paymentMethod|responseFailURL|responseSuccessURL|storename|timezone|transactionNotificationURL|txndatetime|txntype;
+
+          var hashHMACSHA256 = CryptoJS.HmacSHA256(stringToExtendedHash, sharedSecret);
+      var extendedhash = CryptoJS.enc.Base64.stringify(hashHMACSHA256);
+
+          Response.Write(extendedhash);
+      }
+
+      function getDateTime() {
+          Response.Write(txndatetime);
+      }
+</script>
+```
+
+  --- Content ---
+  # Introduction   [Skip link to Introduction](https://docs.fiserv.dev/public/docs/payments-generate-a-hash\#introduction)
+  
+  **All** requests to our payment integrations (whether via the API or hosted solutions) require the use of a hash, also referred to as a message signature. This makes use of not only your api key, but your api secret (also available in the portal) to add an extra layer of security to requests and prevent man-in-the-middle attacks.
+  
+  The high-level idea is that for every request, you must:
+  
+  - Combine your api key and some request data into a single string
+  - Hash the string using the HMAC SHA256 method and your secret key
+  - Add the hash to your request
+  
+  The rest of this page goes into step-by-step detail on how to do this for each integration method.
+  
+  # Payments API, Checkout API & Payment Links API   [Skip link to Payments API, Checkout API & Payment Links API](https://docs.fiserv.dev/public/docs/payments-generate-a-hash\#payments-api-checkout-api--payment-links-api)
+  
+  ## Message Signature Header   [Skip link to Message Signature Header](https://docs.fiserv.dev/public/docs/payments-generate-a-hash\#message-signature-header)
+  
+  When calling the **Payments API**, **Checkouts** and **Payment Links** endpoints, this is the method that must be used; generating the hash and attaching it as the `Message-Signature` header along with the `Timestamp` and `Client-Request-Id` headers.
+  
+  For full detail on how to do this, our best resource is the following recipe:
+  
+  💳
+  
+  Generate message signature (v2)
+  
+  Open Recipe
+  
+  # Hosted Payment Page   [Skip link to Hosted Payment Page](https://docs.fiserv.dev/public/docs/payments-generate-a-hash\#hosted-payment-page)
+  
+  ## hashExtended form parameter   [Skip link to hashExtended form parameter](https://docs.fiserv.dev/public/docs/payments-generate-a-hash\#hashextended-form-parameter)
+  
+  When using the **Hosted Payment Page**, the fields used to generate and pass the has are slightly different to the header above.
+  
+  The hash needs to be calculated using all of the request parameters in ascending order of the parameter names (parameter hashExtended). When you are using the embedded form, there is also an option where you do not need to know the card details (PAN, CVV and Expiry Date) for the hash calculation. This will be managed with a specific setting performed on your store.
+  
+  The request parameters that are not specified in our solution can still be submitted in your request to the Gateway, but they must be excluded from the hash calculation. They will be ignored during processing and returned back in the response. Please contact your local support team if you want to enable this feature.
+  
+  ### Creating the hash   [Skip link to Creating the hash](https://docs.fiserv.dev/public/docs/payments-generate-a-hash\#creating-the-hash)
+  
+  Transaction request values used for the hash calculation:
+  
+  | Field | Example |
+  | --- | --- |
+  | `chargetotal` | 13.00 |
+  | `currency` | 978 |
+  | `paymentMethod` | M |
+  | `responseFailURL` | `https://mywebshop/response_failure.jsp` |
+  | `responseSuccessURL` | `https://mywebshop/response_success.jsp` |
+  | `sharedsecret` | sharedsecret |
+  | `storename` | 10123456789 |
+  | `timezone` | Europe/Berlin |
+  | `transactionNotificationURL` | `https://mywebshop/transactionNotification` |
+  | `txndatetime` | 2022:04:17-17:32:41 |
+  | `txntype` | sale |
+  
+  > ## 📘  Payment Method Options
+  >
+  > Please refer to the Forms fields page in this documentation for the complete [list of values](https://docs.fiserv.dev/public/docs/mandatory-fields)
+  
+  **Step 1**: The `hashExtended` needs to be calculated using all request parameters in ascending order of the parameter names
+  
+  Join the parameters’ values to one string with pipe separator (use only parameters’ values and not the parameters’ names).
+  
+  JavaScript
+  
+  ```javascript
+  let chargetotal = "13.00";
+  let currency =	"978";
+  let paymentMethod =	"M";
+  let responseFailURL = "https://mywebshop/response_failure.jsp";
+  let responseSuccessURL = "https://mywebshop/response_success.jsp";
+  let sharedsecret = "sharedsecret";
+  let storename =	"10123456789";
+  let timezone = "Europe/Berlin";
+  let transactionNotificationURL = "https://mywebshop/transactionNotification";
+  let txndatetime = "2020:04:17-17:32:41";
+  let txntype = "sale";
+  let stringToExtendedHash = `${chargetotal}|${currency}|${paymentMethod}|${responseFailURL}|${responseSuccessURL}|${storename}|${timezone}|${transactionNotificationURL}|${txndatetime}|${txntype}`;
+  ```
+  
+  Note the corresponding hash string does not include `sharedsecret`, which has to be used as the secret key for the HMAC instead.
+  
+  **Step 2**: Pass the created string to the `HMACSHA256` algorithm and using shared secret ('sharedsecret') as a key for calculating the hash value.
+  
+  JavaScript
+  
+  ```javascript
+  var hashExtended = CryptoJS.HmacSHA256(stringToExtendedHash, sharedsecret);
+  ```
+  
+  **Step 3**: Use the value returned by the HMACSHA256 algorithm and submit it to our Gateway in the given form.
+  
+  HTML
+  
+  ```html
+  <input type="hidden" name="hashExtended" value="8CVD62a88mwr/Nfc+t+CWB+XG0g5cqmSrN8JhFlQJVM="/>
+  ```
+  
+  Only HMAC algorithm (i.e.: HMACSHA256, HMACSHA384 or HMACSHA512) is supported for generating the extended request hash.
+  
+  #### Examples   [Skip link to Examples](https://docs.fiserv.dev/public/docs/payments-generate-a-hash\#examples)
+  
+  JavaScriptPHPASP
+  
+  ```javascript
+  let chargetotal = "13.00";
+  let currency =	"978";
+  let paymentMethod =	"M";
+  let responseFailURL = "https://mywebshop/response_failure.jsp";
+  let responseSuccessURL = "https://mywebshop/response_success.jsp";
+  let sharedsecret = "sharedsecret";
+  let storename =	"10123456789";
+  let timezone = "Europe/Berlin";
+  let transactionNotificationURL = "https://mywebshop/transactionNotification";
+  let txndatetime = "2020:04:17-17:32:41";
+  let txntype = "sale";
+  let stringToExtendedHash = `${chargetotal}|${currency}|${paymentMethod}|${responseFailURL}|${responseSuccessURL}|${storename}|${timezone}|${transactionNotificationURL}|${txndatetime}|${txntype}`;
+  var hashExtended = CryptoJS.HmacSHA256(stringToExtendedHash, sharedsecret);
+  
+  <input type="hidden" name="hashExtended" value="8CVD62a88mwr/Nfc+t+CWB+XG0g5cqmSrN8JhFlQJVM="/>
+  ```
+  
+  ```php
+  <?php
+      // Timezeone needs to be set
+      date_default_timezone_set('Europe/Berlin');
+      $dateTime = date("Y:m:d-H:i:s");
+  
+      function getDateTime() {
+          global $dateTime;
+          return $dateTime;
+      }
+  
+      /*
+          Function that calculates the hash of the following parameters:
+          - Store Id
+          - Date/Time(see $dateTime above)
+          - chargetotal
+          - currency (numeric ISO value)
+          - shared secret
+      */
+      function createExtendedHash($chargetotal, $currency) {
+          // Please change the store Id to your individual Store ID
+          $storeId = "10123456789";
+          // NOTE: Please DO NOT hardcode the secret in that script. For example read it from a database.
+          $sharedSecret = "sharedsecret";
+          $separator = "|";
+  
+          $stringToHash = $storeId . $separator .  getDateTime() . $separator . $chargetotal . $separator . $currency;
+  
+          $hashSHA256 = CryptoJS.HmacSHA384(hashWithAllStrings, sharedSecret);
+          $hash = CryptoJS.enc.Base64.stringify($hashSHA256);
+  
+          return $hash;
+      }
+  ?>
+  ```
+  
+  ```html
+  <!-- google CryptoJS for HMAC -->
+  <script LANGUAGE=JScript RUNAT=Server src="script/cryptoJS/crypto-js.min.js"></script>
+  <script LANGUAGE=JScript RUNAT=Server src="script/cryptoJS/enc-base64.min.js"></script>
+  <script LANGUAGE=JScript RUNAT=Server>
+        var today = new Date();
+        var txndatetime = today.formatDate("Y:m:d-H:i:s");
+  
+        /*
+            Function that calculates the hash of the following parameters:
+    - chargetotal
+    - currency
+    - paymentMethod
+    - responseFailURL
+    - responseSuccessURL
+    - sharedsecret
+    - storename
+    - timezone
+    - transactionNotificationURL
+    - txndatetime
+    - txntype
+        */
+  
+        function createExtendedHash(chargetotal, currency) {
+            // Please change the storename to your individual Store Name
+            var storename = "10123456789";
+            // NOTE: Please DO NOT hardcode the secret in that script. For example read it from a database.
+            var stringToExtendedHash = chargetotal|currency|paymentMethod|responseFailURL|responseSuccessURL|storename|timezone|transactionNotificationURL|txndatetime|txntype;
+  
+            var hashHMACSHA256 = CryptoJS.HmacSHA256(stringToExtendedHash, sharedSecret);
+        var extendedhash = CryptoJS.enc.Base64.stringify(hashHMACSHA256);
+  
+            Response.Write(extendedhash);
+        }
+  
+        function getDateTime() {
+            Response.Write(txndatetime);
+        }
+  </script>
+  ```
+  
+  # NEXO Acquirer API   [Skip link to NEXO Acquirer API](https://docs.fiserv.dev/public/docs/payments-generate-a-hash\#nexo-acquirer-api)
+  
+  A similar concept is applied to our NEXO Acquirer API.
+  
+  Please refer to [Nexo encryption and macing](https://docs.fiserv.dev/public/docs/encryption-and-macing#macing-or-make-use-of-message-authentication-code) section for more information.
+  
+  Updated9 months ago
+  
+  * * *
+  
+  Did this page help you?
+  
+  Yes
+  
+  No
+  
+  🦉
+  
+  # Recipe Title
+  
+  Recipe Description
+  
+  ​x
+  
+  ```
+  
+  ```
+  
+  1{"success":true}
+  
+  ## Are you sure?
+  
+  [Contact](https://fiserv.dev/support) [Cookies](https://www.fiserv.com/en/legal/cookie-statement.html) [Privacy Notice](https://fiserv.dev/privacy-notice) [Legal](https://fiserv.dev/legal)
+  
+  Copyright© 2024 Fiserv. All rights reserved.
+  
+  First Data Europe Limited, is a subsidiary of Fiserv, Inc. and is trading as Fiserv. First Data Europe Limited, is a private limited company incorporated in England (Company Number 02012925) with a registered address at Janus House, Endeavour Drive, Basildon, Essex, SS14 3WF. First Data Europe Limited is authorised and regulated by the UK Financial Conduct Authority (FCA Register No. 582703; CCA No. 739230). All trademarks, service marks, and trade names referenced in this material are the property of their respective owners.
+  
+  
+  v1.11
+  
+  Want a quick overview?
+  --- End Content ---

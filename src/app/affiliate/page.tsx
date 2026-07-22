@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion";
 import { Gift, Users, DollarSign, TrendingUp, Copy, Check, ArrowRight } from "lucide-react";
-import { PageShell, PageHeader, PageContent } from "@/components/app/page-shell";
+import { PageHeader, PageContent } from "@/components/app/page-shell";
+import { MarketingShell } from "@/components/marketing/marketing-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
@@ -45,7 +46,7 @@ type Stat = {
 export default function AffiliatePage() {
   const t = useT();
   const [copied, setCopied] = useState(false);
-  const refLink = "https://storeaudit.ai/?ref=youssef";
+  const refLink = "https://convaudit.ai/?ref=youssef";
 
   const copy = () => { navigator.clipboard?.writeText(refLink); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
@@ -57,7 +58,7 @@ export default function AffiliatePage() {
   ];
 
   return (
-    <PageShell>
+    <MarketingShell>
       <PageHeader title={t("affiliate.title")} subtitle={t("affiliate.subtitle")} icon={Gift} />
       <PageContent className="space-y-8">
         {/* Hero */}
@@ -137,6 +138,6 @@ export default function AffiliatePage() {
           <p className="mt-3 text-xs text-muted-foreground">{t("affiliate.noApproval")}</p>
         </div>
       </PageContent>
-    </PageShell>
+    </MarketingShell>
   );
 }

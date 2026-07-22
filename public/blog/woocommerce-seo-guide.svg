@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="WooCommerce SEO guide">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#2d2d44"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="80" y="90" fill="#929292" font-family="system-ui,sans-serif" font-size="14" font-weight="600" letter-spacing="2">CONVAUDIT BLOG � PLATFORMS</text>
+  <text x="80" y="170" fill="white" font-family="system-ui,sans-serif" font-size="46" font-weight="800">WooCommerce</text>
+  <text x="80" y="230" fill="#96588a" font-family="system-ui,sans-serif" font-size="46" font-weight="800">SEO Guide</text>
+  <text x="80" y="290" fill="#929292" font-family="system-ui,sans-serif" font-size="20">WordPress � Schema � Performance � GEO</text>
+  <g transform="translate(650,80)">
+    <rect width="470" height="470" rx="24" fill="#ffffff" opacity="0.04" stroke="#96588a" stroke-opacity="0.35" stroke-width="2"/>
+    <circle cx="235" cy="120" r="60" fill="#96588a" opacity="0.2"/>
+    <text x="235" y="132" text-anchor="middle" fill="#96588a" font-family="system-ui,sans-serif" font-size="36" font-weight="800">W</text>
+    <text x="235" y="220" text-anchor="middle" fill="white" font-family="system-ui,sans-serif" font-size="18" font-weight="700">WordPress + WooCommerce</text>
+    <g transform="translate(60,260)">
+      <rect width="350" height="36" rx="8" fill="#96588a" opacity="0.15"/>
+      <text x="20" y="24" fill="#cccccc" font-family="system-ui,sans-serif" font-size="14">Rank Math / Yoast SEO plugin</text>
+    </g>
+    <g transform="translate(60,310)">
+      <rect width="350" height="36" rx="8" fill="#96588a" opacity="0.15"/>
+      <text x="20" y="24" fill="#cccccc" font-family="system-ui,sans-serif" font-size="14">Product schema + reviews</text>
+    </g>
+    <g transform="translate(60,360)">
+      <rect width="350" height="36" rx="8" fill="#96588a" opacity="0.15"/>
+      <text x="20" y="24" fill="#cccccc" font-family="system-ui,sans-serif" font-size="14">CDN + object caching</text>
+    </g>
+    <g transform="translate(60,410)">
+      <rect width="350" height="36" rx="8" fill="#96588a" opacity="0.15"/>
+      <text x="20" y="24" fill="#cccccc" font-family="system-ui,sans-serif" font-size="14">FAQ blocks for GEO</text>
+    </g>
+  </g>
+</svg>

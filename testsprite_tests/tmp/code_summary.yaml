@@ -1,0 +1,197 @@
+version: "2.0"
+project:
+  name: StorePulse AI
+  description: AI-powered e-commerce audit and optimization platform
+  root: C:\Users\IT\Downloads\GEO
+  local_url: http://localhost:3000
+  port: 3000
+
+tech_stack:
+  frontend:
+    - Next.js 16 App Router
+    - React 19
+    - TypeScript
+    - Tailwind CSS 4
+    - shadcn/ui
+    - Framer Motion
+    - Zustand (language store only)
+  backend:
+    - Next.js API Routes
+    - Supabase Auth + PostgreSQL + RLS
+    - Google Gemini (interpretation/generation)
+    - Firecrawl (scraping)
+    - Kashier (EGP billing)
+    - Upstash Redis (rate limiting)
+    - Resend (email)
+
+auth:
+  provider: Supabase
+  login_urls:
+    - /login
+    - /signup
+    - /auth
+  callback: /auth/callback
+  middleware: src/proxy.ts via src/lib/supabase/middleware.ts
+  test_credentials:
+    email: storepulse.testsprite@gmail.com
+    password: TestSprite!2026
+  notes:
+    - Do NOT use Google OAuth in headless tests
+    - For sign-up tests use unique emails like storepulse.testsprite+<random>@gmail.com
+    - Test user has completed onboarding and one seeded audit
+
+routes:
+  public:
+    - path: /
+      purpose: Marketing landing (AppShell); authenticated users redirect to /dashboard
+    - path: /pricing
+      purpose: Standalone pricing page
+    - path: /features
+      purpose: MVP capabilities catalog
+    - path: /blog
+      purpose: Blog listing
+    - path: /blog/[slug]
+      purpose: Blog post
+    - path: /docs
+      purpose: Documentation placeholder
+    - path: /affiliate
+      purpose: Affiliate placeholder
+
+  auth:
+    - path: /login
+      purpose: Email/password login (re-exports /auth)
+    - path: /signup
+      purpose: Account creation (re-exports /auth)
+    - path: /auth
+      purpose: Canonical auth page with Supabase
+    - path: /auth/callback
+      purpose: OAuth code exchange
+
+  onboarding:
+    - path: /onboarding
+      purpose: Unified onboarding quiz (SiteQuiz) persisted via POST /api/onboarding
+    - path: /onboarding/platform
+      purpose: Redirect to /onboarding
+    - path: /onboarding/store
+      purpose: Redirect to /onboarding
+    - path: /onboarding/goals
+      purpose: Redirect to /onboarding
+    - path: /onboarding/done
+      purpose: Redirect to /dashboard
+
+  product:
+    - path: /dashboard
+      purpose: Recent audits, score trends, plan usage
+    - path: /audit/new
+      purpose: Submit single-page audit or full-site crawl
+    - path: /audit/[id]/scanning
+      purpose: Audit progress UI
+    - path: /audit/[id]/report
+      purpose: Full audit report with PDF export
+    - path: /audit/[id]/compare
+      purpose: Competitor pillar comparison
+    - path: /audit/[id]/generate
+      purpose: AI content generation
+    - path: /history
+      purpose: Audit history
+    - path: /watch
+      purpose: Monitoring watchlist
+    - path: /watch/alerts
+      purpose: Monitoring alerts
+    - path: /watch/[id]/diff
+      purpose: Score diff for monitoring job
+    - path: /tools/content-improver
+      purpose: Standalone AI copy improver (Pro)
+    - path: /checkout
+      purpose: Kashier checkout
+    - path: /settings
+      purpose: Profile settings
+    - path: /settings/billing
+      purpose: Plan and usage
+    - path: /settings/usage
+      purpose: Audit and AI usage stats
+
+api_routes:
+  - GET /api
+  - GET /api/status
+  - POST /api/audit
+  - GET /api/audit/[id]
+  - GET /api/audit/[id]/pdf
+  - POST /api/crawl
+  - GET /api/crawl/[id]/progress
+  - POST /api/generate
+  - POST /api/ai/improve-content
+  - GET/POST /api/onboarding
+  - GET/PATCH /api/profile
+  - GET /api/billing
+  - POST /api/checkout
+  - POST /api/webhooks/kashier
+  - GET/POST /api/monitoring
+  - GET/PATCH/DELETE /api/monitoring/[id]
+  - GET /api/cron/monitoring
+
+user_workflows:
+  signup_and_onboard:
+    - Visit /signup
+    - Create account with email/password
+    - Complete /onboarding quiz
+    - Land on /dashboard
+
+  login_and_audit:
+    - Visit /login with test credentials
+    - Go to /audit/new
+    - Submit product URL
+    - Wait on /audit/[id]/scanning
+    - View /audit/[id]/report
+
+  report_actions:
+    - Export PDF from report
+    - Open /audit/[id]/compare with competitor URL
+    - Generate content at /audit/[id]/generate
+
+  billing:
+    - View /pricing or /settings/billing
+    - Start upgrade via /checkout
+
+  monitoring:
+    - Enable monitoring from report
+    - View /watch and /watch/alerts
+
+features:
+  - Single-page audit with deterministic scoring engines
+  - Full-site crawl audit
+  - Competitor comparison
+  - AI content generation
+  - PDF report export
+  - Site monitoring with alerts
+  - Content improver tool
+  - Kashier billing (EGP)
+  - EN/AR i18n toggle
+
+test_priorities:
+  high:
+    - Login with email/password at /login
+    - Dashboard loads with seeded audit data
+    - New audit from /audit/new to report
+    - Report scores and pillar breakdown visible
+    - PDF download from report
+    - History page lists audits
+    - Onboarding flow for new users
+    - Pricing page and billing settings
+  medium:
+    - Competitor comparison flow
+    - AI content generation
+    - Settings usage page
+    - Content improver tool
+    - Monitoring watchlist
+  low:
+    - Blog pages
+    - Features page
+    - Docs and affiliate placeholders
+
+architecture_notes:
+  - Marketing landing uses AppShell only; no in-page SPA product views
+  - All product flows use App Router pages with real Supabase auth
+  - Navbar on landing uses SessionProvider for auth state
+  - Legacy onboarding sub-routes redirect via next.config.ts
+  - Production server started via npm run build && npm run start (scripts/start.mjs)
