@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { CreditCard, Crown, Loader2 } from "lucide-react";
 import { PageShell, PageHeader, PageContent } from "@/components/app/page-shell";
+import { ApiLoadError } from "@/components/runtime/api-load-error";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useT } from "@/lib/i18n";
@@ -32,14 +33,21 @@ export default function BillingPage() {
   const t = useT();
   const [usage, setUsage] = React.useState<UsageData | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [needsAuth, setNeedsAuth] = React.useState(false);
+  const [retryKey, setRetryKey] = React.useState(0);
 
   React.useEffect(() => {
     let cancelled = false;
+    setError(null);
+    setNeedsAuth(false);
     (async () => {
       try {
         const res = await fetch("/api/usage");
         if (!res.ok) {
-          if (!cancelled) setError(t("billing.loadError"));
+          if (!cancelled) {
+            setNeedsAuth(res.status === 401);
+            setError(t("billing.loadError"));
+          }
           return;
         }
         const json = (await res.json()) as { usage: UsageData };
@@ -51,7 +59,7 @@ export default function BillingPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retryKey, t]);
 
   const auditsUsed = usage?.counts.audit ?? 0;
   const auditsLimit = usage?.plan.auditsPerMonth;
@@ -76,9 +84,14 @@ export default function BillingPage() {
         )}
 
         {error && (
-          <div className="rounded-2xl border border-border/60 bg-card p-8 text-center">
-            <p className="text-sm text-muted-foreground">{error}</p>
-          </div>
+          <ApiLoadError
+            message={error}
+            needsAuth={needsAuth}
+            onRetry={() => {
+              setUsage(null);
+              setRetryKey((k) => k + 1);
+            }}
+          />
         )}
 
         {usage && (
@@ -139,7 +152,7 @@ export default function BillingPage() {
               </div>
             </motion.div>
 
-            <div className="rounded-2xl border border-border/60 bg-card p-6">
+            <div className="rounded-2xl border border-border/50 bg-card p-6">
               <h2 className="font-display text-lg font-bold mb-4">{t("billing.paymentMethod")}</h2>
               <div className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-muted/20">
                 <span className="size-10 rounded-lg bg-background grid place-items-center text-muted-foreground">
@@ -155,8 +168,8 @@ export default function BillingPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
-              <div className="px-6 py-4 border-b border-border/60">
+            <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+              <div className="px-6 py-4 border-b border-border/50">
                 <h2 className="font-display text-lg font-bold">{t("billing.invoices")}</h2>
               </div>
               {usage.billingEvents.length === 0 ? (
@@ -183,7 +196,7 @@ export default function BillingPage() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-border/60 bg-card p-6">
+            <div className="rounded-2xl border border-border/50 bg-card p-6">
               <h2 className="font-display text-lg font-bold mb-2">{t("dashboard.storesLimit")}</h2>
               <p className="text-sm text-muted-foreground">
                 {usage.storeCount}

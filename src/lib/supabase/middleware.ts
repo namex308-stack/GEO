@@ -11,8 +11,12 @@ import {
 /** App routes that require a Supabase session. */
 const PROTECTED_PATHS = [
   "/dashboard",
+  "/health",
   "/audit",
   "/history",
+  "/reports",
+  "/monitor",
+  "/geo",
   "/settings",
   "/checkout",
   "/onboarding",
@@ -180,7 +184,11 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
     } catch {
-      // Fail open for gated paths only if profile lookup hangs — auth still required.
+      // Fail closed: incomplete onboarding must not reach gated product routes
+      // when the profile lookup errors or times out.
+      if (isOnboardingGatedPath(pathname)) {
+        return NextResponse.redirect(new URL("/onboarding", request.url));
+      }
     }
   }
 

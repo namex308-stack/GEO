@@ -54,7 +54,7 @@ export function FAQ() {
 
         <div className="mt-10 text-center">
           <p className="text-sm text-muted-foreground mb-4">{t("faq.stillQuestions")}</p>
-          <Button size="lg" onClick={startAuditAndNavigate} className="font-semibold h-11 px-7 group">
+          <Button size="lg" onClick={startAuditAndNavigate} className="font-semibold h-11 px-7 rounded-full shadow-glow group">
             {t("faq.cta")}
             <ArrowRight className="size-4 ms-0.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
           </Button>

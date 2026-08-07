@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 
 export default function manifest(): MetadataRoute.Manifest {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "https://convaudit.com";
   return {
+    id: getSiteUrl(),
     name: "ConvAudit — منصة تحليل التجارة الإلكترونية",
     short_name: "ConvAudit",
     description:

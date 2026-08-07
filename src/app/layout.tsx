@@ -1,12 +1,19 @@
 import type { Metadata, Viewport } from "next";
 import { Cairo, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { getLocaleConfig } from "@/lib/locale/config";
 import { getActiveLocaleId } from "@/lib/locale/resolve";
+import { getSiteUrl } from "@/lib/site-url";
+
+/** Shared across <meta name="description">, Open Graph, and Twitter Card so all three surfaces stay consistent. */
+const SITE_DESCRIPTION =
+  "حلّل أي متجر أو صفحة منتج في 60 ثانية. احصل على تقييم بالذكاء الاصطناعي للتحويل، SEO، الظهور في محركات الذكاء الاصطناعي (GEO)، والثقة — مع مقارنة بالمنافسين. يدعم Shopify وWooCommerce وسلة وزد.";
+
+/** Shared brand title for Open Graph / Twitter cards (kept distinct from the longer <title>). */
+const SITE_OG_TITLE = "ConvAudit — ذكاء اصطناعي لتحليل التجارة الإلكترونية";
 
 /** Arabic-first typeface (Latin fallback for brand name, URLs, code). */
 const cairo = Cairo({
@@ -21,13 +28,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "ConvAudit — تحليل وتحسين متاجر التجارة الإلكترونية بالذكاء الاصطناعي",
     template: "%s · ConvAudit",
   },
-  description:
-    "حلّل أي متجر أو صفحة منتج في 60 ثانية. احصل على تقييم بالذكاء الاصطناعي للتحويل، SEO، الظهور في محركات الذكاء الاصطناعي (GEO)، والثقة — مع مقارنة بالمنافسين. يدعم Shopify وWooCommerce وسلة وزد.",
+  description: SITE_DESCRIPTION,
   keywords: [
     "تحليل متجر إلكتروني",
     "تحسين صفحة المنتج",
@@ -55,9 +61,8 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "ConvAudit — ذكاء اصطناعي لتحليل التجارة الإلكترونية",
-    description:
-      "حوّل صفحة منتجك إلى آلة تحويل. تحليل بالذكاء الاصطناعي للتحويل، SEO، GEO والثقة.",
+    title: SITE_OG_TITLE,
+    description: SITE_DESCRIPTION,
     siteName: "ConvAudit",
     type: "website",
     locale: "ar_EG",
@@ -65,8 +70,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ConvAudit",
-    description: "منصة تحليل وتحسين التجارة الإلكترونية بالذكاء الاصطناعي.",
+    title: SITE_OG_TITLE,
+    description: SITE_DESCRIPTION,
   },
   robots: {
     index: true,
@@ -172,7 +177,6 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <AuthProvider>
             {children}
-            <Toaster />
             <SonnerToaster position="top-center" richColors closeButton />
           </AuthProvider>
         </ThemeProvider>

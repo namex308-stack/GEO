@@ -223,7 +223,11 @@ export async function saveOnboardingStep(input: {
   skip?: boolean;
   markComplete?: boolean;
 }): Promise<OnboardingState | null> {
-  const sb = await createSupabaseServerClient();
+  // Prefer service role so onboarding_completed_at can be set under the
+  // profiles_protect_onboarding_completed_at trigger (clients cannot forge it).
+  const admin = getSupabaseAdmin();
+  const userSb = await createSupabaseServerClient();
+  const sb = admin ?? userSb;
   if (!sb) return null;
 
   await ensureProfileRow(input.userId);

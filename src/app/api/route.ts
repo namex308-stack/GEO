@@ -11,6 +11,9 @@ export async function GET() {
     status: "ok",
     endpoints: {
       "POST /api/audit": "Run an AI audit on a product URL",
+      "GET /api/audit/:id": "Load an audit report",
+      "DELETE /api/audit/:id": "Delete an audit",
+      "POST /api/audit/:id": "Resolve retry URLs for an existing audit",
       "GET /api/audits": "List workspace audits",
       "GET /api/dashboard": "Dashboard stats from Supabase",
       "GET /api/usage": "Usage meters from usage_events",

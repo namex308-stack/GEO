@@ -16,7 +16,7 @@ type PaidPlan = Exclude<PlanId, "free">;
 async function handlePaymentSuccess(
   orderId: string,
   amount: number | null,
-  source: "webhook_post" | "redirect_get"
+  source: "webhook_post"
 ): Promise<boolean> {
   console.info("[webhook/kashier] handlePaymentSuccess start", {
     source,
@@ -179,15 +179,10 @@ export async function GET(req: NextRequest) {
       queryKeys: [...searchParams.keys()],
     });
 
-    // HPP / Sessions merchantRedirect still activates here for backward compatibility
-    // when serverWebhook is delayed or unavailable. Prefer signed POST for entitlement.
-    if (orderId && success) {
-      const activated = await handlePaymentSuccess(orderId, amount, "redirect_get");
-      if (!activated) {
-        console.error("[webhook/kashier] GET activation failed", { orderId, amount });
-      }
-    } else if (success && !orderId) {
-      console.error("[webhook/kashier] GET success without orderId — cannot activate");
+    // Redirect-only: query params are not payment proof (no HMAC). Entitlement
+    // activation is exclusively via signed POST webhook.
+    if (success && !orderId) {
+      console.warn("[webhook/kashier] GET success without orderId — redirect only");
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

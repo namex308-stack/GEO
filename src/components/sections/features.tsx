@@ -13,7 +13,7 @@ const PILLARS = [
     icon: Bot,
     nameKey: "features.geo.name" as const,
     eyebrow: "01",
-    color: "#FF6600",
+    color: "#cc5200",
     descKey: "features.geo.desc" as const,
     pointKeys: [
       "features.geo.p1",
@@ -26,7 +26,7 @@ const PILLARS = [
     icon: Zap,
     nameKey: "features.conversion.name" as const,
     eyebrow: "02",
-    color: "#ff983f",
+    color: "#FF6600",
     descKey: "features.conversion.desc" as const,
     pointKeys: [
       "features.conversion.p1",
@@ -52,7 +52,7 @@ const PILLARS = [
     icon: ShieldCheck,
     nameKey: "features.trust.name" as const,
     eyebrow: "04",
-    color: "#cc5200",
+    color: "#929292",
     descKey: "features.trust.desc" as const,
     pointKeys: [
       "features.trust.p1",

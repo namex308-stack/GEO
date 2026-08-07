@@ -23,7 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/brand/logo";
 import { getSupabaseBrowser, isSupabaseConfigured } from "@/lib/supabase-browser";
 import { safeNextPath } from "@/lib/auth/safe-next-path";
-import { useT, type TranslationKey } from "@/lib/i18n";
+import { translate, useT, type TranslationKey } from "@/lib/i18n";
 
 type StatItem = { v: string; lKey: TranslationKey };
 
@@ -31,7 +31,7 @@ const STATS: StatItem[] = [
   { v: "4", lKey: "metrics.pillars.title" },
   { v: "40+", lKey: "metrics.signals.title" },
   { v: "3", lKey: "metrics.engines.title" },
-  { v: "3", lKey: "metrics.languages.title" },
+  { v: "1", lKey: "metrics.languages.title" },
 ];
 
 const CALLBACK_ERROR_KEYS: Record<string, TranslationKey> = {
@@ -51,6 +51,15 @@ function mapAuthErrorMessage(message: string, t: (key: TranslationKey) => string
   if (lower.includes("user already registered") || lower.includes("already been registered")) {
     return t("auth.error.alreadyRegistered");
   }
+  if (
+    lower.includes("email address") &&
+    (lower.includes("invalid") || lower.includes("is invalid"))
+  ) {
+    return t("auth.error.invalidEmail");
+  }
+  if (lower.includes("unable to validate email") || lower.includes("valid email")) {
+    return t("auth.error.invalidEmail");
+  }
   if (lower.includes("password") && (lower.includes("weak") || lower.includes("at least"))) {
     return t("auth.error.weakPassword");
   }
@@ -62,7 +71,13 @@ function mapAuthErrorMessage(message: string, t: (key: TranslationKey) => string
 
 export default function AuthPage() {
   return (
-    <React.Suspense fallback={null}>
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen grid place-items-center px-4" aria-busy="true">
+          <p className="text-sm text-muted-foreground">{translate("common.loading")}</p>
+        </div>
+      }
+    >
       <AuthPageInner />
     </React.Suspense>
   );
@@ -73,7 +88,11 @@ function AuthPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { theme, setTheme } = useTheme();
-  const [mode, setMode] = React.useState<"login" | "signup">("login");
+  const initialMode =
+    searchParams.get("mode") === "signup" || searchParams.get("signup") === "1"
+      ? "signup"
+      : "login";
+  const [mode, setMode] = React.useState<"login" | "signup">(initialMode);
   const [fullName, setFullName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -92,6 +111,12 @@ function AuthPageInner() {
     searchParams.get("next") ?? searchParams.get("redirect")
   );
   const callbackError = searchParams.get("error");
+
+  React.useEffect(() => {
+    const m = searchParams.get("mode");
+    if (m === "signup" || searchParams.get("signup") === "1") setMode("signup");
+    if (m === "login") setMode("login");
+  }, [searchParams]);
 
   React.useEffect(() => {
     if (!callbackError) return;
@@ -293,7 +318,7 @@ function AuthPageInner() {
                       className="rounded-lg bg-card border border-border/50 p-2 text-center"
                     >
                       <div className="font-display text-sm font-bold tabular-nums">{s.v}</div>
-                      <div className="text-[9px] text-muted-foreground mt-0.5 leading-tight">
+                      <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
                         {t(s.lKey)}
                       </div>
                     </div>
@@ -301,7 +326,7 @@ function AuthPageInner() {
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-card border border-border/60 p-5 sm:p-8 shadow-lg">
+              <div className="rounded-2xl bg-card border border-border/60 p-5 sm:p-8 shadow-[var(--shadow-card)]">
                 <div className="mb-6">
                   <h2 className="font-display text-2xl font-bold">
                     {isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}

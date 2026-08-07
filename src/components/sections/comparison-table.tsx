@@ -77,7 +77,7 @@ export function ComparisonTable() {
               <div
                 key={c.key}
                 className={cn(
-                  "p-4 sm:p-5 border-s border-border/40 flex flex-col items-center justify-center gap-1.5 text-center",
+                  "p-4 sm:p-5 border-s border-border/50 flex flex-col items-center justify-center gap-1.5 text-center",
                   c.tone === "brand" && "bg-primary/5"
                 )}
               >
@@ -102,7 +102,7 @@ export function ComparisonTable() {
             <div
               key={i}
               className={cn(
-                "grid grid-cols-[1.4fr_1fr_1fr_1.1fr] sm:grid-cols-[2fr_1fr_1fr_1.2fr] border-t border-border/40",
+                "grid grid-cols-[1.4fr_1fr_1fr_1.1fr] sm:grid-cols-[2fr_1fr_1fr_1.2fr] border-t border-border/50",
                 i % 2 === 1 && "bg-muted/20"
               )}
             >
@@ -115,7 +115,7 @@ export function ComparisonTable() {
                   <div
                     key={c.key}
                     className={cn(
-                      "p-3.5 sm:p-4 border-s border-border/40 flex flex-col items-center justify-center text-center gap-1",
+                      "p-3.5 sm:p-4 border-s border-border/50 flex flex-col items-center justify-center text-center gap-1",
                       c.tone === "brand" && "bg-primary/5"
                     )}
                   >

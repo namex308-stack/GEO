@@ -85,7 +85,7 @@ export default function DocsPage() {
             <h2 className="font-display text-xl font-bold mb-3 flex items-center gap-2"><Terminal className="size-5 text-primary" /> {t("docs.quickExample")}</h2>
             <div className="rounded-2xl border border-border/60 bg-muted/30 overflow-hidden">
               <div dir="ltr" className="flex items-center gap-2 px-4 py-2.5 border-b border-border/60 bg-muted/50">
-                <span className="size-2.5 rounded-full bg-rose-400" /><span className="size-2.5 rounded-full bg-amber-400" /><span className="size-2.5 rounded-full bg-emerald-400" />
+                <span className="size-2.5 rounded-full bg-muted-foreground/30" /><span className="size-2.5 rounded-full bg-muted-foreground/30" /><span className="size-2.5 rounded-full bg-muted-foreground/30" />
                 <span className="text-xs font-mono text-muted-foreground mr-2">terminal</span>
               </div>
               <pre className="p-4 text-xs font-mono overflow-x-auto" dir="ltr"><code>{`${t("docs.code.runNewAudit")}

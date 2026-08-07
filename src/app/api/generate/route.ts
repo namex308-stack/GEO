@@ -7,11 +7,15 @@ import { requireApiUser } from "@/lib/auth/require-api-user";
 import {
   ensurePersonalWorkspace,
   getAuditByIdForUser,
-  recordUsageEvent,
+  releaseUsageQuota,
   saveGeneratedContentForAudit,
+  tryConsumeUsageQuota,
 } from "@/lib/db/audit-repository";
+import { getCurrentUsagePeriod, getPlanForUser } from "@/lib/db/workspace-stats";
+import { aiLimitReachedMessage } from "@/lib/billing/quota";
 import { assertSafePublicHttpUrl } from "@/lib/url-safety";
 import { normalizeAppLocale } from "@/lib/locale";
+import { toJsonValue } from "@/lib/audits/parse";
 
 const Body = z.object({
   productUrl: z.string().url().optional(),
@@ -25,6 +29,7 @@ const Body = z.object({
 
 export async function POST(req: NextRequest) {
   const started = Date.now();
+  let usageEventId: string | null = null;
   try {
     const auth = await requireApiUser();
     if (!auth.ok) return auth.response;
@@ -33,12 +38,6 @@ export async function POST(req: NextRequest) {
     const parsed = Body.safeParse(json);
     if (!parsed.success) {
       return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
-    }
-
-    const rateKey = `user:${auth.user.id}`;
-    const { success } = await checkRateLimit(rateKey, "pro");
-    if (!success) {
-      return NextResponse.json({ error: "تم تجاوز الحد المسموح" }, { status: 429 });
     }
 
     let productUrl = parsed.data.productUrl;
@@ -62,18 +61,66 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: safeUrl.reason, code: "BLOCKED_URL" }, { status: 400 });
     }
 
+    const workspaceId = await ensurePersonalWorkspace(auth.user.id);
+    if (!workspaceId) {
+      return NextResponse.json({ error: "تعذّر تجهيز مساحة العمل" }, { status: 503 });
+    }
+
+    const plan = await getPlanForUser(auth.user.id);
+
+    const rateKey = `user:${auth.user.id}`;
+    const { success } = await checkRateLimit(rateKey, plan.planId);
+    if (!success) {
+      return NextResponse.json({ error: "تم تجاوز الحد المسموح" }, { status: 429 });
+    }
+
+    if (!plan.features.aiGenerator) {
+      return NextResponse.json(
+        {
+          error: "مولّد AI غير متاح في باقتك الحالية. قم بالترقية للمتابعة.",
+          code: "AI_GENERATOR_LOCKED",
+          plan: plan.planId,
+        },
+        { status: 403 }
+      );
+    }
+
+    const { start: periodStart, end: periodEnd } = getCurrentUsagePeriod();
+    const quota = await tryConsumeUsageQuota({
+      workspaceId,
+      metric: "ai_generation",
+      limit: plan.aiGensPerMonth,
+      periodStart,
+      periodEnd,
+    });
+
+    if (!quota.allowed) {
+      const message =
+        plan.aiGensPerMonth != null
+          ? aiLimitReachedMessage(plan.displayName, quota.used, plan.aiGensPerMonth)
+          : "تعذّر تأكيد باقتك. حاول مرة أخرى.";
+      return NextResponse.json(
+        {
+          error: message,
+          code: "AI_LIMIT_REACHED",
+          plan: plan.planId,
+          limit: plan.aiGensPerMonth,
+          used: quota.used,
+        },
+        { status: 403 }
+      );
+    }
+    usageEventId = quota.usageEventId;
+
     const page = await crawlAndNormalize(safeUrl.href);
     if (!page) {
+      if (usageEventId) await releaseUsageQuota(usageEventId);
       return NextResponse.json({ error: "تعذّر قراءة الصفحة" }, { status: 422 });
     }
 
     // ConvAudit is Arabic-only today; the locale layer is the extension point for future dialects.
     const outputLocale = normalizeAppLocale("ar");
     const content = await generateContent(page, outputLocale);
-    const workspaceId = await ensurePersonalWorkspace(auth.user.id);
-    if (!workspaceId) {
-      return NextResponse.json({ error: "تعذّر تجهيز مساحة العمل" }, { status: 503 });
-    }
 
     const { tokensUsed, ...payload } = content;
     const durationMs = Math.max(0, Date.now() - started);
@@ -82,17 +129,12 @@ export async function POST(req: NextRequest) {
       userId: auth.user.id,
       auditId,
       productUrl: safeUrl.href,
-      content: payload as unknown as Record<string, unknown>,
+      content: toJsonValue(payload),
       model: isGeminiConfigured() && content.source === "gemini" ? getGeminiModelId() : "page",
       generationType,
       status: "completed",
       durationMs,
       tokensUsed: tokensUsed ?? null,
-    });
-
-    await recordUsageEvent(workspaceId, "ai_generation", {
-      type: "ai_generation",
-      id: generationId ?? workspaceId,
     });
 
     return NextResponse.json({
@@ -106,6 +148,7 @@ export async function POST(req: NextRequest) {
       source: content.source ?? "page",
     });
   } catch (err) {
+    if (usageEventId) await releaseUsageQuota(usageEventId);
     console.error("[api/generate] error:", err);
     return NextResponse.json({ error: "فشل التوليد" }, { status: 500 });
   }

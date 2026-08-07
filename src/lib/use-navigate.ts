@@ -13,11 +13,11 @@ async function resolveAuditStartPath(): Promise<string> {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return "/auth?next=/onboarding";
+  if (!user) return "/auth?mode=signup&next=/onboarding";
 
   try {
     const res = await fetch("/api/onboarding");
-    if (res.status === 401) return "/auth?next=/onboarding";
+    if (res.status === 401) return "/auth?mode=signup&next=/onboarding";
     if (!res.ok) return "/onboarding";
     const data = (await res.json()) as {
       onboarding?: { completed?: boolean; resumePath?: string };
@@ -46,7 +46,7 @@ export function useNavigateAfterAction() {
 
   const openLoginAndNavigate = (after?: "onboarding" | "audit") => {
     const next = after === "audit" ? "/audit/new" : "/onboarding";
-    router.push(`/auth?next=${encodeURIComponent(next)}`);
+    router.push(`/auth?mode=login&next=${encodeURIComponent(next)}`);
   };
 
   return { startAuditAndNavigate, openLoginAndNavigate };

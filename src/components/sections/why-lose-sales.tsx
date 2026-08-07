@@ -67,7 +67,7 @@ export function WhyLoseSales() {
         </div>
 
         <div className="mt-10 text-center">
-          <Button size="lg" onClick={startAuditAndNavigate} className="font-semibold h-11 px-7">
+          <Button size="lg" onClick={startAuditAndNavigate} className="font-semibold h-11 px-7 rounded-full shadow-glow">
             {t("whyLose.cta")}
           </Button>
           <p className="mt-3 text-xs text-muted-foreground">{t("whyLose.ctaSub")}</p>

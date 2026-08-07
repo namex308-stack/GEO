@@ -4,6 +4,12 @@ import {
   PlusCircle,
   History,
   FileText,
+  Swords,
+  Sparkles,
+  HeartPulse,
+  Bell,
+  AlertTriangle,
+  ListChecks,
   CreditCard,
   Settings,
   HelpCircle,
@@ -12,9 +18,15 @@ import type { TranslationKey } from "@/lib/i18n";
 
 export type AppNavId =
   | "dashboard"
+  | "health"
   | "new-audit"
   | "history"
   | "reports"
+  | "monitor"
+  | "geo"
+  | "alerts"
+  | "notifications"
+  | "tasks"
   | "billing"
   | "settings"
   | "help";
@@ -37,6 +49,12 @@ export const APP_NAV_PRIMARY: AppNavItem[] = [
     icon: LayoutDashboard,
   },
   {
+    id: "health",
+    href: "/health",
+    labelKey: "nav.storeHealth",
+    icon: HeartPulse,
+  },
+  {
     id: "new-audit",
     href: "/audit/new",
     labelKey: "nav.newAudit",
@@ -50,10 +68,39 @@ export const APP_NAV_PRIMARY: AppNavItem[] = [
   },
   {
     id: "reports",
-    href: "/history",
+    href: "/reports/weekly",
     labelKey: "nav.reports",
     icon: FileText,
-    fromLatest: "report",
+  },
+  {
+    id: "monitor",
+    href: "/monitor",
+    labelKey: "nav.competitors",
+    icon: Swords,
+  },
+  {
+    id: "geo",
+    href: "/geo",
+    labelKey: "nav.geoVisibility",
+    icon: Sparkles,
+  },
+  {
+    id: "notifications",
+    href: "/notifications",
+    labelKey: "nav.notifications",
+    icon: Bell,
+  },
+  {
+    id: "alerts",
+    href: "/alerts",
+    labelKey: "nav.alerts",
+    icon: AlertTriangle,
+  },
+  {
+    id: "tasks",
+    href: "/tasks",
+    labelKey: "nav.growthTasks",
+    icon: ListChecks,
   },
 ];
 
@@ -80,8 +127,15 @@ export const APP_NAV_FOOTER: AppNavItem[] = [
 
 export const APP_ROUTE_PREFIXES = [
   "/dashboard",
+  "/health",
   "/audit",
   "/history",
+  "/reports",
+  "/monitor",
+  "/geo",
+  "/alerts",
+  "/notifications",
+  "/tasks",
   "/settings",
   "/onboarding",
 ] as const;
@@ -111,12 +165,29 @@ export function isNavItemActive(pathname: string, item: AppNavItem): boolean {
   switch (item.id) {
     case "dashboard":
       return pathname === "/dashboard";
+    case "health":
+      return pathname === "/health" || pathname.startsWith("/health/");
     case "new-audit":
       return pathname === "/audit/new" || /\/audit\/[^/]+\/scanning$/.test(pathname);
     case "history":
       return pathname === "/history" || pathname.startsWith("/history/");
     case "reports":
-      return false;
+      return (
+        pathname.startsWith("/reports") ||
+        /\/audit\/[^/]+\/(report|compare|generate)$/.test(pathname)
+      );
+    case "monitor":
+      return pathname === "/monitor" || pathname.startsWith("/monitor/");
+    case "geo":
+      return pathname === "/geo" || pathname.startsWith("/geo/");
+    case "alerts":
+      return pathname === "/alerts" || pathname.startsWith("/alerts/");
+    case "notifications":
+      return (
+        pathname === "/notifications" || pathname.startsWith("/notifications/")
+      );
+    case "tasks":
+      return pathname === "/tasks" || pathname.startsWith("/tasks/");
     case "billing":
       return pathname.startsWith("/settings/billing");
     case "settings":

@@ -9,14 +9,20 @@ import {
   pillarScore,
 } from "@/lib/db/denormalized-scores";
 import { prioritizeRecommendations } from "@/lib/ai/recommendations";
+import {
+  FALLBACK_PRODUCT_NAME,
+  FALLBACK_STORE_NAME,
+  type AuditHistoryItem,
+} from "@/lib/audits/types";
+import { mapRecommendationRow, toJsonValue } from "@/lib/audits/parse";
+import { displayHostFromUrl } from "@/lib/url-display";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
+import type { Json } from "@/lib/db/database.types";
+import { recordGeoScoreHistory } from "@/lib/db/geo-history-repository";
+import { emitAlertsForCompletedAudit } from "@/lib/alerts/emit";
+import { syncGrowthTasksFromAudit } from "@/lib/growth-tasks/emit";
 
-function hostFromUrl(raw: string): string {
-  try {
-    return new URL(raw).hostname.replace(/^www\./, "");
-  } catch {
-    return raw.slice(0, 120);
-  }
-}
+export type { AuditHistoryItem } from "@/lib/audits/types";
 
 /** Upsert the workspace primary store from onboarding / audit context; return store id. */
 export async function ensureWorkspaceStore(input: {
@@ -40,8 +46,8 @@ export async function ensureWorkspaceStore(input: {
   const now = new Date().toISOString();
   const name =
     (input.name && input.name.trim()) ||
-    hostFromUrl(primaryUrl) ||
-    "Store";
+    displayHostFromUrl(primaryUrl) ||
+    FALLBACK_STORE_NAME;
 
   const { data: existing } = await sb
     .from("stores")
@@ -397,7 +403,7 @@ export async function persistAuditResults(auditId: string, workspaceId: string, 
       audit_id: auditId,
       workspace_id: workspaceId,
       version: 1,
-      summary: audit as unknown as Record<string, unknown>,
+      summary: toJsonValue(audit),
       overall_score: audit.overallScore,
       geo_score: geoScore,
       seo_score: seoScore,
@@ -407,6 +413,53 @@ export async function persistAuditResults(auditId: string, workspaceId: string, 
     },
     { onConflict: "audit_id,version" }
   );
+
+  // Historical GEO tracking only — does not re-run or modify the GEO engine.
+  const { data: auditMeta } = await sb
+    .from("audits")
+    .select("store_id, completed_at")
+    .eq("id", auditId)
+    .maybeSingle();
+
+  const storeId = (auditMeta?.store_id as string | null) ?? null;
+
+  await recordGeoScoreHistory({
+    workspaceId,
+    storeId,
+    auditId,
+    audit: {
+      ...audit,
+      createdAt:
+        (auditMeta?.completed_at as string) ||
+        audit.createdAt ||
+        new Date().toISOString(),
+    },
+  });
+
+  const completedAudit: AuditData = {
+    ...audit,
+    id: auditId,
+    createdAt:
+      (auditMeta?.completed_at as string) ||
+      audit.createdAt ||
+      new Date().toISOString(),
+  };
+
+  // AI Alerts — compare with previous completed audit; never blocks persistence.
+  await emitAlertsForCompletedAudit({
+    workspaceId,
+    storeId,
+    auditId,
+    audit: completedAudit,
+  });
+
+  // Growth Tasks — transform recommendations into durable actionable tasks.
+  await syncGrowthTasksFromAudit({
+    workspaceId,
+    storeId,
+    auditId,
+    audit: completedAudit,
+  });
 }
 
 export async function recordUsageEvent(
@@ -428,6 +481,71 @@ export async function recordUsageEvent(
   if (error) console.error("[usage_events] insert failed:", error.message);
 }
 
+export type UsageQuotaResult = {
+  allowed: boolean;
+  /** Usage count for the metric/period *after* this call (including this unit, when allowed). */
+  used: number;
+  /** id of the usage_events row created when `allowed` is true; null otherwise. */
+  usageEventId: string | null;
+};
+
+/**
+ * Atomically checks the workspace's usage against `limit` for `metric` within
+ * [periodStart, periodEnd] and — if under the limit — records one usage unit
+ * in the same database transaction (see try_consume_usage_quota SQL
+ * function). Concurrent requests for the same workspace+metric are
+ * serialized by an advisory lock inside that function, so two in-flight
+ * requests can never both pass the check when only one slot remains.
+ *
+ * `limit === null` means unlimited (e.g. Business plan) — always allowed.
+ * Fails closed (denies) on unexpected database errors so a broken quota
+ * check can never silently bypass a billing limit.
+ */
+export async function tryConsumeUsageQuota(input: {
+  workspaceId: string;
+  metric: UsageMetric;
+  limit: number | null;
+  periodStart: string;
+  periodEnd: string;
+  ref?: { type: string; id: string };
+}): Promise<UsageQuotaResult> {
+  const sb = getSupabaseAdmin();
+  // Fail closed: never silently bypass billing limits when admin is unavailable.
+  if (!sb) {
+    console.error("[usage_events] quota check denied: Supabase admin unavailable");
+    return { allowed: false, used: 0, usageEventId: null };
+  }
+
+  const { data, error } = await sb
+    .rpc("try_consume_usage_quota", {
+      p_workspace_id: input.workspaceId,
+      p_metric: input.metric,
+      p_limit: input.limit,
+      p_period_start: input.periodStart,
+      p_period_end: input.periodEnd,
+      p_ref_type: input.ref?.type ?? null,
+      p_ref_id: input.ref?.id ?? null,
+    })
+    .single();
+
+  if (error || !data) {
+    console.error("[usage_events] quota check failed:", error?.message);
+    return { allowed: false, used: 0, usageEventId: null };
+  }
+
+  const row = data as { allowed: boolean; used_count: number; usage_event_id: string | null };
+  return { allowed: row.allowed, used: row.used_count, usageEventId: row.usage_event_id };
+}
+
+/** Roll back a reservation made by `tryConsumeUsageQuota` when the audit it was held for ultimately fails. */
+export async function releaseUsageQuota(usageEventId: string): Promise<void> {
+  const sb = getSupabaseAdmin();
+  if (!sb) return;
+
+  const { error } = await sb.from("usage_events").delete().eq("id", usageEventId);
+  if (error) console.error("[usage_events] release failed:", error.message);
+}
+
 export async function markAuditFailed(auditId: string, message: string): Promise<void> {
   const sb = getSupabaseAdmin();
   if (!sb) return;
@@ -440,19 +558,6 @@ export async function markAuditFailed(auditId: string, message: string): Promise
     })
     .eq("id", auditId);
 }
-
-export type AuditHistoryItem = {
-  id: string;
-  productName: string;
-  storeName: string;
-  productUrl: string;
-  overallScore: number | null;
-  status: string;
-  createdAt: string;
-  completedAt: string | null;
-  pageCount?: number;
-  openIssues?: number;
-};
 
 /** List audits the user owns or can access via workspace membership. */
 export async function listAuditsForUser(
@@ -480,7 +585,10 @@ export async function listAuditsForUser(
 
   const q = query?.trim();
   if (q) {
-    const safe = q.replace(/[%_,]/g, " ").slice(0, 80);
+    // Strip PostgREST filter-syntax metacharacters (`,` separates or()
+    // conditions, `()` groups them, `%`/`_` are ilike wildcards, `\` is the
+    // LIKE escape char) so user input can never alter the filter structure.
+    const safe = q.replace(/[%_,()\\]/g, " ").slice(0, 80);
     req = req.or(
       `product_name.ilike.%${safe}%,store_name.ilike.%${safe}%,product_url.ilike.%${safe}%`
     );
@@ -493,16 +601,24 @@ export async function listAuditsForUser(
     return [];
   }
 
-  return data.map((row) => ({
-    id: row.id as string,
-    productName: (row.product_name as string) || "Product",
-    storeName: (row.store_name as string) || "Store",
-    productUrl: row.product_url as string,
-    overallScore: (row.overall_score as number) ?? null,
-    status: row.status as string,
-    createdAt: row.created_at as string,
-    completedAt: (row.completed_at as string) ?? null,
-  }));
+  return data.map((row) => {
+    const productUrl = row.product_url as string;
+    const host = displayHostFromUrl(productUrl);
+    const rawProduct = ((row.product_name as string) || "").trim();
+    const rawStore = ((row.store_name as string) || "").trim();
+    return {
+      id: row.id as string,
+      productName: decodeHtmlEntities(
+        rawProduct || host || FALLBACK_PRODUCT_NAME
+      ),
+      storeName: decodeHtmlEntities(rawStore || host || FALLBACK_STORE_NAME),
+      productUrl,
+      overallScore: (row.overall_score as number) ?? null,
+      status: row.status as string,
+      createdAt: row.created_at as string,
+      completedAt: (row.completed_at as string) ?? null,
+    };
+  });
 }
 
 /** Persist AI generate payload and merge into reports.summary.generatedContent. */
@@ -511,7 +627,7 @@ export async function saveGeneratedContentForAudit(input: {
   userId: string;
   auditId: string | null;
   productUrl: string;
-  content: Record<string, unknown>;
+  content: Json;
   model: string;
   generationType?: string;
   status?: "completed" | "failed" | "running";
@@ -586,6 +702,79 @@ export type StoredAuditReport = {
   }[];
 };
 
+export type AuditAccessMeta = {
+  id: string;
+  workspaceId: string;
+  productUrl: string;
+  storeUrl: string | null;
+  competitorUrl: string | null;
+  status: string;
+};
+
+/**
+ * Membership/ownership check that works for any audit status (including failed).
+ * Used by delete/retry — unlike getAuditByIdForUser, does not require a completed report.
+ */
+export async function getAuditAccessForUser(
+  auditId: string,
+  userId: string
+): Promise<AuditAccessMeta | null> {
+  const sb = getSupabaseAdmin();
+  if (!sb) return null;
+
+  const { data: row, error } = await sb
+    .from("audits")
+    .select("id, workspace_id, product_url, store_url, competitor_url, status, created_by")
+    .eq("id", auditId)
+    .maybeSingle();
+
+  if (error || !row) {
+    if (error) console.error("[audits] access lookup failed:", error.message);
+    return null;
+  }
+
+  const workspaceId = row.workspace_id as string;
+  const createdBy = row.created_by as string | null;
+
+  if (createdBy !== userId) {
+    const { data: membership } = await sb
+      .from("workspace_members")
+      .select("id")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!membership) return null;
+  }
+
+  return {
+    id: row.id as string,
+    workspaceId,
+    productUrl: row.product_url as string,
+    storeUrl: (row.store_url as string) ?? null,
+    competitorUrl: (row.competitor_url as string) ?? null,
+    status: row.status as string,
+  };
+}
+
+/** Soft-safe hard delete: cascades to child rows via FK. Returns false when not accessible. */
+export async function deleteAuditForUser(
+  auditId: string,
+  userId: string
+): Promise<boolean> {
+  const meta = await getAuditAccessForUser(auditId, userId);
+  if (!meta) return false;
+
+  const sb = getSupabaseAdmin();
+  if (!sb) return false;
+
+  const { error } = await sb.from("audits").delete().eq("id", auditId);
+  if (error) {
+    console.error("[audits] delete failed:", error.message);
+    return false;
+  }
+  return true;
+}
+
 /**
  * Load an audit report only if the user is a member of its workspace
  * (or created it). Prevents IDOR via service-role reads.
@@ -645,6 +834,8 @@ async function hydrateStoredAudit(row: Record<string, unknown>): Promise<StoredA
     errorMessage: (r.error_message as string) ?? null,
   }));
 
+  const rowStatus = (row.status as string) || "queued";
+
   const { data: report } = await sb
     .from("reports")
     .select("summary")
@@ -659,10 +850,11 @@ async function hydrateStoredAudit(row: Record<string, unknown>): Promise<StoredA
         ...summary,
         id: auditId,
         productUrl: summary.productUrl || (row.product_url as string),
-        productName: summary.productName || (row.product_name as string) || "Product",
-        storeName: summary.storeName || (row.store_name as string) || "Store",
+        productName: summary.productName || (row.product_name as string) || FALLBACK_PRODUCT_NAME,
+        storeName: summary.storeName || (row.store_name as string) || FALLBACK_STORE_NAME,
         demoMode: summary.demoMode ?? demoMode,
         recommendations: prioritizeRecommendations(summary.recommendations ?? []),
+        status: rowStatus,
       },
       demoMode: summary.demoMode ?? demoMode,
       aiConfigured,
@@ -670,7 +862,29 @@ async function hydrateStoredAudit(row: Record<string, unknown>): Promise<StoredA
     };
   }
 
-  if (row.status !== "completed") return null;
+  // In-progress / failed audits must be readable for scanning polls and routing.
+  if (rowStatus !== "completed") {
+    return {
+      audit: {
+        id: auditId,
+        productUrl: (row.product_url as string) || "",
+        storeUrl: (row.store_url as string) || undefined,
+        competitorUrl: (row.competitor_url as string) || undefined,
+        productName: (row.product_name as string) || FALLBACK_PRODUCT_NAME,
+        storeName: (row.store_name as string) || FALLBACK_STORE_NAME,
+        overallScore: (row.overall_score as number) ?? 0,
+        breakdown: [],
+        recommendations: [],
+        geoReadability: { chatgpt: 0, perplexity: 0, googleAI: 0 },
+        createdAt: (row.created_at as string) || new Date().toISOString(),
+        demoMode,
+        status: rowStatus,
+      },
+      demoMode,
+      aiConfigured,
+      analysisRuns,
+    };
+  }
 
   const { data: scores } = await sb
     .from("audit_scores")
@@ -733,8 +947,8 @@ async function hydrateStoredAudit(row: Record<string, unknown>): Promise<StoredA
     productUrl: row.product_url as string,
     storeUrl: (row.store_url as string) || undefined,
     competitorUrl: (row.competitor_url as string) || undefined,
-    productName: (row.product_name as string) || "Product",
-    storeName: (row.store_name as string) || "Store",
+    productName: (row.product_name as string) || FALLBACK_PRODUCT_NAME,
+    storeName: (row.store_name as string) || FALLBACK_STORE_NAME,
     overallScore: (row.overall_score as number) ?? 0,
     competitorScore: (row.competitor_score as number) ?? undefined,
     breakdown,
@@ -745,26 +959,11 @@ async function hydrateStoredAudit(row: Record<string, unknown>): Promise<StoredA
       googleAI: (geo?.google_ai as number) ?? 0,
     },
     recommendations: prioritizeRecommendations(
-      (recs ?? []).map((r) => ({
-        id: (r.external_key as string) || (r.id as string),
-        pillar: (r.pillar as AuditData["breakdown"][number]["pillar"]) || "conversion",
-        severity: r.severity as "critical" | "warning" | "opportunity",
-        impact: r.impact as "high" | "medium" | "low",
-        effort: r.effort as "quick" | "medium" | "involved" | undefined,
-        problem: r.problem as string,
-        solution: r.solution as string,
-        confidence: (r.confidence as number) ?? undefined,
-        affectedPage: (r.affected_page as string) ?? undefined,
-        projectedImpact: (r.projected_impact as string) ?? undefined,
-        beforePreview: (r.before_preview as string) ?? undefined,
-        afterPreview: (r.after_preview as string) ?? undefined,
-        estimatedLift: (r.estimated_lift as string) ?? undefined,
-        source: (r.source as AuditData["recommendations"][number]["source"]) ?? undefined,
-        fixType: (r.fix_type as AuditData["recommendations"][number]["fixType"]) ?? undefined,
-      }))
+      (recs ?? []).map((r) => mapRecommendationRow(r))
     ),
     createdAt: (row.completed_at as string) || (row.created_at as string),
     demoMode,
+    status: rowStatus,
   };
 
   return { audit, demoMode, aiConfigured, analysisRuns };

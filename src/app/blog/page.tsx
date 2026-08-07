@@ -33,7 +33,7 @@ export default function BlogPage() {
       <PageContent>
         {/* Featured */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <Link href={`/blog/${POSTS[0].slug}`} className="block rounded-3xl border border-border/60 bg-card overflow-hidden hover:shadow-xl transition-shadow group">
+          <Link href={`/blog/${POSTS[0].slug}`} className="block rounded-2xl border border-border/60 bg-card overflow-hidden hover:shadow-[var(--shadow-card-hover)] transition-shadow group">
             <div className="grid lg:grid-cols-2">
               <div className="aspect-video lg:aspect-auto lg:min-h-[300px] gradient-brand-soft relative overflow-hidden">
                 <div className="absolute inset-0 bg-dots opacity-30" />
@@ -58,7 +58,7 @@ export default function BlogPage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {POSTS.slice(1).map((p, i) => (
             <motion.div key={p.slug} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
-              <Link href={`/blog/${p.slug}`} className="block rounded-2xl border border-border/60 bg-card overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all group h-full">
+              <Link href={`/blog/${p.slug}`} className="block rounded-2xl border border-border/60 bg-card overflow-hidden hover:shadow-[var(--shadow-card-hover)] hover:-translate-y-0.5 transition-all group h-full">
                 <div className="aspect-video relative overflow-hidden" style={{ background: `${p.color}15` }}>
                   <div className="absolute inset-0 bg-dots opacity-20" />
                   <div className="absolute inset-0 grid place-items-center"><span className="font-display text-3xl font-extrabold" style={{ color: p.color }}>{t(p.categoryKey)}</span></div>

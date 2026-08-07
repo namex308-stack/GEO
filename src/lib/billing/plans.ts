@@ -33,7 +33,7 @@ export function mapAmountToPlan(amount: number): {
 }
 
 export function formatEgp(amount: number): string {
-  return amount.toLocaleString("en-EG");
+  return amount.toLocaleString("ar-EG");
 }
 
 export interface MarketingPlan {
@@ -52,12 +52,12 @@ export interface MarketingPlan {
 export const MARKETING_PLANS: MarketingPlan[] = [
   {
     id: "free",
-    name: "Free",
-    tagline: "3 audits, basic score, and recent report history.",
+    name: "مجاني",
+    tagline: "3 تحليلات، درجة أساسية، وسجل تقارير حديث.",
     monthlyPrice: 0,
     yearlyPrice: 0,
-    auditsLabel: "3 audits / month",
-    cta: "Start Free",
+    auditsLabel: "3 تحليلات / شهر",
+    cta: "ابدأ مجاناً",
     featureKeys: [
       "plan.starter.f1",
       "plan.starter.f2",
@@ -66,13 +66,13 @@ export const MARKETING_PLANS: MarketingPlan[] = [
   },
   {
     id: "pro",
-    name: "Pro",
-    tagline: "Full analysis, Quick Fixes, and AI tools for growing stores.",
+    name: "احترافي",
+    tagline: "تحليل كامل وإصلاحات سريعة وأدوات AI للمتاجر النامية.",
     monthlyPrice: 199,
     yearlyPrice: 1490,
-    auditsLabel: "30 audits / month",
+    auditsLabel: "30 تحليلاً / شهر",
     highlight: true,
-    cta: "Upgrade to Pro",
+    cta: "الترقية للاحترافي",
     featureKeys: [
       "plan.pro.f1",
       "plan.pro.f2",
@@ -85,12 +85,12 @@ export const MARKETING_PLANS: MarketingPlan[] = [
   },
   {
     id: "business",
-    name: "Business",
-    tagline: "Unlimited audits, crawl, and 24/7 Watchdog monitoring.",
+    name: "أعمال",
+    tagline: "تحليلات وتوليدات AI غير محدودة للمتاجر ذات الحجم الأعلى.",
     monthlyPrice: 499,
     yearlyPrice: 3990,
-    auditsLabel: "Unlimited audits",
-    cta: "Upgrade to Business",
+    auditsLabel: "تحليلات غير محدودة",
+    cta: "الترقية للأعمال",
     featureKeys: [
       "plan.business.f1",
       "plan.business.f2",
@@ -98,7 +98,6 @@ export const MARKETING_PLANS: MarketingPlan[] = [
       "plan.business.f4",
       "plan.business.f5",
       "plan.business.f6",
-      "plan.business.f7",
     ],
   },
 ];
@@ -120,12 +119,7 @@ export const PLAN_COMPARISON_ROWS: PlanComparisonRow[] = [
   { labelKey: "planCompare.aiRecommendations", free: "no", pro: "yes", business: "yes" },
   { labelKey: "planCompare.aiGenerator", free: "no", pro: "yes", business: "yes" },
   { labelKey: "planCompare.competitor", free: "no", pro: "partial", business: "yes", noteKey: "planCompare.competitorNote" },
-  { labelKey: "planCompare.pdfExport", free: "no", pro: "yes", business: "yes" },
-  { labelKey: "planCompare.websiteCrawl", free: "no", pro: "partial", business: "yes", noteKey: "planCompare.crawlNote" },
-  { labelKey: "planCompare.weeklyReports", free: "no", pro: "yes", business: "yes" },
-  { labelKey: "planCompare.teamMembers", free: "no", pro: "no", business: "yes" },
-  { labelKey: "planCompare.whiteLabel", free: "no", pro: "no", business: "yes" },
-  { labelKey: "planCompare.apiAccess", free: "no", pro: "no", business: "yes" },
+  { labelKey: "planCompare.websiteCrawl", free: "partial", pro: "yes", business: "yes", noteKey: "planCompare.crawlNote" },
   { labelKey: "planCompare.support", free: "partial", pro: "partial", business: "yes", noteKey: "planCompare.supportNote" },
 ];
 

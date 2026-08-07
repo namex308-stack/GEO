@@ -1,0 +1,1179 @@
+[
+  {
+    "id": "TC001",
+    "title": "Submit a new product audit and reach scanning",
+    "description": "An authenticated user can start a new product-page audit from a valid URL and see the scanning progress view.",
+    "category": "Audit Submission",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /audit/new"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid product page URL into the audit URL field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new audit"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the scanning progress view is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the audit has started"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Open a completed audit report and review the key scores",
+    "description": "An authenticated user can open an audit report and see the conversion, SEO, AI visibility, and trust scores with recommendations.",
+    "category": "Audit Report",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open a recent audit report"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the audit report is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify conversion, SEO, AI visibility, and trust scores are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Complete onboarding through store, platform, and goals",
+    "description": "A newly signed-in user can provide store details, choose an ecommerce platform, select goals, and finish onboarding successfully.",
+    "category": "Onboarding Wizard",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /onboarding"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid store URL into the store URL field"
+      },
+      {
+        "type": "action",
+        "description": "Continue to platform selection"
+      },
+      {
+        "type": "action",
+        "description": "Select an ecommerce platform"
+      },
+      {
+        "type": "action",
+        "description": "Continue to goal selection"
+      },
+      {
+        "type": "action",
+        "description": "Select one or more goals"
+      },
+      {
+        "type": "action",
+        "description": "Finish onboarding"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the onboarding completion screen is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a path to the dashboard is available"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Create a new audit from a valid product URL",
+    "description": "An authenticated user can submit a valid product page URL and reach the audit scanning flow.",
+    "category": "New Audit",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /audit/new"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid product page URL into the URL field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the audit form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the scanning progress view is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Sign in with email and reach the authenticated entry point",
+    "description": "A returning user can submit email sign-in from the auth page and arrive at the authenticated app entry point.",
+    "category": "Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /auth"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Click the sign-in request action"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the authenticated entry point is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Complete a billing upgrade checkout",
+    "description": "An authenticated user can complete the checkout flow and see the purchase confirmation state.",
+    "category": "Billing and Checkout",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /checkout"
+      },
+      {
+        "type": "action",
+        "description": "Complete payment flow"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a successful checkout confirmation is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the upgraded subscription state is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "View the audit report with all score modules and recommendations",
+    "description": "An authenticated user can open a completed audit report and see the key score modules and recommendations.",
+    "category": "Audit Report",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /audit/[id]/report"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify conversion, SEO, AI visibility, and trust score modules are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify audit recommendations are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Complete an upgrade from checkout",
+    "description": "An authenticated billing admin can open checkout from billing settings and confirm the upgrade flow is presented.",
+    "category": "Billing and Usage",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /settings"
+      },
+      {
+        "type": "action",
+        "description": "Open billing settings"
+      },
+      {
+        "type": "action",
+        "description": "Start checkout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the checkout page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the upgrade flow is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Open checkout from billing settings",
+    "description": "An authenticated billing admin can start the upgrade flow from billing settings and reach checkout.",
+    "category": "Dashboard and History",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings/billing"
+      },
+      {
+        "type": "action",
+        "description": "Start the upgrade checkout flow"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the checkout page is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "View billing and usage before upgrading",
+    "description": "An authenticated billing admin can review billing and usage limits from the settings area before moving to checkout.",
+    "category": "Billing and Usage",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /settings"
+      },
+      {
+        "type": "action",
+        "description": "Open billing settings"
+      },
+      {
+        "type": "action",
+        "description": "Open usage settings"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify billing information is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify usage limits are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Complete onboarding and reach the dashboard",
+    "description": "A newly signed-in user can complete onboarding across store, platform, and goals screens and arrive at the dashboard.",
+    "category": "Dashboard and History",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /onboarding/store"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid store URL into the store URL field"
+      },
+      {
+        "type": "action",
+        "description": "Continue to the platform selection"
+      },
+      {
+        "type": "action",
+        "description": "Select an ecommerce platform"
+      },
+      {
+        "type": "action",
+        "description": "Continue to the goals selection"
+      },
+      {
+        "type": "action",
+        "description": "Select user goals"
+      },
+      {
+        "type": "action",
+        "description": "Complete onboarding"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "Review billing plan and start an upgrade",
+    "description": "An authenticated user can view billing details and begin the upgrade flow from the billing page.",
+    "category": "Billing and Checkout",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings/billing"
+      },
+      {
+        "type": "action",
+        "description": "Choose an upgrade plan"
+      },
+      {
+        "type": "action",
+        "description": "Continue to checkout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify billing plan and usage information are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the checkout flow is opened"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "Review billing settings and usage limits",
+    "description": "An authenticated account owner can open billing and usage pages to review subscription state and quota information.",
+    "category": "Dashboard and History",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings/billing"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify billing and subscription information are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings/usage"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify usage quota information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC014",
+    "title": "Start sign-in from the Arabic homepage",
+    "description": "A public visitor can review the landing page value proposition and start the sign-in flow from the main call to action.",
+    "category": "Content and Trust Pages",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Review the landing page content"
+      },
+      {
+        "type": "action",
+        "description": "Start sign-in from the main call to action"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the Arabic landing page content is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the sign-in page is opened"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC015",
+    "title": "Review landing page and start sign-in",
+    "description": "A public visitor can review the Arabic landing page, inspect pricing information, and begin the sign-in journey from the primary call to action.",
+    "category": "Marketing Landing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Scroll through the landing page"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to view pricing information"
+      },
+      {
+        "type": "action",
+        "description": "Click the primary call to action to start analysis"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the pricing page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the sign-in page is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC016",
+    "title": "Browse the dashboard and open a recent audit",
+    "description": "An authenticated user can review the dashboard summary and open a recent audit from it.",
+    "category": "Dashboard and History",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify recent audits and scores are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Open a recent audit"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected audit opens"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC017",
+    "title": "Review usage limits and move toward an upgrade",
+    "description": "An authenticated user can review quota consumption on usage settings and proceed to billing from there.",
+    "category": "Billing and Checkout",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings/usage"
+      },
+      {
+        "type": "action",
+        "description": "Decide to upgrade"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to billing and checkout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify usage limits and quota consumption are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the billing and checkout path is available"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC018",
+    "title": "Compare an audit against competitors",
+    "description": "An authenticated user can navigate from an audit report to competitor comparison and review the comparison results.",
+    "category": "Audit Report",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open a recent audit report"
+      },
+      {
+        "type": "action",
+        "description": "Open the competitor comparison view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the competitor comparison view is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify comparison results are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC019",
+    "title": "Open competitor comparison from the audit report",
+    "description": "An authenticated user can move from the audit report to the competitor comparison view and see comparative findings.",
+    "category": "Audit Report",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /audit/[id]/report"
+      },
+      {
+        "type": "action",
+        "description": "Open the competitor comparison view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the competitor comparison view is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC020",
+    "title": "Generate improved copy from audit findings",
+    "description": "An authenticated user can open the AI generation view from an audit and see generated copy suggestions based on the audit findings.",
+    "category": "Audit Report",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open a recent audit report"
+      },
+      {
+        "type": "action",
+        "description": "Open the AI copy generation view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the AI generation view is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify generated copy suggestions are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC021",
+    "title": "Review audit history and dashboard summaries",
+    "description": "An authenticated user can browse the dashboard and history views to review recent audits and past activity.",
+    "category": "Dashboard and History",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open the history view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify recent audits are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the audit history list is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC022",
+    "title": "Update profile settings successfully",
+    "description": "An authenticated user can edit profile information in settings and save the updated account state.",
+    "category": "Settings Profile",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /settings"
+      },
+      {
+        "type": "action",
+        "description": "Update account information"
+      },
+      {
+        "type": "action",
+        "description": "Save the changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the profile fields are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated profile state is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC023",
+    "title": "Review history and return after deleting an audit",
+    "description": "An authenticated user can review audit history, remove an audit, and return to see the list updated.",
+    "category": "Dashboard and History",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /history"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify past audits are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Delete an audit from the history list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the audit is removed from the history list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC024",
+    "title": "Read documentation and open a blog article",
+    "description": "A public visitor can browse the docs, open a related blog post, and return to the blog index.",
+    "category": "Content and Trust Pages",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /docs"
+      },
+      {
+        "type": "action",
+        "description": "Browse documentation topics"
+      },
+      {
+        "type": "action",
+        "description": "Open a related blog post"
+      },
+      {
+        "type": "action",
+        "description": "Return to the blog index"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify documentation content is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify blog index content is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC025",
+    "title": "Verify the landing page uses Arabic RTL layout",
+    "description": "A public visitor can confirm the homepage presents the product in Arabic with a right-to-left layout and clear product explanation.",
+    "category": "Marketing Landing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Scroll through the landing page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify Arabic content is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the page uses a right-to-left layout"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC026",
+    "title": "Show validation for an unsafe audit URL and allow correction",
+    "description": "An authenticated user sees validation feedback for an invalid audit URL and can correct it to start scanning.",
+    "category": "New Audit",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /audit/new"
+      },
+      {
+        "type": "action",
+        "description": "Fill an unsafe or invalid product page URL into the URL field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the audit form"
+      },
+      {
+        "type": "action",
+        "description": "Replace the URL with a valid product page URL"
+      },
+      {
+        "type": "action",
+        "description": "Submit the audit form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a validation error is shown for the invalid URL"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the scanning progress view is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC027",
+    "title": "Review privacy, security, and status information",
+    "description": "A public visitor can navigate through trust pages and verify that policy and status content is available.",
+    "category": "Content and Trust Pages",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /privacy"
+      },
+      {
+        "type": "action",
+        "description": "Read the privacy policy"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /security"
+      },
+      {
+        "type": "action",
+        "description": "Review security practices"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /status"
+      },
+      {
+        "type": "action",
+        "description": "Check current system status"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify privacy policy content is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify security and status content are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC028",
+    "title": "Browse public help and company pages",
+    "description": "A public visitor can open the documentation, blog, privacy, security, status, roadmap, changelog, and affiliate pages successfully.",
+    "category": "Public Content",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /docs"
+      },
+      {
+        "type": "action",
+        "description": "Open the blog index"
+      },
+      {
+        "type": "action",
+        "description": "Open the privacy page"
+      },
+      {
+        "type": "action",
+        "description": "Open the security page"
+      },
+      {
+        "type": "action",
+        "description": "Open the status page"
+      },
+      {
+        "type": "action",
+        "description": "Open the roadmap page"
+      },
+      {
+        "type": "action",
+        "description": "Open the changelog page"
+      },
+      {
+        "type": "action",
+        "description": "Open the affiliate page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the public content pages are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC029",
+    "title": "Open a blog article from the blog index",
+    "description": "A public visitor can open a blog article from the blog listing and see the article content.",
+    "category": "Content and Trust Pages",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /blog"
+      },
+      {
+        "type": "action",
+        "description": "Open a blog article"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the blog article content is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the blog index navigation remains available"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC030",
+    "title": "Review roadmap, changelog, and affiliate information",
+    "description": "A public visitor can explore product planning and partnership pages from the trust navigation.",
+    "category": "Content and Trust Pages",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /roadmap"
+      },
+      {
+        "type": "action",
+        "description": "Review planned work"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /changelog"
+      },
+      {
+        "type": "action",
+        "description": "Review recent updates"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /affiliate"
+      },
+      {
+        "type": "action",
+        "description": "Learn about the affiliate program"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify roadmap content is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify changelog and affiliate content are displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC031",
+    "title": "Reject an invalid product URL when starting an audit",
+    "description": "An authenticated user entering an invalid or unsafe product URL is shown a validation error and cannot start the audit.",
+    "category": "Audit Submission",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /audit/new"
+      },
+      {
+        "type": "action",
+        "description": "Fill in an invalid product URL into the audit URL field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the new audit"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a URL validation error is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the audit does not start"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC032",
+    "title": "Compare plans from the pricing page",
+    "description": "A public visitor can open pricing information and proceed toward account access from the pricing page.",
+    "category": "New Audit",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /pricing"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify pricing plans are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Click the upgrade or sign-in call to action"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user is taken to the sign-in experience"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC033",
+    "title": "Review the Arabic homepage and start sign-in",
+    "description": "A public visitor can review the Arabic RTL homepage and start the sign-in journey from the primary call to action.",
+    "category": "New Audit",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the homepage content is displayed in an Arabic right-to-left layout"
+      },
+      {
+        "type": "action",
+        "description": "Click the main sign-in call to action"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the sign-in page is displayed"
+      }
+    ],
+    "priority": "Low"
+  }
+]

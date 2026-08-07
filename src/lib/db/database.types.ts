@@ -271,6 +271,206 @@ export interface Database {
           created_at: string;
         };
       };
+      weekly_reports: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          store_id: string;
+          period_start: string;
+          period_end: string;
+          latest_audit_id: string | null;
+          previous_audit_id: string | null;
+          status: "pending" | "ready" | "failed" | "skipped";
+          payload: Json;
+          email_html: string | null;
+          email_sent_at: string | null;
+          error_message: string | null;
+          generated_at: string;
+          created_at: string;
+        };
+      };
+      competitor_targets: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          store_id: string | null;
+          label: string | null;
+          url: string;
+          page_type: string;
+          is_active: boolean;
+          cadence_hours: number;
+          last_checked_at: string | null;
+          last_changed_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      competitor_snapshots: {
+        Row: {
+          id: string;
+          target_id: string;
+          workspace_id: string;
+          scraped_at: string;
+          scrape_source: "firecrawl" | "fallback" | "audit_reuse" | "none";
+          scrape_status: "ok" | "failed";
+          content_hash: string | null;
+          title: string | null;
+          description: string | null;
+          price: string | null;
+          rating: string | null;
+          review_count: string | null;
+          faq_count: number;
+          schema_types: string[];
+          overall_score: number | null;
+          conversion_score: number | null;
+          seo_score: number | null;
+          geo_score: number | null;
+          trust_score: number | null;
+          signals: Json;
+          page_payload: Json;
+          scores_payload: Json;
+          error_message: string | null;
+          created_at: string;
+        };
+      };
+      competitor_changes: {
+        Row: {
+          id: string;
+          target_id: string;
+          workspace_id: string;
+          previous_snapshot_id: string | null;
+          current_snapshot_id: string;
+          change_type: string;
+          severity: "critical" | "warning" | "info";
+          field_path: string | null;
+          previous_value: Json | null;
+          current_value: Json | null;
+          summary: string;
+          business_impact: string | null;
+          recommended_action: string | null;
+          payload: Json;
+          detected_at: string;
+          created_at: string;
+        };
+      };
+      geo_score_history: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          store_id: string | null;
+          audit_id: string;
+          overall_geo_score: number;
+          citation_score: number | null;
+          schema_score: number | null;
+          entity_score: number | null;
+          faq_score: number | null;
+          ai_readability: number | null;
+          findings: Json;
+          component_scores: Json;
+          recorded_at: string;
+          created_at: string;
+        };
+      };
+      alerts: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          store_id: string | null;
+          alert_type:
+            | "overall_score_drop"
+            | "geo_score_drop"
+            | "trust_signals_lost"
+            | "schema_invalid"
+            | "competitor_improved"
+            | "competitor_price_drop"
+            | "important_recommendation"
+            | "store_healthier";
+          priority: "critical" | "high" | "medium" | "low";
+          title: string;
+          reason: string;
+          business_impact: string;
+          suggested_action: string;
+          source: "audit" | "competitor" | "geo" | "system";
+          source_ref_type: string | null;
+          source_ref_id: string | null;
+          dedupe_key: string;
+          payload: Json;
+          is_read: boolean;
+          read_at: string | null;
+          notify_in_app: boolean;
+          notify_email: boolean;
+          in_app_delivered_at: string | null;
+          email_delivered_at: string | null;
+          created_at: string;
+        };
+      };
+      growth_tasks: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          store_id: string | null;
+          fingerprint: string;
+          external_key: string | null;
+          title: string;
+          category: "conversion" | "seo" | "geo" | "trust";
+          priority: "p1" | "p2" | "p3";
+          difficulty: "easy" | "medium" | "hard";
+          estimated_time: string;
+          expected_business_impact: string;
+          horizon: "today" | "week" | "month" | "longterm";
+          suggested_order: number;
+          status: "open" | "done" | "auto_resolved";
+          completed_at: string | null;
+          completion_source: "user" | "reanalysis" | null;
+          source_audit_id: string | null;
+          resolved_audit_id: string | null;
+          recommendation_problem: string | null;
+          recommendation_solution: string | null;
+          severity: "critical" | "warning" | "opportunity" | null;
+          impact: "high" | "medium" | "low" | null;
+          effort: "quick" | "medium" | "involved" | null;
+          payload: Json;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+      notifications: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          store_id: string | null;
+          category:
+            | "ai_alert"
+            | "weekly_report"
+            | "competitor_change"
+            | "score_change"
+            | "completed_task"
+            | "subscription_warning";
+          priority: "critical" | "high" | "medium" | "low";
+          title: string;
+          body: string;
+          action_label: string | null;
+          action_href: string | null;
+          source:
+            | "audit"
+            | "competitor"
+            | "geo"
+            | "report"
+            | "task"
+            | "billing"
+            | "system";
+          source_ref_type: string | null;
+          source_ref_id: string | null;
+          dedupe_key: string;
+          payload: Json;
+          is_read: boolean;
+          read_at: string | null;
+          is_archived: boolean;
+          archived_at: string | null;
+          created_at: string;
+        };
+      };
     };
   };
 }

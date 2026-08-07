@@ -202,9 +202,9 @@ export async function runBatchedPillarAnalysis(
       );
     }
 
-    if (locale === "ar") {
-      sanitized = enforceArabicBatchedOutput(sanitized, heuristic);
-    }
+    // Product UI is Arabic-only — always coerce AI copy back to Arabic.
+    void locale;
+    sanitized = enforceArabicBatchedOutput(sanitized, heuristic);
 
     sanitized = syncBatchedPerPillarResults(sanitized);
     const usage = result.response.usageMetadata as
@@ -243,10 +243,8 @@ export async function generateContent(
   const safeMarkdown = sanitizePromptText(normalized.markdown, 4000);
   const safeStructured = sanitizePromptText(JSON.stringify(normalized.structuredData), 1500);
 
-  const languageRule =
-    locale === "ar"
-      ? `CRITICAL OUTPUT LANGUAGE: Write EVERY customer-facing string (title, description, faq, metaDescription, adCopy) in Modern Standard Arabic (Egyptian/Gulf ecommerce tone). Do NOT switch to English even if the source page is English-only. Proper nouns, brand names, and URLs may stay as-is.`
-      : `Write all customer-facing copy in clear English for ecommerce merchants.`;
+  void locale; // AppLocale is Arabic-only; kept for call-site compatibility.
+  const languageRule = `CRITICAL OUTPUT LANGUAGE: Write EVERY customer-facing string (title, description, faq, metaDescription, adCopy) in Modern Standard Arabic (Egyptian/Gulf ecommerce tone). Do NOT switch to English even if the source page is English-only. Proper nouns, brand names, and URLs may stay as-is.`;
 
   const prompt = `You are an e-commerce copywriter. Generate optimized copy ONLY from the product page data below.
 Do not invent brands, prices, or claims that are not supported by the data.
@@ -747,17 +745,14 @@ function buildBatchedPillarPrompt(
   const shippingClarity = detectShippingReturnsClarity(page);
   const shippingHint = `وضوح السياسات المكتشفة بالنمط — شحن: ${shippingClarity.shippingDuration}، إرجاع: ${shippingClarity.returnPolicy}، استبدال: ${shippingClarity.exchangePolicy}. ميّز بين محددة (مثل 3–5 أيام عمل) وعامة/غائبة.`;
 
-  const languageBlock =
-    outputLocale === "ar"
-      ? `CRITICAL OUTPUT LANGUAGE (overrides page language and store language):
+  void outputLocale; // AppLocale is Arabic-only; kept for call-site compatibility.
+  const languageBlock = `CRITICAL OUTPUT LANGUAGE (overrides page language and store language):
 - Write EVERY user-facing string in Modern Standard Arabic suitable for Egyptian/Gulf merchants: summary, findings[], problem, solution.
 - Do NOT write findings or recommendations in English even if the crawled page is English-only.
 - Proper nouns, brand names, payment brand names (مدى/Tabby/etc.), URLs, and JSON keys/enums may stay as-is.
-- Arabic numerals or Western digits are both fine for scores.`
-      : `OUTPUT LANGUAGE: Write summary, findings, problem, and solution in clear English for ecommerce merchants.`;
+- Arabic numerals or Western digits are both fine for scores.`;
 
-  const textExample =
-    outputLocale === "ar" ? "string بالعربية" : "string in English";
+  const textExample = "string بالعربية";
 
   return `أنت محرك تحليل متاجر إلكترونية في مصر والخليج (StorePulse / ConvAudit).
 حلّل الصفحة وأرجع درجات التحويل وSEO والثقة مع النتائج — في استجابة JSON واحدة فقط.

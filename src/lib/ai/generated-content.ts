@@ -48,11 +48,11 @@ export function parseGeneratedContent(raw: unknown): GeneratedContent | null {
  */
 export function generatedContentFromPage(page: NormalizedPage): GeneratedContent {
   const sd = page.structuredData ?? {};
-  const title = (page.title || "Product").trim().slice(0, 70);
+  const title = (page.title || "منتج").trim().slice(0, 70);
   const description =
     (page.description || "").trim() ||
     page.markdown.slice(0, 600).trim() ||
-    `Product page at ${page.url}`;
+    `صفحة المنتج على ${page.url}`;
 
   const faqFromPage = Array.isArray(sd.faq)
     ? (sd.faq as { q?: string; a?: string }[])
@@ -73,22 +73,22 @@ export function generatedContentFromPage(page: NormalizedPage): GeneratedContent
       {
         platform: "Meta / Instagram",
         headline: title.slice(0, 60),
-        body: [description.slice(0, 180), price ? `Price: ${price}` : null, brand ? `Brand: ${brand}` : null]
+        body: [description.slice(0, 180), price ? `السعر: ${price}` : null, brand ? `العلامة: ${brand}` : null]
           .filter(Boolean)
           .join(" · "),
-        cta: "Shop now",
+        cta: "تسوّق الآن",
       },
       {
         platform: "TikTok",
         headline: title.slice(0, 50),
         body: description.slice(0, 140),
-        cta: "Learn more",
+        cta: "اعرف المزيد",
       },
       {
         platform: "Google Search",
         headline: title.slice(0, 60),
         body: description.slice(0, 140),
-        cta: "Buy now",
+        cta: "اشترِ الآن",
       },
     ],
     source: "page",

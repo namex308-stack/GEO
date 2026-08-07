@@ -156,7 +156,7 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
               variant="secondary"
               className={cn(
                 "rounded-full text-[10px] font-bold px-2 py-0 border-0",
-                isYearly ? "bg-white/20 text-white" : "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400"
+                isYearly ? "bg-white/20 text-white" : "bg-primary/15 text-primary"
               )}
             >
               {t("plan.saveFourMonths")}
@@ -184,13 +184,13 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
                 className={cn(
                   "relative flex flex-col w-full rounded-2xl border p-6 sm:p-7 transition-shadow",
                   isPro
-                    ? "border-indigo-500/60 bg-gradient-to-b from-indigo-500/8 via-card to-card shadow-lg shadow-indigo-500/10 md:-mt-2 md:mb-2 ring-1 ring-indigo-500/20"
+                    ? "border-primary/60 bg-gradient-to-b from-primary/8 via-card to-card shadow-glow md:-mt-2 md:mb-2 ring-1 ring-primary/20"
                     : "border-border/60 bg-card hover:shadow-md"
                 )}
               >
                 {isPro && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                    <Badge className="rounded-full px-3.5 py-1 gap-1.5 bg-indigo-600 hover:bg-indigo-600 text-white border-0 shadow-md">
+                    <Badge className="rounded-full px-3.5 py-1 gap-1.5 border-0 shadow-md">
                       <Sparkles className="size-3.5" aria-hidden />
                       {t("plan.mostPopular")}
                     </Badge>
@@ -203,7 +203,7 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
                       {t(meta.nameKey)}
                     </h3>
                     {plan.id === "business" && (
-                      <ShieldCheck className="size-4 text-indigo-500 shrink-0" aria-hidden />
+                      <ShieldCheck className="size-4 text-primary shrink-0" aria-hidden />
                     )}
                   </div>
                   <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed min-h-[2.5rem]">
@@ -218,7 +218,7 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
                       {isFree ? (
                         <span className="text-foreground">0 EGP</span>
                       ) : (
-                        <span className={cn(isPro && "text-indigo-600 dark:text-indigo-400")}>
+                        <span className={cn(isPro && "text-primary")}>
                           {formatEgp(displayPrice)} EGP
                         </span>
                       )}
@@ -235,7 +235,7 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
                   {!isFree && isYearly && (
                     <Badge
                       variant="outline"
-                      className="mt-2.5 text-xs font-semibold border-indigo-500/40 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5"
+                      className="mt-2.5 text-xs font-semibold border-primary/40 text-primary bg-primary/5"
                     >
                       {t("plan.saveFourMonths")}
                     </Badge>
@@ -244,7 +244,7 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
                   {!isFree && !isYearly && (
                     <p className="mt-2 text-xs text-muted-foreground">
                       {formatEgp(plan.yearlyPrice)} EGP{t("pricing.perYear")}{" "}
-                      <span className="text-indigo-600 dark:text-indigo-400 font-medium">
+                      <span className="text-primary font-medium">
                         — {t("plan.saveFourMonths")}
                       </span>
                     </p>
@@ -262,7 +262,7 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
                   size="lg"
                   className={cn(
                     "w-full rounded-full font-semibold h-11",
-                    isPro && "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/25"
+                    isPro && "shadow-glow"
                   )}
                   variant={isPro ? "default" : isFree ? "outline" : "secondary"}
                 >
@@ -282,14 +282,14 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
                       <span
                         className={cn(
                           "mt-0.5 size-5 rounded-full grid place-items-center shrink-0",
-                          isPro ? "bg-indigo-500/15" : "bg-primary/15"
+                          isPro ? "bg-brand/15" : "bg-primary/15"
                         )}
                         aria-hidden
                       >
                         <Check
                           className={cn(
                             "size-3",
-                            isPro ? "text-indigo-600 dark:text-indigo-400" : "text-primary"
+                            isPro ? "text-brand" : "text-primary"
                           )}
                         />
                       </span>

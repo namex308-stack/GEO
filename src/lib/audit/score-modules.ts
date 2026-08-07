@@ -91,9 +91,12 @@ export function detectLocalPaymentMethods(page: NormalizedPage): LocalPaymentDet
   };
 }
 
-export function buildLocalPaymentTrustFinding(detection: LocalPaymentDetection): string {
+export function buildLocalPaymentTrustFinding(
+  detection: LocalPaymentDetection
+): string | null {
   if (detection.detected.length === 0) return TRUST_PAYMENT_MISSING_FINDING;
-  return `طرق دفع محلية ظاهرة تدعم الثقة: ${detection.labelsAr.join("، ")}.`;
+  // Success state — do not emit a fake opportunity recommendation.
+  return null;
 }
 
 /**
@@ -117,7 +120,9 @@ export function enrichTrustWithLocalPayments(
       !/mada|tabby|tamara|apple pay|الدفع عند الاستلام/i.test(f)
   );
 
-  const findings = [paymentFinding, ...withoutOldPayment].slice(0, 8);
+  const findings = (
+    paymentFinding ? [paymentFinding, ...withoutOldPayment] : withoutOldPayment
+  ).slice(0, 8);
 
   let score = trust.score;
   if (adjustScore) {
@@ -240,9 +245,8 @@ function shippingClarityLabelAr(clarity: PolicyClarity): string {
 
 export function buildShippingReturnsFindings(clarity: ShippingReturnsClarity): string[] {
   if (clarity.weakCount === 0) {
-    return [
-      "سياسات الشحن والإرجاع والاستبدال واضحة ومحددة (مدد زمنية ظاهرة للمشتري).",
-    ];
+    // Success state — do not emit a fake "opportunity" recommendation.
+    return [];
   }
 
   const findings: string[] = [];
@@ -417,28 +421,24 @@ export function scoreConversionModule(page: NormalizedPage): PillarScoreModuleRe
 
   if (s.hasPrice) {
     score += 15;
-    findings.push("تم رصد إشارة واضحة للسعر على الصفحة.");
   } else {
     findings.push("لا توجد إشارة واضحة للسعر قرب زر الشراء.");
   }
 
   if (s.hasImages) {
     score += 15;
-    findings.push("توجد صور للمنتج تدعم قرار الشراء.");
   } else {
     findings.push("لم يتم العثور على صورة منتج واضحة.");
   }
 
   if (s.hasCta) {
     score += 15;
-    findings.push("يوجد زر أو دعوة واضحة لاتخاذ إجراء (CTA).");
   } else {
     findings.push("دعوة الشراء (CTA) غير واضحة أو غير مكتشفة.");
   }
 
   if (s.descLen > 80) {
     score += 10;
-    findings.push("وصف المنتج كافٍ نسبيًا لتقليل احتكاك التحويل.");
   } else {
     findings.push("وصف المنتج قصير وقد يزيد من تردد المشتري.");
   }
@@ -462,35 +462,30 @@ export function scoreSeoModule(page: NormalizedPage): PillarScoreModuleResult {
 
   if (page.title) {
     score += 15;
-    findings.push("عنوان الصفحة (Title) موجود.");
   } else {
     findings.push("عنوان الصفحة مفقود أو فارغ.");
   }
 
   if (s.descLen > 50) {
     score += 15;
-    findings.push("الوصف التعريفي (Meta) موجود بطول مناسب.");
   } else {
     findings.push("الوصف التعريفي قصير أو غير مكتمل.");
   }
 
   if (s.hasImages) {
     score += 10;
-    findings.push("توجد صور يمكن فهرستها أو ربطها بـ Open Graph.");
   } else {
     findings.push("لا توجد صور كافية لدعم الظهور في البحث.");
   }
 
   if (s.hasSchema) {
     score += 15;
-    findings.push("تم رصد بيانات منظمة (Schema / JSON-LD).");
   } else {
     findings.push("لا توجد بيانات منظمة Schema.org على الصفحة.");
   }
 
   if (s.mdLen > 800) {
     score += 10;
-    findings.push("محتوى الصفحة غني بما يكفي لمحركات البحث.");
   } else {
     findings.push("محتوى الصفحة قليل وقد يضعف الترتيب.");
   }
@@ -514,14 +509,12 @@ export function scoreTrustModule(page: NormalizedPage): PillarScoreModuleResult 
 
   if (s.hasRating) {
     score += 20;
-    findings.push("توجد تقييمات أو مراجعات مرئية.");
   } else {
     findings.push("لا توجد تقييمات أو عدد مراجعات واضح.");
   }
 
   if (s.hasBrand) {
     score += 10;
-    findings.push("اسم العلامة التجارية ظاهر في البيانات.");
   } else {
     findings.push("هوية العلامة التجارية غير واضحة.");
   }
@@ -530,12 +523,10 @@ export function scoreTrustModule(page: NormalizedPage): PillarScoreModuleResult 
 
   if (s.hasImages) {
     score += 10;
-    findings.push("الصور تدعم مصداقية عرض المنتج.");
   }
 
   if (s.descLen > 80) {
     score += 10;
-    findings.push("جودة المحتوى النصي تدعم الثقة.");
   } else {
     findings.push("المحتوى النصي ضعيف وقد يقلل ثقة الزائر.");
   }

@@ -2,9 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ArrowUpRight, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ArrowUpRight, LogOut, X } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/providers/auth-provider";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import {
@@ -38,7 +40,7 @@ function NavLink({
         "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
         active
           ? "bg-primary/10 text-primary"
-          : "text-muted-foreground hover:bg-accent/70 hover:text-foreground"
+          : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
       )}
     >
       <Icon className={cn("size-[18px] shrink-0", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
@@ -62,10 +64,26 @@ export function AppSidebar({
   onClose: () => void;
 }) {
   const t = useT();
+  const router = useRouter();
+  const { signOut } = useAuth();
+  const [signingOut, setSigningOut] = React.useState(false);
+
+  const handleLogout = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      onClose();
+      await signOut();
+      router.push("/");
+      router.refresh();
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   const body = (
     <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center justify-between gap-2 px-5">
+      <div className="flex h-[72px] items-center justify-between gap-2 px-5">
         <Link href="/dashboard" onClick={onClose} className="min-w-0">
           <Logo size={32} showTagline={false} />
         </Link>
@@ -105,7 +123,17 @@ export function AppSidebar({
         </div>
       </nav>
 
-      <div className="p-3 pt-0">
+      <div className="space-y-2 p-3 pt-0">
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full justify-start gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground"
+          disabled={signingOut}
+          onClick={() => void handleLogout()}
+        >
+          <LogOut className="size-[18px] shrink-0" />
+          {t("nav.logout")}
+        </Button>
         <Link
           href="/pricing"
           onClick={onClose}
@@ -147,7 +175,7 @@ export function AppSidebar({
         />
         <aside
           className={cn(
-            "absolute inset-y-0 start-0 w-[min(288px,88vw)] bg-card shadow-elevated transition-transform duration-200",
+            "absolute inset-y-0 start-0 w-[min(288px,88vw)] bg-card shadow-[var(--shadow-elevated)] transition-transform duration-200",
             mobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"
           )}
         >

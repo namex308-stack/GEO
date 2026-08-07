@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   crawlWithFallback,
@@ -16,10 +16,15 @@ import {
   markAuditFailed,
   persistAuditResults,
   recordUsageEvent,
+  releaseUsageQuota,
   saveAuditPage,
   startAnalysisRun,
+  tryConsumeUsageQuota,
   updateAuditStatus,
 } from "@/lib/db/audit-repository";
+import { getCurrentUsagePeriod, getPlanForUser } from "@/lib/db/workspace-stats";
+import { auditLimitReachedMessage } from "@/lib/billing/quota";
+import { emitSubscriptionWarningNotification } from "@/lib/notifications/emit";
 import type { AnalyzerJsonResult } from "@/lib/db/types";
 import { assertSafePublicHttpUrl } from "@/lib/url-safety";
 import { analyzeGeo } from "@/lib/audit/geo-analyzer";
@@ -27,17 +32,33 @@ import { applyGeoAnalysisToAudit } from "@/lib/audit/scoring";
 import {
   getOnboardingState,
   toAnalyzerOnboarding,
+  type OnboardingState,
 } from "@/lib/db/onboarding-repository";
 import { normalizeAppLocale } from "@/lib/locale";
+import type { OnboardingAnswers } from "@/lib/types";
 
-const Body = z.object({
-  productUrl: z.string().url(),
-  storeUrl: z.string().url().optional().or(z.literal("")),
-  competitorUrl: z.string().url().optional().or(z.literal("")),
-  onboarding: z.record(z.string(), z.string()).optional(),
-  /** Reserved for future locale variants (e.g. `ar-gulf`); output is always Arabic today. */
-  locale: z.literal("ar").optional(),
-});
+const OptionalHttpUrl = z.string().url().optional().or(z.literal(""));
+
+const Body = z
+  .object({
+    productUrl: OptionalHttpUrl,
+    storeUrl: OptionalHttpUrl,
+    competitorUrl: OptionalHttpUrl,
+    onboarding: z.record(z.string(), z.string()).optional(),
+    /** Reserved for future locale variants (e.g. `ar-gulf`); output is always Arabic today. */
+    locale: z.literal("ar").optional(),
+  })
+  .superRefine((data, ctx) => {
+    const hasProduct = Boolean(data.productUrl?.trim());
+    const hasStore = Boolean(data.storeUrl?.trim());
+    if (!hasProduct && !hasStore) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["productUrl"],
+        message: "أدخل رابط منتج أو رابط متجر على الأقل.",
+      });
+    }
+  });
 
 function validateCrawlUrl(label: string, raw: string): string | null {
   const safe = assertSafePublicHttpUrl(raw);
@@ -45,105 +66,30 @@ function validateCrawlUrl(label: string, raw: string): string | null {
   return null;
 }
 
-export async function POST(req: NextRequest) {
+async function runAuditPipeline(input: {
+  auditId: string;
+  workspaceId: string;
+  primaryUrl: string;
+  resolvedStoreUrl: string | undefined;
+  resolvedCompetitorUrl: string | undefined;
+  storeId: string | null;
+  onboarding: OnboardingAnswers | null;
+  onboardingState: OnboardingState;
+  usageEventId: string | null;
+}): Promise<void> {
+  const {
+    auditId,
+    workspaceId,
+    primaryUrl,
+    resolvedStoreUrl,
+    resolvedCompetitorUrl,
+    storeId,
+    onboarding,
+    onboardingState,
+    usageEventId,
+  } = input;
+
   try {
-    const auth = await requireApiUser();
-    if (!auth.ok) return auth.response;
-
-    const json = await req.json();
-    const parsed = Body.safeParse(json);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "طلب غير صالح", details: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-    const { productUrl, storeUrl, competitorUrl } = parsed.data;
-
-    // Supabase profile is the source of truth for onboarding personalization.
-    const onboardingState = await getOnboardingState(auth.user.id);
-    if (!onboardingState?.completed) {
-      return NextResponse.json(
-        {
-          error: "أكمل التهيئة قبل تشغيل تحليل.",
-          code: "ONBOARDING_REQUIRED",
-          resumePath: onboardingState?.resumePath ?? "/onboarding",
-        },
-        { status: 403 }
-      );
-    }
-    const onboarding = toAnalyzerOnboarding(onboardingState);
-
-    const resolvedStoreUrl =
-      (storeUrl && storeUrl.trim()) ||
-      onboardingState.storeUrl ||
-      undefined;
-    const resolvedCompetitorUrl =
-      (competitorUrl && competitorUrl.trim()) ||
-      onboardingState.competitorUrl ||
-      undefined;
-
-    const urlError =
-      validateCrawlUrl("رابط المنتج", productUrl) ||
-      (resolvedStoreUrl ? validateCrawlUrl("رابط المتجر", resolvedStoreUrl) : null) ||
-      (resolvedCompetitorUrl ? validateCrawlUrl("رابط المنافس", resolvedCompetitorUrl) : null);
-    if (urlError) {
-      return NextResponse.json({ error: urlError, code: "BLOCKED_URL" }, { status: 400 });
-    }
-
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
-    const rateKey = `user:${auth.user.id}`;
-    const { success, remaining, limit } = await checkRateLimit(rateKey, "free");
-    if (!success) {
-      return NextResponse.json(
-        { error: "تم تجاوز الحد المسموح. حاول لاحقاً أو قم بترقية باقتك." },
-        {
-          status: 429,
-          headers: {
-            "X-RateLimit-Limit": String(limit),
-            "X-RateLimit-Remaining": String(remaining),
-          },
-        }
-      );
-    }
-
-    const workspaceId = await ensurePersonalWorkspace(auth.user.id);
-    if (!workspaceId) {
-      return NextResponse.json(
-        { error: "تعذّر تجهيز مساحة العمل. حاول مرة أخرى." },
-        { status: 503 }
-      );
-    }
-
-    const storeId = resolvedStoreUrl
-      ? await ensureWorkspaceStore({
-          workspaceId,
-          storeUrl: resolvedStoreUrl,
-          name: onboardingState.businessName || onboardingState.homepageTitle || undefined,
-          platform: onboardingState.platform || null,
-          country: onboardingState.country || null,
-          language: onboardingState.primaryLanguage || null,
-          verifiedAt: onboardingState.storeVerifiedAt,
-          markCrawled: true,
-        })
-      : null;
-
-    const auditId = await createAuditRecord({
-      workspaceId,
-      userId: auth.user.id,
-      productUrl,
-      storeUrl: resolvedStoreUrl,
-      competitorUrl: resolvedCompetitorUrl,
-      storeId,
-    });
-
-    if (!auditId) {
-      return NextResponse.json(
-        { error: "تعذّر إنشاء سجل التحليل. حاول مرة أخرى." },
-        { status: 503 }
-      );
-    }
-
     await updateAuditStatus(auditId, "scraping");
 
     const emptyCompetitor = {
@@ -153,7 +99,7 @@ export async function POST(req: NextRequest) {
     };
 
     const [productResult, competitorResult] = await Promise.all([
-      crawlWithFallback(productUrl),
+      crawlWithFallback(primaryUrl),
       resolvedCompetitorUrl
         ? crawlWithFallback(resolvedCompetitorUrl)
         : Promise.resolve(emptyCompetitor),
@@ -170,21 +116,9 @@ export async function POST(req: NextRequest) {
           : productResult.errorCode === "BLOCKED_URL"
             ? "لا يمكن استخراج هذا الرابط."
             : "تعذّر الوصول إلى الصفحة، تحقق من الرابط.");
-      if (auditId) await markAuditFailed(auditId, message);
-      return NextResponse.json(
-        {
-          error: message,
-          code: productResult.errorCode ?? "SCRAPE_FAILED",
-        },
-        {
-          status:
-            productResult.errorCode === "NOT_CONFIGURED" || productResult.errorCode === "CREDITS"
-              ? 503
-              : productResult.errorCode === "BLOCKED_URL"
-                ? 400
-                : 422,
-        }
-      );
+      await markAuditFailed(auditId, message);
+      if (usageEventId) await releaseUsageQuota(usageEventId);
+      return;
     }
 
     await saveAuditPage(auditId, "primary", product);
@@ -192,31 +126,22 @@ export async function POST(req: NextRequest) {
     await updateAuditStatus(auditId, "analyzing");
 
     const runIds = new Map<AnalyzerName, string>();
-
-    // ConvAudit is Arabic-only today; the locale layer is the extension point for future dialects.
     const outputLocale = normalizeAppLocale("ar");
 
-    const audit = await runAudit(
-      product,
-      competitor,
-      onboarding,
-      {
-        outputLocale,
-        onAnalyzerStart: async (analyzer: AnalyzerName) => {
-          const id = await startAnalysisRun(auditId, analyzer);
-          if (id) runIds.set(analyzer, id);
-        },
-        onAnalyzerComplete: async (analyzer: AnalyzerName, result: AnalyzerJsonResult) => {
-          const id = runIds.get(analyzer);
-          if (id) await finishAnalysisRun(id, result);
-        },
-      }
-    );
+    const audit = await runAudit(product, competitor, onboarding, {
+      outputLocale,
+      onAnalyzerStart: async (analyzer: AnalyzerName) => {
+        const id = await startAnalysisRun(auditId, analyzer);
+        if (id) runIds.set(analyzer, id);
+      },
+      onAnalyzerComplete: async (analyzer: AnalyzerName, result: AnalyzerJsonResult) => {
+        const id = runIds.get(analyzer);
+        if (id) await finishAnalysisRun(id, result);
+      },
+    });
 
-    // Ensure GEO analysis is attached (deterministic rule engine) for every audit.
     const geoAnalysis = analyzeGeo(product);
     const withGeo = applyGeoAnalysisToAudit(audit, geoAnalysis);
-
     const usedFallback = productResult.source === "fallback";
     const withMeta = {
       ...withGeo,
@@ -249,7 +174,7 @@ export async function POST(req: NextRequest) {
         null;
       await ensureWorkspaceStore({
         workspaceId,
-        storeUrl: resolvedStoreUrl || productUrl,
+        storeUrl: resolvedStoreUrl || primaryUrl,
         name: withMeta.storeName || onboardingState.businessName || undefined,
         platform: onboardingState.platform || null,
         country: onboardingState.country || null,
@@ -260,26 +185,196 @@ export async function POST(req: NextRequest) {
         markCrawled: true,
       });
     }
-    await recordUsageEvent(workspaceId, "audit", { type: "audit", id: auditId });
+
     if (resolvedCompetitorUrl) {
       await recordUsageEvent(workspaceId, "competitor_compare", { type: "audit", id: auditId });
     }
+  } catch (err) {
+    console.error("[api/audit] pipeline error:", err);
+    await markAuditFailed(auditId, "فشل التحليل. حاول مرة أخرى.");
+    if (usageEventId) await releaseUsageQuota(usageEventId);
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const auth = await requireApiUser();
+    if (!auth.ok) return auth.response;
+
+    const json = await req.json();
+    const parsed = Body.safeParse(json);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "طلب غير صالح", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const productUrlInput = parsed.data.productUrl?.trim() || "";
+    const storeUrlInput = parsed.data.storeUrl?.trim() || "";
+    const competitorUrlInput = parsed.data.competitorUrl?.trim() || "";
+
+    const onboardingState = await getOnboardingState(auth.user.id);
+    if (!onboardingState?.completed) {
+      return NextResponse.json(
+        {
+          error: "أكمل التهيئة قبل تشغيل تحليل.",
+          code: "ONBOARDING_REQUIRED",
+          resumePath: onboardingState?.resumePath ?? "/onboarding",
+        },
+        { status: 403 }
+      );
+    }
+    const onboarding = toAnalyzerOnboarding(onboardingState);
+
+    const primaryUrl = productUrlInput || storeUrlInput;
+    const resolvedStoreUrl =
+      storeUrlInput || onboardingState.storeUrl || undefined;
+    const competitorCandidate =
+      competitorUrlInput || onboardingState.competitorUrl || undefined;
+
+    const urlError =
+      validateCrawlUrl(productUrlInput ? "رابط المنتج" : "رابط المتجر", primaryUrl) ||
+      (resolvedStoreUrl && resolvedStoreUrl !== primaryUrl
+        ? validateCrawlUrl("رابط المتجر", resolvedStoreUrl)
+        : null) ||
+      (competitorCandidate ? validateCrawlUrl("رابط المنافس", competitorCandidate) : null);
+    if (urlError) {
+      return NextResponse.json({ error: urlError, code: "BLOCKED_URL" }, { status: 400 });
+    }
+
+    const workspaceId = await ensurePersonalWorkspace(auth.user.id);
+    if (!workspaceId) {
+      return NextResponse.json(
+        { error: "تعذّر تجهيز مساحة العمل. حاول مرة أخرى." },
+        { status: 503 }
+      );
+    }
+
+    const plan = await getPlanForUser(auth.user.id);
+
+    const rateKey = `user:${auth.user.id}`;
+    const { success, remaining, limit } = await checkRateLimit(rateKey, plan.planId);
+    if (!success) {
+      return NextResponse.json(
+        { error: "تم تجاوز الحد المسموح. حاول لاحقاً أو قم بترقية باقتك." },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Limit": String(limit),
+            "X-RateLimit-Remaining": String(remaining),
+          },
+        }
+      );
+    }
+
+    let resolvedCompetitorUrl = competitorCandidate;
+    if (resolvedCompetitorUrl && !plan.features.competitor) {
+      if (competitorUrlInput) {
+        return NextResponse.json(
+          {
+            error: "مقارنة المنافسين غير متاحة في باقتك الحالية. قم بالترقية للمتابعة.",
+            code: "COMPETITOR_LOCKED",
+            plan: plan.planId,
+          },
+          { status: 403 }
+        );
+      }
+      resolvedCompetitorUrl = undefined;
+    }
+
+    const storeId = resolvedStoreUrl
+      ? await ensureWorkspaceStore({
+          workspaceId,
+          storeUrl: resolvedStoreUrl,
+          name: onboardingState.businessName || onboardingState.homepageTitle || undefined,
+          platform: onboardingState.platform || null,
+          country: onboardingState.country || null,
+          language: onboardingState.primaryLanguage || null,
+          verifiedAt: onboardingState.storeVerifiedAt,
+          markCrawled: true,
+        })
+      : null;
+
+    const auditId = await createAuditRecord({
+      workspaceId,
+      userId: auth.user.id,
+      productUrl: primaryUrl,
+      storeUrl: resolvedStoreUrl,
+      competitorUrl: resolvedCompetitorUrl,
+      storeId,
+    });
+
+    if (!auditId) {
+      return NextResponse.json(
+        { error: "تعذّر إنشاء سجل التحليل. حاول مرة أخرى." },
+        { status: 503 }
+      );
+    }
+
+    const { start: periodStart, end: periodEnd } = getCurrentUsagePeriod();
+    const quota = await tryConsumeUsageQuota({
+      workspaceId,
+      metric: "audit",
+      limit: plan.auditsPerMonth,
+      periodStart,
+      periodEnd,
+      ref: { type: "audit", id: auditId },
+    });
+
+    if (!quota.allowed) {
+      const message =
+        plan.auditsPerMonth != null
+          ? auditLimitReachedMessage(plan.displayName, quota.used, plan.auditsPerMonth)
+          : "تعذّر تأكيد باقتك. حاول مرة أخرى.";
+      await markAuditFailed(auditId, message);
+      await emitSubscriptionWarningNotification({
+        workspaceId,
+        kind: "quota_exhausted",
+        metricLabel: "تحليلات الشهر",
+      });
+      return NextResponse.json(
+        {
+          error: message,
+          code: "AUDIT_LIMIT_REACHED",
+          plan: plan.planId,
+          limit: plan.auditsPerMonth,
+          used: quota.used,
+        },
+        { status: 403 }
+      );
+    }
+
+    const usageEventId = quota.usageEventId;
+
+    after(() =>
+      runAuditPipeline({
+        auditId,
+        workspaceId,
+        primaryUrl,
+        resolvedStoreUrl,
+        resolvedCompetitorUrl,
+        storeId,
+        onboarding,
+        onboardingState,
+        usageEventId,
+      })
+    );
 
     return NextResponse.json({
-      audit: { ...withMeta, id: auditId },
+      audit: {
+        id: auditId,
+        productUrl: primaryUrl,
+        storeUrl: resolvedStoreUrl,
+        competitorUrl: resolvedCompetitorUrl,
+        status: "queued",
+      },
       meta: {
         rateLimit: { remaining, limit },
         auditId,
         workspaceId,
-        scrapeSource: productResult.source,
-        warning:
-          productResult.errorCode === "CREDITS"
-            ? productResult.errorMessage
-            : usedFallback && !isFirecrawlConfigured()
-              ? FIRECRAWL_NOT_CONFIGURED_MESSAGE
-              : undefined,
+        accepted: true,
         demoMode: {
-          firecrawl: !isFirecrawlConfigured() || usedFallback,
+          firecrawl: !isFirecrawlConfigured(),
           gemini: !isGeminiConfigured(),
         },
       },
@@ -295,11 +390,12 @@ export async function GET() {
     endpoint: "POST /api/audit",
     auth: "Required (Supabase session cookie).",
     body: {
-      productUrl: "string (required)",
-      storeUrl: "string (optional)",
+      productUrl: "string (optional — required if storeUrl is empty)",
+      storeUrl: "string (optional — required if productUrl is empty)",
       competitorUrl: "string (optional)",
       locale: "ar (optional — reserved for future Arabic dialect variants)",
     },
-    notes: "Onboarding context is loaded from the user profile (required before audit).",
+    notes:
+      "Provide at least one of productUrl or storeUrl. Onboarding context is loaded from the user profile (required before audit). Returns auditId immediately; crawl/AI continue in the background — poll GET /api/audit/:id or open /scanning.",
   });
 }

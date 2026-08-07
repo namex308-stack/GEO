@@ -124,9 +124,9 @@ export function ConceptExplainer() {
               {/* browser chrome */}
               <div className="flex items-center justify-between px-5 py-3 border-b border-border/60 bg-muted/40">
                 <div className="flex items-center gap-2">
-                  <span className="size-2.5 rounded-full bg-rose-400" />
-                  <span className="size-2.5 rounded-full bg-amber-400" />
-                  <span className="size-2.5 rounded-full bg-emerald-400" />
+                  <span className="size-2.5 rounded-full bg-muted-foreground/30" />
+                  <span className="size-2.5 rounded-full bg-muted-foreground/30" />
+                  <span className="size-2.5 rounded-full bg-muted-foreground/30" />
                 </div>
                 <span className="text-xs font-mono text-muted-foreground">convaudit.com/audit</span>
                 <span className="text-xs text-muted-foreground">{phase + 1} / {PHASES.length}</span>

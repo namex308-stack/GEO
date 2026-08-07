@@ -13,8 +13,8 @@ import { cn } from "@/lib/utils";
 const PILLARS = [
   { icon: Zap, labelKey: "hero.pillar.conversion" as const, color: "#FF6600" },
   { icon: Search, labelKey: "hero.pillar.seo" as const, color: "#ff983f" },
-  { icon: Bot, labelKey: "hero.pillar.geo" as const, color: "#ff983f" },
-  { icon: ShieldCheck, labelKey: "hero.pillar.trust" as const, color: "#cc5200" },
+  { icon: Bot, labelKey: "hero.pillar.geo" as const, color: "#cc5200" },
+  { icon: ShieldCheck, labelKey: "hero.pillar.trust" as const, color: "#929292" },
 ] as const;
 
 const TRUST_POINTS = [
@@ -70,7 +70,7 @@ export function Hero() {
             <Button
               size="lg"
               onClick={startAuditAndNavigate}
-              className="h-11 px-7 font-semibold shadow-sm group"
+              className="h-11 px-7 font-semibold rounded-full shadow-glow group"
             >
               {t("hero.startFreeAudit")}
               <ArrowRight className="size-4 ms-0.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
@@ -79,7 +79,7 @@ export function Hero() {
               size="lg"
               variant="outline"
               onClick={() => {
-                document.getElementById("why-lose-sales")?.scrollIntoView({ behavior: "smooth" });
+                document.getElementById("how")?.scrollIntoView({ behavior: "smooth" });
               }}
               className="h-11 px-7 font-semibold bg-card/80"
             >

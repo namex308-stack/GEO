@@ -6,7 +6,7 @@ import {
   saveOnboardingStep,
   updateOnboardingAnswers,
 } from "@/lib/db/onboarding-repository";
-import { ONBOARDING_STEPS, slugFromStepNumber } from "@/lib/onboarding/constants";
+import { ONBOARDING_STEPS, isOptionalStep, slugFromStepNumber } from "@/lib/onboarding/constants";
 import { probeStoreUrl } from "@/lib/onboarding/probe-store";
 import {
   OnboardingProfilePartialSchema,
@@ -78,11 +78,16 @@ export async function PATCH(req: NextRequest) {
         { status: 400 }
       );
     }
-  } else if (slug !== "competitor") {
-    return NextResponse.json({ error: "خطوة المنافس هي الاختيارية فقط." }, { status: 400 });
+  } else if (!isOptionalStep(slug)) {
+    return NextResponse.json({ error: "هذه الخطوة مطلوبة ولا يمكن تخطيها." }, { status: 400 });
   }
 
   let mergedAnswers = { ...answers };
+
+  // Arabic-first product default — language step removed from the wizard.
+  if (!mergedAnswers.primaryLanguage) {
+    mergedAnswers.primaryLanguage = "ar";
+  }
 
   // Store URL step: verify reachability, detect platform, persist probe metadata.
   if (slug === "store-url" && !skip) {
@@ -102,6 +107,7 @@ export async function PATCH(req: NextRequest) {
       platform: probe.platform,
       platformConfidence: probe.confidence,
       storeVerifiedAt: new Date().toISOString(),
+      primaryLanguage: mergedAnswers.primaryLanguage || "ar",
     };
   }
 

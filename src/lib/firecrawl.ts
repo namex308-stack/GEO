@@ -368,9 +368,9 @@ function extractTitleFromUrl(url: string): string {
       seg
         .replace(/[-_]/g, " ")
         .replace(/\.\w+$/, "")
-        .replace(/\b\w/g, (c) => c.toUpperCase()) || "Product page"
+        .replace(/\b\w/g, (c) => c.toUpperCase()) || "صفحة منتج"
     );
   } catch {
-    return "Product page";
+    return "صفحة منتج";
   }
 }

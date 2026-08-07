@@ -34,7 +34,7 @@ export default function AffiliatePage() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-primary/30 gradient-brand p-8 sm:p-10 text-center text-white relative overflow-hidden"
+          className="rounded-2xl border border-primary/30 gradient-brand p-8 sm:p-10 text-center text-white relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-dots opacity-20" />
           <div className="relative">

@@ -22,10 +22,11 @@ export function getRedis(): Redis | null {
 }
 
 /**
- * Per-IP rate limiter for audit requests.
- * Falls back to "always allow" in demo mode.
- *   Free plan: 10 audits / hour
- *   Pro/Business: 100 audits / hour
+ * Per-user rate limiter for audit / generate requests.
+ * Production fails closed when Redis is unset.
+ *   Free: 10 / hour
+ *   Pro: 100 / hour
+ *   Business: 1000 / hour
  */
 const LIMITERS: Record<string, Ratelimit> = {};
 
@@ -50,7 +51,8 @@ export function getRatelimit(plan: "free" | "pro" | "business" = "free"): Rateli
 /**
  * Check rate limit for an identifier (IP or user ID).
  * Returns { success, limit, remaining, reset }.
- * In demo mode (no Redis), always succeeds.
+ * Production without Redis: deny (fail closed).
+ * Non-production without Redis: allow (local demo).
  */
 export async function checkRateLimit(
   identifier: string,
@@ -58,7 +60,10 @@ export async function checkRateLimit(
 ): Promise<{ success: boolean; limit: number; remaining: number; reset: number }> {
   const limiter = getRatelimit(plan);
   if (!limiter) {
-    // Demo mode — allow everything.
+    if (process.env.NODE_ENV === "production") {
+      console.error("[redis] rate limit denied: Upstash Redis not configured");
+      return { success: false, limit: 0, remaining: 0, reset: 0 };
+    }
     return { success: true, limit: Infinity, remaining: Infinity, reset: 0 };
   }
   return limiter.limit(identifier);

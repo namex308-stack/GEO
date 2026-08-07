@@ -16,14 +16,13 @@ import {
 import { toast } from "sonner";
 import { PageShell, PageHeader, PageContent } from "@/components/app/page-shell";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/components/providers/auth-provider";
 import { getUserInitials } from "@/lib/auth/display-user";
 import { useT } from "@/lib/i18n";
-import { normalizeAppLocale } from "@/lib/locale";
-import { getEnabledLocales } from "@/lib/locale/config";
 import {
   CATEGORY_OPTIONS,
   CHALLENGE_OPTIONS,
@@ -101,11 +100,9 @@ export default function SettingsPage() {
   const t = useT();
   const { user } = useAuth();
   const authInitials = user ? getUserInitials(user) : "?";
-  const enabledLocales = getEnabledLocales();
 
   const [fullName, setFullName] = React.useState("");
   const [email, setEmail] = React.useState(user?.email ?? "");
-  const [locale, setLocale] = React.useState(normalizeAppLocale("ar"));
   const [timezone, setTimezone] = React.useState("");
   const [loadingAccount, setLoadingAccount] = React.useState(true);
   const [savingAccount, setSavingAccount] = React.useState(false);
@@ -130,14 +127,12 @@ export default function SettingsPage() {
             profile?: {
               fullName?: string;
               email?: string;
-              locale?: string;
               timezone?: string;
             };
           };
           if (!cancelled && data.profile) {
             setFullName(data.profile.fullName || "");
             setEmail(data.profile.email || user?.email || "");
-            setLocale(normalizeAppLocale(data.profile.locale || "ar"));
             setTimezone(data.profile.timezone || "");
           }
         }
@@ -182,13 +177,12 @@ export default function SettingsPage() {
     setSavingAccount(true);
     setSavedAccount(false);
     try {
-      const nextLocale = normalizeAppLocale(locale);
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName,
-          locale: nextLocale,
+          locale: "ar",
           timezone,
           businessName: biz.businessName,
           country: biz.country,
@@ -252,13 +246,13 @@ export default function SettingsPage() {
     <PageShell>
       <PageHeader title={t("settings.title")} subtitle={t("settings.subtitle")} icon={Settings} back="/dashboard" />
       <PageContent className="space-y-6 max-w-3xl">
-        <div className="rounded-2xl border border-border/60 bg-card p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
             <h2 className="font-display text-lg font-bold flex items-center gap-2">
               <User className="size-5 text-primary" /> {t("settings.profile")}
             </h2>
             {savedAccount && (
-              <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600">
                 <CheckCircle2 className="size-3.5" /> {t("settings.saved")}
               </span>
             )}
@@ -298,20 +292,11 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-sm text-muted-foreground">{t("settings.localeLabel")}</Label>
-                  <select
-                    value={locale}
-                    onChange={(e) => {
-                      setLocale(normalizeAppLocale(e.target.value));
-                      setSavedAccount(false);
-                    }}
-                    className="flex h-11 w-full rounded-xl border border-input bg-background px-3 text-sm"
-                  >
-                    {enabledLocales.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.label}
-                      </option>
-                    ))}
-                  </select>
+                  <Input
+                    value={t("settings.localeFixedValue")}
+                    readOnly
+                    className="h-11 rounded-xl text-sm bg-muted/40"
+                  />
                   <p className="text-xs text-muted-foreground">{t("settings.languageDesc")}</p>
                 </div>
                 <div className="space-y-1.5">
@@ -342,15 +327,15 @@ export default function SettingsPage() {
               </div>
             </>
           )}
-        </div>
+        </Card>
 
-        <div className="rounded-2xl border border-border/60 bg-card p-6">
+        <Card className="p-6">
           <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
             <h2 className="font-display text-lg font-bold flex items-center gap-2">
               <Store className="size-5 text-primary" /> {t("settings.businessProfile")}
             </h2>
             {savedBiz && (
-              <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-600">
                 <CheckCircle2 className="size-3.5" /> {t("settings.saved")}
               </span>
             )}
@@ -387,12 +372,15 @@ export default function SettingsPage() {
                   onChange={(v) => setBizField("country", v)}
                   options={COUNTRY_OPTIONS}
                 />
-                <SelectField
-                  label={t("settings.primaryLanguage")}
-                  value={biz.primaryLanguage}
-                  onChange={(v) => setBizField("primaryLanguage", v)}
-                  options={LANGUAGE_OPTIONS}
-                />
+                <div className="space-y-1.5">
+                  <SelectField
+                    label={t("settings.primaryLanguage")}
+                    value={biz.primaryLanguage}
+                    onChange={(v) => setBizField("primaryLanguage", v)}
+                    options={LANGUAGE_OPTIONS}
+                  />
+                  <p className="text-xs text-muted-foreground">{t("settings.storeLanguageDesc")}</p>
+                </div>
                 <SelectField
                   label={t("settings.platform")}
                   value={biz.platform}
@@ -456,12 +444,12 @@ export default function SettingsPage() {
               </div>
             </>
           )}
-        </div>
+        </Card>
 
         <div className="grid sm:grid-cols-2 gap-4">
           {SECTIONS.map((s, i) => (
             <motion.div key={s.href} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
-              <Link href={s.href} className="block rounded-2xl border border-border/60 bg-card p-5 hover:border-primary/40 hover:shadow-md transition-all">
+              <Link href={s.href} className="block rounded-2xl border border-border/50 bg-card p-5 hover:border-primary/40 hover:shadow-[var(--shadow-card-hover)] transition-all">
                 <div className="flex items-center gap-3">
                   <span className="size-10 rounded-xl bg-primary/10 text-primary grid place-items-center"><s.icon className="size-5" /></span>
                   <div className="flex-1">

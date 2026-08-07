@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Store,
@@ -29,9 +29,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
-import { useAppStore } from "@/lib/store";
-import type { AuditData } from "@/lib/types";
-
 const REPORT_FEATURES = [
   {
     id: "health",
@@ -104,10 +101,27 @@ function storeOriginFromProduct(productUrl: string): string {
 }
 
 export default function AuditNewPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <PageShell>
+          <PageContent className="max-w-2xl flex justify-center py-20">
+            <Loader2 className="size-8 animate-spin text-primary" />
+          </PageContent>
+        </PageShell>
+      }
+    >
+      <AuditNewPageInner />
+    </React.Suspense>
+  );
+}
+
+function AuditNewPageInner() {
   const t = useT();
   const router = useRouter();
-  const setLastAudit = useAppStore((s) => s.setLastAudit);
-  const incrementAudits = useAppStore((s) => s.incrementAudits);
+  const searchParams = useSearchParams();
+  const fromOnboarding = searchParams.get("from") === "onboarding";
+  const shouldAutostart = searchParams.get("autostart") === "1";
 
   const [productUrl, setProductUrl] = React.useState("");
   const [storeUrl, setStoreUrl] = React.useState("");
@@ -115,44 +129,69 @@ export default function AuditNewPage() {
   const [touched, setTouched] = React.useState(false);
   const [analyzing, setAnalyzing] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [prefillReady, setPrefillReady] = React.useState(false);
+  const autostartedRef = React.useRef(false);
 
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const res = await fetch("/api/onboarding");
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (!cancelled) setPrefillReady(true);
+          return;
+        }
         const data = (await res.json()) as {
           onboarding?: { storeUrl?: string; competitorUrl?: string; completed?: boolean; resumePath?: string };
         };
-        if (cancelled || !data.onboarding) return;
+        if (cancelled || !data.onboarding) {
+          if (!cancelled) setPrefillReady(true);
+          return;
+        }
         if (!data.onboarding.completed) {
           window.location.href = data.onboarding.resumePath || "/onboarding";
           return;
         }
         if (data.onboarding.storeUrl) setStoreUrl(data.onboarding.storeUrl);
-        if (data.onboarding.competitorUrl) setCompetitorUrl(data.onboarding.competitorUrl);
+        if (fromOnboarding) {
+          toast.success(t("auditNew.onboardingReady"));
+        } else if (data.onboarding.competitorUrl) {
+          setCompetitorUrl(data.onboarding.competitorUrl);
+        }
       } catch {
         /* non-blocking prefills */
+      } finally {
+        if (!cancelled) setPrefillReady(true);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fromOnboarding, t]);
 
-  const productValid = isValidHttpUrl(productUrl);
+  const productFilled = productUrl.trim().length > 0;
   const storeFilled = storeUrl.trim().length > 0;
+  const productValid = !productFilled || isValidHttpUrl(productUrl);
   const storeValid = !storeFilled || isValidHttpUrl(storeUrl);
   const competitorFilled = competitorUrl.trim().length > 0;
   const competitorValid = !competitorFilled || isValidHttpUrl(competitorUrl);
   const hasCompetitor = competitorFilled && isValidHttpUrl(competitorUrl);
+  const hasPrimaryTarget =
+    (productFilled && isValidHttpUrl(productUrl)) ||
+    (storeFilled && isValidHttpUrl(storeUrl));
+  const primaryDisplayUrl = productFilled
+    ? normalizeUrl(productUrl)
+    : storeFilled
+      ? normalizeUrl(storeUrl)
+      : "";
+
+  const eitherError =
+    touched && !productFilled && !storeFilled ? t("auditNew.urlEitherRequired") : null;
 
   const productError = (() => {
     if (!touched) return null;
-    if (!productUrl.trim()) return t("auditNew.urlEmpty");
-    if (!productValid) return t("auditNew.urlError");
-    return null;
+    if (productFilled && !isValidHttpUrl(productUrl)) return t("auditNew.urlError");
+    return eitherError;
   })();
 
   const storeError = (() => {
@@ -174,12 +213,14 @@ export default function AuditNewPage() {
   const startAnalysis = async () => {
     setTouched(true);
     setErrorMessage(null);
-    if (!productValid || !storeValid || !competitorValid) return;
+    if (!hasPrimaryTarget || !productValid || !storeValid || !competitorValid) return;
 
-    const normalizedProduct = normalizeUrl(productUrl);
+    const normalizedProduct = productFilled ? normalizeUrl(productUrl) : "";
     const normalizedStore = storeFilled
       ? normalizeUrl(storeUrl)
-      : storeOriginFromProduct(normalizedProduct);
+      : normalizedProduct
+        ? storeOriginFromProduct(normalizedProduct)
+        : "";
     const normalizedCompetitor = hasCompetitor ? normalizeUrl(competitorUrl) : "";
 
     setAnalyzing(true);
@@ -200,7 +241,7 @@ export default function AuditNewPage() {
         error?: string;
         code?: string;
         resumePath?: string;
-        audit?: AuditData & { id?: string };
+        audit?: { id?: string; status?: string };
         meta?: {
           auditId?: string | null;
           warning?: string;
@@ -231,15 +272,6 @@ export default function AuditNewPage() {
       }
 
       const auditId = data.meta?.auditId || data.audit?.id;
-      const auditPayload: AuditData = {
-        ...(data.audit as AuditData),
-        id: auditId,
-        demoMode: data.audit?.demoMode ?? data.meta?.demoMode?.gemini,
-      };
-
-      setLastAudit(auditPayload);
-      incrementAudits();
-      toast.success(t("report.auditComplete"));
 
       if (!auditId) {
         setErrorMessage(t("auditNew.noAuditId"));
@@ -248,7 +280,7 @@ export default function AuditNewPage() {
         return;
       }
 
-      router.push(`/audit/${auditId}/report`);
+      router.push(`/audit/${auditId}/scanning`);
     } catch {
       const message = t("auditNew.urlUnreachable");
       setErrorMessage(message);
@@ -256,6 +288,13 @@ export default function AuditNewPage() {
       setAnalyzing(false);
     }
   };
+
+  React.useEffect(() => {
+    if (!shouldAutostart || !prefillReady || analyzing || autostartedRef.current) return;
+    if (!storeFilled || !isValidHttpUrl(storeUrl)) return;
+    autostartedRef.current = true;
+    void startAnalysis();
+  }, [shouldAutostart, prefillReady, storeFilled, storeUrl, analyzing]);
 
   return (
     <PageShell>
@@ -268,7 +307,7 @@ export default function AuditNewPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 shadow-sm text-center"
+              className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8 shadow-[var(--shadow-card)] text-center"
             >
               <div className="mx-auto size-14 rounded-2xl gradient-brand grid place-items-center text-white shadow-glow mb-4 relative">
                 <Loader2 className="size-7 animate-spin" />
@@ -276,7 +315,7 @@ export default function AuditNewPage() {
               </div>
               <h2 className="font-display text-2xl sm:text-3xl font-bold">{t("auditNew.analyzingCta")}</h2>
               <p className="mt-2 text-muted-foreground text-sm">{t("auditNew.pipeline.subtitle")}</p>
-              <p className="mt-4 text-xs text-muted-foreground break-all">{normalizeUrl(productUrl)}</p>
+              <p className="mt-4 text-xs text-muted-foreground break-all">{primaryDisplayUrl}</p>
             </motion.div>
           ) : (
             <motion.div
@@ -286,18 +325,23 @@ export default function AuditNewPage() {
               exit={{ opacity: 0, y: -8 }}
               className="space-y-6"
             >
-              <div className="rounded-2xl border border-border/60 bg-card p-6 sm:p-8 shadow-sm">
+              <div className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8 shadow-[var(--shadow-card)]">
                 <div className="size-12 rounded-xl bg-primary/10 text-primary grid place-items-center mb-4">
                   <Store className="size-6" />
                 </div>
                 <h2 className="font-display text-2xl font-bold">{t("auditNew.title")}</h2>
                 <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{t("auditNew.valueProp")}</p>
+                <p className="mt-3 text-xs font-medium text-primary">{t("auditNew.urlEitherRequired")}</p>
 
                 <div className="mt-6 space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="product" className="flex items-center gap-1.5 text-sm font-medium">
+                    <Label
+                      htmlFor="product"
+                      className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground"
+                    >
                       <Globe2 className="size-4" />
-                      {t("auditNew.productUrl")} <span className="text-rose-500">*</span>
+                      {t("auditNew.productUrl")}{" "}
+                      <span className="font-normal">({t("auditNew.requiredEither")})</span>
                     </Label>
                     <p className="text-xs text-muted-foreground">{t("auditNew.productUrlDesc")}</p>
                     <Input
@@ -328,7 +372,7 @@ export default function AuditNewPage() {
                     >
                       <Store className="size-4" />
                       {t("auditNew.storeUrl")}{" "}
-                      <span className="font-normal">({t("auditNew.competitorOptional")})</span>
+                      <span className="font-normal">({t("auditNew.requiredEither")})</span>
                     </Label>
                     <p className="text-xs text-muted-foreground">{t("auditNew.storeUrlDesc")}</p>
                     <Input
@@ -340,8 +384,15 @@ export default function AuditNewPage() {
                       onChange={(e) => {
                         setStoreUrl(e.target.value);
                         setTouched(false);
+                        setErrorMessage(null);
                       }}
-                      className={cn("h-12 text-sm", storeError && "border-rose-500")}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void startAnalysis();
+                      }}
+                      className={cn(
+                        "h-12 text-sm",
+                        (storeError || (eitherError && !productFilled)) && "border-rose-500"
+                      )}
                       disabled={analyzing}
                     />
                     {storeError && <p className="text-xs text-rose-500">{storeError}</p>}
@@ -401,7 +452,10 @@ export default function AuditNewPage() {
                   <Button
                     type="button"
                     onClick={() => void startAnalysis()}
-                    disabled={analyzing || (touched && (!productValid || !storeValid || !competitorValid))}
+                    disabled={
+                      analyzing ||
+                      (touched && (!hasPrimaryTarget || !productValid || !storeValid || !competitorValid))
+                    }
                     className="rounded-full font-semibold px-7 shadow-glow disabled:opacity-40"
                   >
                     {analyzing ? (
@@ -431,7 +485,7 @@ export default function AuditNewPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.96 }}
                         transition={{ delay: i * 0.03 }}
-                        className="rounded-xl border border-border/60 bg-card p-4 shadow-sm"
+                        className="rounded-xl border border-border/50 bg-card p-4 shadow-[var(--shadow-card)]"
                       >
                         <div className="size-9 rounded-lg bg-primary/10 text-primary grid place-items-center mb-3">
                           <feature.icon className="size-4" aria-hidden />
@@ -446,7 +500,7 @@ export default function AuditNewPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border/60 bg-card/60 p-4 sm:p-5">
+              <div className="rounded-xl border border-border/50 bg-card/60 p-4 sm:p-5">
                 <ul className="grid sm:grid-cols-2 gap-3">
                   {REASSURANCES.map((item) => (
                     <li key={item.key} className="flex items-start gap-2.5 text-xs text-muted-foreground">

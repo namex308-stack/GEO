@@ -148,6 +148,8 @@ export interface AuditData {
   crawlMetadata?: CrawlMetadata;
   /** Latest AI (or page-derived) rewrite payload for this audit. */
   generatedContent?: GeneratedContent;
+  /** Persisted audit lifecycle status (queued → … → completed|failed). */
+  status?: string;
 }
 
 export interface OnboardingAnswers {

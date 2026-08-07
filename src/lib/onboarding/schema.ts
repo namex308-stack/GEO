@@ -25,7 +25,7 @@ const optionalUrl = z
   .trim()
   .max(500)
   .refine((v) => !v || /^https?:\/\//i.test(v) || /^[\w.-]+\.[\w.-]+/.test(v), {
-    message: "Enter a valid URL",
+    message: "أدخل رابطاً صالحاً",
   });
 
 export const OnboardingAnswersSchema = z.object({
@@ -71,61 +71,26 @@ export const STEP_SCHEMAS: Record<
   z.ZodType<{ [key: string]: unknown }>
 > = {
   "business-name": z.object({
-    businessName: z.string().trim().min(2, "Business name is required").max(120),
+    businessName: z.string().trim().min(2, "اسم النشاط مطلوب").max(120),
   }),
   "store-url": z.object({
     storeUrl: z
       .string()
       .trim()
-      .min(3, "Store URL is required")
+      .min(3, "رابط المتجر مطلوب")
       .max(500)
       .refine((v) => /^https?:\/\//i.test(v) || /^[\w.-]+\.[\w.-]+/.test(v), {
-        message: "Enter a valid store URL",
+        message: "أدخل رابط متجر صالحاً",
       }),
   }),
   country: z.object({
     country: z.string().refine((v) => values(COUNTRY_OPTIONS).includes(v), {
-      message: "Select a country",
-    }),
-  }),
-  language: z.object({
-    primaryLanguage: z.string().refine((v) => values(LANGUAGE_OPTIONS).includes(v), {
-      message: "Select a language",
+      message: "اختر الدولة",
     }),
   }),
   platform: z.object({
     platform: z.string().refine((v) => values(PLATFORM_OPTIONS).includes(v), {
-      message: "Select a platform",
-    }),
-  }),
-  "store-size": z.object({
-    storeSize: z.string().refine((v) => values(STORE_SIZE_OPTIONS).includes(v), {
-      message: "Select store size",
-    }),
-  }),
-  category: z.object({
-    businessCategory: z.string().refine((v) => values(CATEGORY_OPTIONS).includes(v), {
-      message: "Select a category",
-    }),
-  }),
-  goal: z.object({
-    primaryGoal: z.string().refine((v) => values(GOAL_OPTIONS).includes(v), {
-      message: "Select a goal",
-    }),
-  }),
-  traffic: z.object({
-    monthlyTraffic: z.string().refine((v) => values(TRAFFIC_OPTIONS).includes(v), {
-      message: "Select traffic range",
-    }),
-  }),
-  orders: z.object({
-    monthlyOrders: z.string().refine((v) => values(ORDERS_OPTIONS).includes(v), {
-      message: "Select orders range",
-    }),
-  }),
-  challenge: z.object({
-    mainChallenge: z.string().refine((v) => values(CHALLENGE_OPTIONS).includes(v), {
-      message: "Select a challenge",
+      message: "اختر المنصة",
     }),
   }),
   competitor: z.object({
@@ -136,7 +101,7 @@ export const STEP_SCHEMAS: Record<
 export const SaveOnboardingBodySchema = z.object({
   step: z.number().int().min(1).max(ONBOARDING_STEP_COUNT),
   answers: OnboardingProfilePartialSchema,
-  /** Skip only the optional competitor step. */
+  /** Skip only optional steps (competitor). */
   skip: z.boolean().optional(),
   markComplete: z.boolean().optional(),
 });

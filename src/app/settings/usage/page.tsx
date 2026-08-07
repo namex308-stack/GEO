@@ -1,11 +1,10 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { BarChart3, Zap, Bot, Swords, Activity, Loader2 } from "lucide-react";
 import { PageShell, PageHeader, PageContent } from "@/components/app/page-shell";
-import { Button } from "@/components/ui/button";
+import { ApiLoadError } from "@/components/runtime/api-load-error";
 import { ScoreRadial } from "@/components/common/score-viz";
 import { useT } from "@/lib/i18n";
 
@@ -41,14 +40,19 @@ export default function UsagePage() {
   const t = useT();
   const [usage, setUsage] = React.useState<UsageData | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [needsAuth, setNeedsAuth] = React.useState(false);
+  const [retryKey, setRetryKey] = React.useState(0);
 
   React.useEffect(() => {
     let cancelled = false;
+    setError(null);
+    setNeedsAuth(false);
     (async () => {
       try {
         const res = await fetch("/api/usage");
         if (!res.ok) {
           if (!cancelled) {
+            setNeedsAuth(res.status === 401);
             setError(res.status === 401 ? t("usage.signInToView") : t("usage.loadError"));
           }
           return;
@@ -62,7 +66,7 @@ export default function UsagePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retryKey, t]);
 
   const renewLabel = usage
     ? new Date(usage.periodEnd).toLocaleDateString(undefined, {
@@ -83,12 +87,14 @@ export default function UsagePage() {
         )}
 
         {error && (
-          <div className="rounded-2xl border border-border/60 bg-card p-8 text-center">
-            <p className="text-sm text-muted-foreground">{error}</p>
-            <Button asChild className="mt-4 rounded-full">
-              <Link href="/auth">{t("navbar.login")}</Link>
-            </Button>
-          </div>
+          <ApiLoadError
+            message={error}
+            needsAuth={needsAuth}
+            onRetry={() => {
+              setUsage(null);
+              setRetryKey((k) => k + 1);
+            }}
+          />
         )}
 
         {usage && (
@@ -96,7 +102,7 @@ export default function UsagePage() {
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-border/60 bg-card p-6 flex items-center gap-6"
+              className="rounded-2xl border border-border/50 bg-card p-6 flex items-center gap-6"
             >
               <ScoreRadial score={usage.usagePct} size={100} stroke={8} label={t("settings.usage")} />
               <div>
@@ -125,7 +131,7 @@ export default function UsagePage() {
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.06 }}
-                      className="rounded-2xl border border-border/60 bg-card p-5"
+                      className="rounded-2xl border border-border/50 bg-card p-5"
                     >
                       <div className="flex items-center gap-3 mb-3">
                         <span
@@ -141,7 +147,7 @@ export default function UsagePage() {
                           </div>
                         </div>
                       </div>
-                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                         <motion.div
                           className="h-full rounded-full"
                           style={{ background: meta.color }}
@@ -158,7 +164,7 @@ export default function UsagePage() {
                 })}
             </div>
 
-            <div className="rounded-2xl border border-border/60 bg-card p-6">
+            <div className="rounded-2xl border border-border/50 bg-card p-6">
               <h2 className="font-display text-lg font-bold mb-4">{t("usage.apiUsage")}</h2>
               <div className="space-y-3">
                 {usage.endpoints.map((api) => (

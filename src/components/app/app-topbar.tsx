@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import {
   Bell,
   ChevronDown,
+  LogOut,
   Menu,
   Moon,
   Plus,
@@ -18,7 +19,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/components/providers/auth-provider";
 import { getUserDisplayName, getUserInitials } from "@/lib/auth/display-user";
 import { useT } from "@/lib/i18n";
-import { useLocale } from "@/lib/locale/resolve";
 
 function greetingKey(hour: number): "dashboard.goodMorning" | "dashboard.goodAfternoon" | "dashboard.goodEvening" {
   if (hour < 12) return "dashboard.goodMorning";
@@ -33,35 +33,64 @@ function firstName(full: string): string {
 export function AppTopbar({
   planName,
   notificationCount = 0,
+  preferredDisplayName = null,
   onMenuOpen,
   compactGreeting = false,
 }: {
   planName?: string | null;
   notificationCount?: number;
+  /** Kept for shell payload compatibility; bell links to /alerts. */
+  latestAuditId?: string | null;
+  preferredDisplayName?: string | null;
   onMenuOpen: () => void;
   compactGreeting?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
   const [hour, setHour] = React.useState(() => new Date().getHours());
   const [query, setQuery] = React.useState("");
+  const [signingOut, setSigningOut] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
     setHour(new Date().getHours());
   }, []);
 
-  const displayName = user ? getUserDisplayName(user) : "";
-  const initials = user ? getUserInitials(user) : "?";
+  const handleLogout = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+      router.push("/");
+      router.refresh();
+    } finally {
+      setSigningOut(false);
+    }
+  };
+
+  const authName = user ? getUserDisplayName(user) : "";
+  const displayName = (preferredDisplayName?.trim() || authName).trim();
+  const initials = displayName
+    ? displayName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0] ?? "")
+        .join("")
+        .toUpperCase() || "?"
+    : user
+      ? getUserInitials(user)
+      : "?";
   const avatarUrl =
     (typeof user?.user_metadata?.avatar_url === "string" && user.user_metadata.avatar_url) ||
     (typeof user?.user_metadata?.picture === "string" && user.user_metadata.picture) ||
     "";
   const greetName = firstName(displayName) || "بك";
   const badge = Math.max(0, notificationCount);
+  const issuesHref = "/notifications";
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,12 +128,9 @@ export function AppTopbar({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("dashboard.searchPlaceholder")}
-              className="h-10 w-full rounded-xl border border-border/60 bg-card ps-10 pe-14 text-sm outline-none transition-shadow placeholder:text-muted-foreground focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
+              className="h-10 w-full rounded-xl border border-border/60 bg-card ps-10 pe-3 text-sm outline-none transition-shadow placeholder:text-muted-foreground focus:border-primary/40 focus:ring-2 focus:ring-primary/15"
               aria-label={t("dashboard.searchPlaceholder")}
             />
-            <kbd className="pointer-events-none absolute top-1/2 -translate-y-1/2 end-2.5 hidden sm:inline-flex items-center rounded-md border border-border/70 bg-muted/60 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
-              ⌘K
-            </kbd>
           </form>
         </div>
 
@@ -121,23 +147,33 @@ export function AppTopbar({
             </Button>
           )}
 
-          <Link
-            href="/history"
-            className="relative grid size-10 place-items-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label={t("dashboard.notifications")}
-            title={t("dashboard.openIssues")}
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="relative rounded-full"
           >
-            <Bell className="size-[18px]" />
-            {badge > 0 && (
-              <span className="absolute top-1.5 end-1.5 grid min-w-4 h-4 px-0.5 place-items-center rounded-full bg-rose-500 text-[9px] font-bold text-white">
-                {badge > 99 ? "99+" : badge}
-              </span>
-            )}
-          </Link>
+            <Link
+              href={issuesHref}
+              aria-label={
+                badge > 0
+                  ? `${t("notifications.title")}: ${badge}`
+                  : t("dashboard.notifications")
+              }
+              title={t("notifications.title")}
+            >
+              <Bell className="size-[18px]" />
+              {badge > 0 && (
+                <span className="absolute top-1 end-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-white">
+                  {badge > 99 ? "99+" : badge}
+                </span>
+              )}
+            </Link>
+          </Button>
 
           <Link
             href="/settings"
-            className="hidden md:flex items-center gap-2.5 rounded-full border border-border/60 bg-card py-1.5 pe-3 ps-1.5 hover:border-primary/30 transition-colors"
+            className="hidden md:flex items-center gap-2.5 rounded-full border border-border/50 bg-card py-1.5 pe-3 ps-1.5 hover:border-primary/30 transition-colors"
           >
             <Avatar className="size-8">
               {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
@@ -156,7 +192,20 @@ export function AppTopbar({
             <ChevronDown className="size-3.5 text-muted-foreground shrink-0" />
           </Link>
 
-          <Button asChild className="rounded-xl font-semibold shadow-glow h-10 px-3 sm:px-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+            disabled={signingOut}
+            onClick={() => void handleLogout()}
+            aria-label={t("nav.logout")}
+            title={t("nav.logout")}
+          >
+            <LogOut className="size-[18px]" />
+          </Button>
+
+          <Button asChild className="rounded-full font-semibold shadow-glow h-10 px-3 sm:px-4">
             <Link href="/audit/new">
               <span className="hidden sm:inline">{t("dashboard.newAudit")}</span>
               <Plus className="size-4" />

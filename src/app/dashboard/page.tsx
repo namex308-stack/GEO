@@ -11,7 +11,6 @@ import {
   Check,
   ChevronRight,
   FileText,
-  Loader2,
   PieChart,
   Plus,
   Search,
@@ -19,89 +18,33 @@ import {
   Swords,
   TrendingUp,
 } from "lucide-react";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import dynamic from "next/dynamic";
 import { PageShell, PageContent } from "@/components/app/page-shell";
+import type { ScoreTrendPoint } from "@/components/app/score-trend-chart";
+import { AuditRowActions } from "@/components/app/audit-row-actions";
+import { DashboardSkeleton } from "@/components/app/dashboard-skeleton";
+import { ApiLoadError } from "@/components/runtime/api-load-error";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useT, type TranslationKey } from "@/lib/i18n";
+import type { DashboardPayload } from "@/lib/dashboard/types";
+import { filterTrendByMonths, labelTrendPoints } from "@/lib/dashboard/trend";
+import { displayHostFromUrl } from "@/lib/url-display";
 import { cn } from "@/lib/utils";
+import { isAuditInProgress } from "@/lib/audits/types";
 
-type PriorityIssue = {
-  id: string;
-  auditId: string;
-  problem: string;
-  solution: string;
-  severity: "critical" | "warning" | "opportunity";
-  impact: "high" | "medium" | "low";
-  effort: string | null;
-  pillar: string | null;
-  projectedImpact: string | null;
-};
-
-type TopIssue = {
-  problem: string;
-  count: number;
-  severity: "critical" | "warning" | "opportunity";
-  auditId: string | null;
-};
-
-type DashboardData = {
-  plan: {
-    planId: string;
-    displayName: string;
-    auditsPerMonth: number | null;
-    aiGensPerMonth: number | null;
-    storesLimit: number | null;
-    features: {
-      aiGenerator: boolean;
-      competitor: boolean;
-      api: boolean;
-    };
-  };
-  stats: {
-    avgScore: number | null;
-    totalAudits: number;
-    auditsThisMonth: number;
-    auditsLimit: number | null;
-    geoScore: number | null;
-    openRecommendations: number;
-    totalRecommendations: number;
-    latestStoreScore: number | null;
-    pagesScanned: number;
-  };
-  latestAudit: {
-    id: string;
-    productName: string;
-    storeName: string;
-    overallScore: number | null;
-    completedAt: string | null;
-  } | null;
-  topIssues: TopIssue[];
-  nextFixes: PriorityIssue[];
-  priorityIssue: PriorityIssue | null;
-  trend: { label: string; score: number; date: string }[];
-  recent: {
-    id: string;
-    productName: string;
-    storeName: string;
-    productUrl: string;
-    overallScore: number | null;
-    createdAt: string;
-    completedAt: string | null;
-    pageCount?: number;
-    openIssues?: number;
-  }[];
-  notificationCount: number;
-  usagePct: number;
-};
+const ScoreTrendChart = dynamic(
+  () =>
+    import("@/components/app/score-trend-chart").then((m) => ({
+      default: m.ScoreTrendChart,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full w-full animate-pulse rounded-xl bg-muted/40" aria-hidden />
+    ),
+  }
+);
 
 function relativeDate(iso: string, t: (key: TranslationKey, params?: Record<string, string | number>) => string): string {
   const d = new Date(iso);
@@ -122,24 +65,18 @@ function relativeDate(iso: string, t: (key: TranslationKey, params?: Record<stri
 
 function scoreTone(score: number | null): string {
   if (score == null) return "bg-muted text-muted-foreground";
-  if (score >= 80) return "bg-emerald-500/15 text-emerald-600";
-  if (score >= 60) return "bg-amber-500/15 text-amber-600";
-  return "bg-rose-500/15 text-rose-600";
-}
-
-function hostFromUrl(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
+  if (score >= 80) return "bg-primary/15 text-primary";
+  if (score >= 60) return "bg-brand/15 text-brand";
+  return "bg-muted text-muted-foreground";
 }
 
 function PlanRing({ pct, pctLabel }: { pct: number; pctLabel: string }) {
   const r = 42;
   const c = 2 * Math.PI * r;
-  const clamped = Math.max(0, Math.min(100, pct));
-  const offset = c - (clamped / 100) * c;
+  const safePct = Math.max(0, Math.round(pct));
+  const ringPct = Math.min(100, safePct);
+  const offset = c - (ringPct / 100) * c;
+  const overQuota = safePct > 100;
   return (
     <div className="relative size-[120px]">
       <svg viewBox="0 0 100 100" className="size-full -rotate-90">
@@ -150,7 +87,7 @@ function PlanRing({ pct, pctLabel }: { pct: number; pctLabel: string }) {
           r={r}
           fill="none"
           stroke="currentColor"
-          className="text-primary"
+          className={overQuota ? "text-rose-500" : "text-primary"}
           strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={c}
@@ -159,7 +96,14 @@ function PlanRing({ pct, pctLabel }: { pct: number; pctLabel: string }) {
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">
         <div>
-          <div className="font-display text-xl font-extrabold tabular-nums leading-none">{clamped}%</div>
+          <div
+            className={cn(
+              "font-display text-xl font-extrabold tabular-nums leading-none",
+              overQuota && "text-rose-600"
+            )}
+          >
+            {safePct}%
+          </div>
           <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {pctLabel}
           </div>
@@ -181,7 +125,8 @@ function KpiCard({
   label: string;
   value: string;
   hint: string;
-  positive?: boolean;
+  /** true = up, false = down, null/undefined = neutral (no fake growth arrow) */
+  positive?: boolean | null;
   icon: React.ComponentType<{ className?: string }>;
   iconClass: string;
   delay: number;
@@ -203,14 +148,18 @@ function KpiCard({
       <p
         className={cn(
           "mt-1.5 flex items-center gap-0.5 text-xs font-medium",
-          positive === false ? "text-rose-600" : "text-emerald-600"
+          positive === true
+            ? "text-emerald-600"
+            : positive === false
+              ? "text-rose-600"
+              : "text-muted-foreground"
         )}
       >
-        {positive === false ? (
-          <ArrowDownRight className="size-3.5" />
-        ) : (
+        {positive === true ? (
           <ArrowUpRight className="size-3.5" />
-        )}
+        ) : positive === false ? (
+          <ArrowDownRight className="size-3.5" />
+        ) : null}
         {hint}
       </p>
     </motion.div>
@@ -219,24 +168,29 @@ function KpiCard({
 
 export default function DashboardPage() {
   const t = useT();
-  const [data, setData] = React.useState<DashboardData | null>(null);
+  const [data, setData] = React.useState<DashboardPayload | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [needsAuth, setNeedsAuth] = React.useState(false);
+  const [retryKey, setRetryKey] = React.useState(0);
   const [range, setRange] = React.useState<"3" | "6" | "12">("6");
 
   React.useEffect(() => {
     let cancelled = false;
+    setError(null);
+    setNeedsAuth(false);
     (async () => {
       try {
         const res = await fetch("/api/dashboard");
         if (!res.ok) {
           if (!cancelled) {
+            setNeedsAuth(res.status === 401);
             setError(
               res.status === 401 ? t("dashboard.signInToView") : t("dashboard.loadError")
             );
           }
           return;
         }
-        const json = (await res.json()) as { dashboard: DashboardData };
+        const json = (await res.json()) as { dashboard: DashboardPayload };
         if (!cancelled) setData(json.dashboard);
       } catch {
         if (!cancelled) setError(t("dashboard.loadError"));
@@ -245,7 +199,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retryKey, t]);
 
   const latestId = data?.latestAudit?.id ?? null;
   const generateHref = latestId ? `/audit/${latestId}/generate` : "/audit/new";
@@ -254,8 +208,12 @@ export default function DashboardPage() {
 
   const chartData = React.useMemo(() => {
     if (!data?.trend.length) return [];
-    const take = range === "3" ? 4 : range === "6" ? 8 : 12;
-    return data.trend.slice(-take);
+    const months = range === "3" ? 3 : range === "6" ? 6 : 12;
+    const filtered = filterTrendByMonths(data.trend, months);
+    return labelTrendPoints(
+      filtered.map((p) => ({ score: p.score, date: p.date })),
+      "ar"
+    );
   }, [data, range]);
 
   const planFeatures = React.useMemo(() => {
@@ -268,7 +226,7 @@ export default function DashboardPage() {
       data.plan.aiGensPerMonth == null
         ? t("dashboard.featureUnlimited")
         : data.plan.features.aiGenerator
-          ? `${data.plan.aiGensPerMonth}/mo`
+          ? `${data.plan.aiGensPerMonth}${t("dashboard.perMonthShort")}`
           : t("dashboard.featureLocked");
     const storesLabel =
       data.plan.storesLimit == null
@@ -290,19 +248,17 @@ export default function DashboardPage() {
   return (
     <PageShell>
       <PageContent className="space-y-6">
-        {!data && !error && (
-          <div className="py-20 text-center">
-            <Loader2 className="size-8 animate-spin mx-auto text-primary" />
-          </div>
-        )}
+        {!data && !error && <DashboardSkeleton />}
 
         {error && (
-          <div className="rounded-2xl border border-border/60 bg-card p-8 text-center shadow-[var(--shadow-card)]">
-            <p className="text-sm text-muted-foreground">{error}</p>
-            <Button asChild className="mt-4 rounded-xl">
-              <Link href="/auth">{t("navbar.login")}</Link>
-            </Button>
-          </div>
+          <ApiLoadError
+            message={error}
+            needsAuth={needsAuth}
+            onRetry={() => {
+              setData(null);
+              setRetryKey((k) => k + 1);
+            }}
+          />
         )}
 
         {data && (
@@ -313,6 +269,7 @@ export default function DashboardPage() {
                 label={t("dashboard.kpiScore")}
                 value={data.stats.avgScore != null ? `${data.stats.avgScore} / 100` : "—"}
                 hint={t("dashboard.kpiScoreHint")}
+                positive={null}
                 icon={TrendingUp}
                 iconClass="bg-primary/15 text-primary"
                 delay={0}
@@ -321,23 +278,25 @@ export default function DashboardPage() {
                 label={t("dashboard.kpiAudits")}
                 value={String(data.stats.totalAudits)}
                 hint={t("dashboard.kpiAuditsHint", { count: data.stats.auditsThisMonth })}
+                positive={null}
                 icon={Search}
-                iconClass="bg-violet-500/15 text-violet-600"
+                iconClass="bg-brand/15 text-brand"
                 delay={0.04}
               />
               <KpiCard
                 label={t("dashboard.kpiGeo")}
                 value={data.stats.geoScore != null ? `${data.stats.geoScore}%` : "—"}
                 hint={t("dashboard.kpiGeoHint")}
+                positive={null}
                 icon={PieChart}
-                iconClass="bg-emerald-500/15 text-emerald-600"
+                iconClass="bg-gold/25 text-gold-foreground"
                 delay={0.08}
               />
               <KpiCard
                 label={t("dashboard.kpiIssues")}
                 value={String(data.stats.openRecommendations)}
                 hint={t("dashboard.kpiIssuesHint")}
-                positive={false}
+                positive={data.stats.openRecommendations > 0 ? false : null}
                 icon={AlertTriangle}
                 iconClass="bg-rose-500/15 text-rose-600"
                 delay={0.12}
@@ -345,9 +304,10 @@ export default function DashboardPage() {
               <KpiCard
                 label={t("dashboard.kpiPages")}
                 value={String(data.stats.pagesScanned)}
-                hint={t("dashboard.kpiPagesHint", { count: data.stats.auditsThisMonth })}
+                hint={t("dashboard.kpiPagesHint", { count: data.stats.pagesThisMonth })}
+                positive={null}
                 icon={FileText}
-                iconClass="bg-sky-500/15 text-sky-600"
+                iconClass="bg-muted text-muted-foreground"
                 delay={0.16}
               />
             </div>
@@ -368,7 +328,7 @@ export default function DashboardPage() {
                   <select
                     value={range}
                     onChange={(e) => setRange(e.target.value as "3" | "6" | "12")}
-                    className="h-9 rounded-xl border border-border/60 bg-background px-3 text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20"
+                    className="h-11 rounded-xl border border-border/60 bg-background px-3 text-sm font-medium outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                     aria-label={t("dashboard.trendRange")}
                   >
                     <option value="3">{t("dashboard.range3")}</option>
@@ -379,46 +339,7 @@ export default function DashboardPage() {
 
                 <div className="mt-4 h-[260px] w-full">
                   {chartData.length > 1 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="scoreFill" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#FF6600" stopOpacity={0.28} />
-                            <stop offset="100%" stopColor="#FF6600" stopOpacity={0.02} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="oklch(0.9 0 0)" />
-                        <XAxis
-                          dataKey="label"
-                          tickLine={false}
-                          axisLine={false}
-                          tick={{ fill: "oklch(0.55 0 0)", fontSize: 12 }}
-                        />
-                        <YAxis
-                          domain={[0, 100]}
-                          tickLine={false}
-                          axisLine={false}
-                          tick={{ fill: "oklch(0.55 0 0)", fontSize: 12 }}
-                          width={36}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            borderRadius: 12,
-                            border: "1px solid oklch(0.9 0 0)",
-                            boxShadow: "0 8px 24px oklch(0.2 0 0 / 0.08)",
-                          }}
-                          formatter={(value: number) => [value, t("dashboard.storeScore")]}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="score"
-                          stroke="#FF6600"
-                          strokeWidth={2.5}
-                          fill="url(#scoreFill)"
-                          activeDot={{ r: 5, fill: "#FF6600", stroke: "#fff", strokeWidth: 2 }}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    <ScoreTrendChart data={chartData as ScoreTrendPoint[]} />
                   ) : (
                     <div className="h-full grid place-items-center rounded-xl border border-dashed border-border/60 bg-muted/20 px-6 text-center">
                       <div>
@@ -498,7 +419,11 @@ export default function DashboardPage() {
 
                 {data.recent.length === 0 ? (
                   <div className="p-10 text-center">
-                    <p className="text-sm text-muted-foreground">{t("dashboard.emptyDecisionBody")}</p>
+                    <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+                      <Search className="size-5" />
+                    </span>
+                    <p className="mt-4 font-display text-base font-bold">{t("dashboard.emptyRecentTitle")}</p>
+                    <p className="mt-1.5 text-sm text-muted-foreground">{t("dashboard.emptyDecisionBody")}</p>
                     <Button asChild className="mt-4 rounded-xl">
                       <Link href="/audit/new">{t("dashboard.runFirstAudit")}</Link>
                     </Button>
@@ -507,27 +432,34 @@ export default function DashboardPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[560px] text-sm text-start">
                       <thead>
-                        <tr className="text-start text-[11px] tracking-wider text-muted-foreground border-b border-border/40">
+                        <tr className="text-start text-[11px] tracking-wider text-muted-foreground border-b border-border/50">
                           <th className="px-5 sm:px-6 py-3 font-semibold text-start">{t("dashboard.colAudit")}</th>
                           <th className="px-3 py-3 font-semibold text-start">{t("dashboard.colScore")}</th>
                           <th className="px-3 py-3 font-semibold text-start hidden sm:table-cell">{t("dashboard.colPages")}</th>
                           <th className="px-3 py-3 font-semibold text-start">{t("dashboard.colIssues")}</th>
                           <th className="px-3 py-3 font-semibold text-start">{t("dashboard.colDate")}</th>
-                          <th className="px-4 py-3 w-10 text-end" />
+                          <th className="px-4 py-3 w-24 text-end" />
                         </tr>
                       </thead>
                       <tbody>
                         {data.recent.slice(0, 4).map((r) => (
-                          <tr key={r.id} className="border-b border-border/40 last:border-0 hover:bg-accent/30 transition-colors">
+                          <tr key={r.id} className="border-b border-border/50 last:border-0 hover:bg-accent/30 transition-colors">
                             <td className="px-5 sm:px-6 py-3.5 text-start">
-                              <Link href={`/audit/${r.id}/report`} className="flex items-center gap-3 min-w-0">
+                              <Link
+                                href={
+                                  isAuditInProgress(r.status) || r.status === "failed"
+                                    ? `/audit/${r.id}/scanning`
+                                    : `/audit/${r.id}/report`
+                                }
+                                className="flex items-center gap-3 min-w-0"
+                              >
                                 <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-display text-xs font-bold">
                                   {(r.storeName || r.productName).slice(0, 2).toUpperCase()}
                                 </span>
                                 <span className="min-w-0 text-start">
                                   <span className="block font-semibold truncate">{r.productName}</span>
                                   <span className="block text-xs text-muted-foreground truncate" dir="ltr">
-                                    {hostFromUrl(r.productUrl) || r.storeName}
+                                    {displayHostFromUrl(r.productUrl) || r.storeName}
                                   </span>
                                 </span>
                               </Link>
@@ -551,14 +483,31 @@ export default function DashboardPage() {
                             <td className="px-3 py-3.5 text-muted-foreground whitespace-nowrap text-start">
                               {relativeDate(r.completedAt || r.createdAt, t)}
                             </td>
-                            <td className="px-4 py-3.5 text-end">
-                              <Link
-                                href={`/audit/${r.id}/report`}
-                                className="inline-flex text-muted-foreground hover:text-foreground"
-                                aria-label={t("dashboard.viewReport")}
-                              >
-                                <ChevronRight className="size-4 rtl:rotate-180" />
-                              </Link>
+                            <td className="px-2 py-3.5 text-end">
+                              <div className="inline-flex items-center justify-end gap-0.5">
+                                <AuditRowActions
+                                  auditId={r.id}
+                                  status={r.status ?? "completed"}
+                                  onDeleted={() => setRetryKey((k) => k + 1)}
+                                />
+                                {(isAuditInProgress(r.status) || r.status === "failed") ? (
+                                  <Link
+                                    href={`/audit/${r.id}/scanning`}
+                                    className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                                    aria-label={t("dashboard.viewReport")}
+                                  >
+                                    <ChevronRight className="size-4 rtl:rotate-180" />
+                                  </Link>
+                                ) : (
+                                  <Link
+                                    href={`/audit/${r.id}/report`}
+                                    className="inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                                    aria-label={t("dashboard.viewReport")}
+                                  >
+                                    <ChevronRight className="size-4 rtl:rotate-180" />
+                                  </Link>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -616,7 +565,10 @@ export default function DashboardPage() {
                         </li>
                       ))}
                     {!data.topIssues.length && !data.priorityIssue && (
-                      <li className="text-sm text-muted-foreground py-2">{t("dashboard.noTopIssues")}</li>
+                      <li className="py-4 text-center">
+                        <p className="text-sm font-medium">{t("dashboard.emptyIssuesTitle")}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{t("dashboard.noTopIssues")}</p>
+                      </li>
                     )}
                   </ul>
                 </motion.section>
@@ -640,19 +592,19 @@ export default function DashboardPage() {
                         href: generateHref,
                         label: t("nav.aiGenerator"),
                         icon: Sparkles,
-                        className: "bg-violet-500/10 text-violet-600",
+                        className: "bg-brand/10 text-brand",
                       },
                       {
                         href: compareHref,
                         label: t("nav.competitors"),
                         icon: Swords,
-                        className: "bg-sky-500/10 text-sky-600",
+                        className: "bg-gold/20 text-gold-foreground",
                       },
                       {
                         href: "/settings/usage",
                         label: t("nav.monitoring"),
                         icon: Activity,
-                        className: "bg-emerald-500/10 text-emerald-600",
+                        className: "bg-muted text-muted-foreground",
                       },
                     ].map((action) => (
                       <Link

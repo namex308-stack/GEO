@@ -1,0 +1,47 @@
+-- =============================================================================
+-- Automation Scheduler — Supabase pg_cron EXAMPLE (INACTIVE)
+-- =============================================================================
+-- Do NOT apply this file as a migration.
+-- Generated conceptually from src/lib/automation/adapters/supabase.ts.
+--
+-- Prerequisites when activating later:
+--   1. Extensions: pg_cron, pg_net
+--   2. App setting / vault secret for CRON_SECRET
+--   3. AUTOMATION_ENABLED=true on the app (and review AUTOMATION_DRY_RUN)
+--   4. Set productionActivated=true on catalog entries you intend to schedule
+-- =============================================================================
+
+-- Example only — weekly_reports
+-- select cron.schedule(
+--   'automation_weekly_reports',
+--   '0 6 * * 1',
+--   $$
+--   select net.http_post(
+--     url := 'https://YOUR_APP_ORIGIN/api/cron/automation/weekly_reports',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'Authorization', 'Bearer ' || current_setting('app.settings.CRON_SECRET', true)
+--     ),
+--     body := '{}'::jsonb
+--   );
+--   $$
+-- );
+
+-- Example only — competitor_monitoring
+-- select cron.schedule(
+--   'automation_competitor_monitoring',
+--   '0 7 * * *',
+--   $$
+--   select net.http_post(
+--     url := 'https://YOUR_APP_ORIGIN/api/cron/automation/competitor_monitoring',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'Authorization', 'Bearer ' || current_setting('app.settings.CRON_SECRET', true)
+--     ),
+--     body := '{}'::jsonb
+--   );
+--   $$
+-- );
+
+-- Remaining catalog jobs (weekly_scan, monthly_scan, health_updates, ai_alerts)
+-- follow the same pattern; use buildSupabaseCronSpecs({ includeInactive: true }).

@@ -32,6 +32,14 @@ describe("detectEcommercePlatform", () => {
     expect(result.platform).toBe("salla");
   });
 
+  it("prefers Salla host over conflicting Shopify markup", () => {
+    const result = detectEcommercePlatform({
+      url: "https://brand.salla.sa",
+      html: '<script src="https://cdn.shopify.com/s/files/1/theme.js"></script><div class="shopify-section">x</div>',
+    });
+    expect(result.platform).toBe("salla");
+  });
+
   it("detects Zid from assets", () => {
     const result = detectEcommercePlatform({
       url: "https://shop.example.com",

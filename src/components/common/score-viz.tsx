@@ -81,7 +81,7 @@ export function ScoreRadial({
             </div>
           )}
           {sublabel && (
-            <div className="text-[9px] text-muted-foreground/70 mt-0.5">{sublabel}</div>
+            <div className="text-[10px] text-muted-foreground/70 mt-0.5">{sublabel}</div>
           )}
         </div>
       </div>

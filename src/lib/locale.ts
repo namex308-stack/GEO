@@ -1,5 +1,5 @@
-/** UI / AI output locale for ConvAudit (Arabic-first product). */
-export type AppLocale = "ar" | "en";
+/** Product UI / AI output locale — Arabic-only. */
+export type AppLocale = "ar";
 
 const ARABIC_SCRIPT = /[\u0600-\u06FF]/;
 
@@ -20,12 +20,11 @@ export function isArabicFacingText(text: string | null | undefined): boolean {
   return hasArabicScript(trimmed);
 }
 
-export function normalizeAppLocale(value: unknown): AppLocale {
-  if (typeof value !== "string") return "ar";
-  const v = value.trim().toLowerCase();
-  if (v === "en" || v.startsWith("en-")) return "en";
-  if (v === "ar" || v.startsWith("ar-")) return "ar";
-  // Arabic-first default for unknown / empty values from profiles.
+/**
+ * Normalize any legacy/profile locale value to the only supported UI locale.
+ * English (`en`) and unknown values are coerced to Arabic.
+ */
+export function normalizeAppLocale(_value?: unknown): AppLocale {
   return "ar";
 }
 

@@ -15,10 +15,10 @@ import {
 describe("onboarding paths", () => {
   it("maps step numbers to one-question slugs and paths", () => {
     expect(slugFromStepNumber(1)).toBe("business-name");
-    expect(slugFromStepNumber(12)).toBe("competitor");
+    expect(slugFromStepNumber(5)).toBe("competitor");
     expect(onboardingPathForStep(1)).toBe("/onboarding/business-name");
-    expect(onboardingPathForStep(13)).toBe("/onboarding/done");
-    expect(stepNumberFromSlug("challenge")).toBe(11);
+    expect(onboardingPathForStep(6)).toBe("/onboarding/done");
+    expect(stepNumberFromSlug("platform")).toBe(4);
   });
 
   it("gates app routes until onboarding is complete", () => {
@@ -44,16 +44,9 @@ describe("onboarding paths", () => {
         businessName: "Acme",
         storeUrl: "https://acme.com",
         country: "EG",
-        primaryLanguage: "en",
         platform: "shopify",
-        storeSize: "small",
-        businessCategory: "fashion",
-        primaryGoal: "increase_conversions",
-        monthlyTraffic: "1k_10k",
-        monthlyOrders: "50_200",
-        mainChallenge: "low_conversion",
       })
-    ).toBe(12);
+    ).toBe(5);
   });
 });
 

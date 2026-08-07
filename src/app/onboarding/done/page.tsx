@@ -104,7 +104,7 @@ export default function OnboardingDonePage() {
             {t("onboarding.done.readySub")}
           </p>
 
-          <div className="mt-8 rounded-2xl border border-border/60 bg-card/60 px-5 text-start">
+          <div className="mt-8 rounded-2xl border border-border/50 bg-card/60 px-5 text-start">
             <SummaryRow label={t("onboarding.done.businessName")} value={profile.businessName} />
             <SummaryRow label={t("onboarding.done.storeUrl")} value={profile.storeUrl} />
             <SummaryRow
@@ -117,7 +117,9 @@ export default function OnboardingDonePage() {
 
           <div className="mt-8 flex flex-col gap-2">
             <Button asChild className="rounded-full font-semibold h-12 shadow-glow">
-              <Link href="/audit/new">{t("onboarding.done.startFirstAudit")}</Link>
+              <Link href="/audit/new?from=onboarding&autostart=1">
+                {t("onboarding.done.startFirstAudit")}
+              </Link>
             </Button>
             <Button asChild variant="outline" className="rounded-full h-12">
               <Link href="/dashboard">{t("onboarding.done.exploreDashboard")}</Link>

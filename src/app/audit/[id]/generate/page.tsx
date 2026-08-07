@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
+import { isPlaceholderAuditId } from "@/lib/audits/types";
 import type { GeneratedContent } from "@/lib/types";
 
 type LoadState =
@@ -26,7 +27,7 @@ export default function GeneratePage() {
 
   const load = React.useCallback(async () => {
     setState({ status: "loading" });
-    if (!auditId || auditId === "demo") {
+    if (!auditId || isPlaceholderAuditId(auditId)) {
       setState({ status: "error", message: t("generate.openFromReport") });
       return;
     }
@@ -90,7 +91,7 @@ export default function GeneratePage() {
         )}
 
         {state.status === "error" && (
-          <div className="rounded-2xl border border-border/60 bg-card p-8 text-center">
+          <div className="rounded-2xl border border-border/50 bg-card p-8 text-center">
             <AlertTriangle className="size-8 text-amber-500 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">{state.message}</p>
             <div className="mt-4 flex justify-center gap-2">
@@ -132,7 +133,7 @@ export default function GeneratePage() {
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-border/60 bg-card p-5 space-y-3"
+                  className="rounded-2xl border border-border/50 bg-card p-5 space-y-3"
                 >
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-semibold text-muted-foreground">{t("generate.titleTab")}</div>
@@ -147,7 +148,7 @@ export default function GeneratePage() {
                   </div>
                   <p className="text-sm font-semibold">{state.content.title}</p>
                 </motion.div>
-                <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-3">
+                <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-semibold text-muted-foreground">{t("generate.descriptionTab")}</div>
                     <Button
@@ -163,7 +164,7 @@ export default function GeneratePage() {
                     {state.content.description}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-3">
+                <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="text-xs font-semibold text-muted-foreground">{t("generate.metaDesc")}</div>
                     <Button
@@ -181,7 +182,7 @@ export default function GeneratePage() {
 
               <TabsContent value="faq" className="mt-4 space-y-3">
                 {state.content.faq.map((f, i) => (
-                  <div key={i} className="rounded-2xl border border-border/60 bg-card p-5">
+                  <div key={i} className="rounded-2xl border border-border/50 bg-card p-5">
                     <div className="font-semibold text-sm">{f.q}</div>
                     <p className="text-sm text-muted-foreground mt-2">{f.a}</p>
                   </div>
@@ -190,7 +191,7 @@ export default function GeneratePage() {
 
               <TabsContent value="ads" className="mt-4 space-y-3">
                 {state.content.adCopy.map((ad, i) => (
-                  <div key={i} className="rounded-2xl border border-border/60 bg-card p-5 space-y-2">
+                  <div key={i} className="rounded-2xl border border-border/50 bg-card p-5 space-y-2">
                     <Badge variant="outline" className="rounded-full">
                       {ad.platform}
                     </Badge>

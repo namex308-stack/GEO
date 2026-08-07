@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth/require-api-user";
 import { getAccountProfile, updateAccountProfile } from "@/lib/db/workspace-stats";
+import { normalizeAppLocale } from "@/lib/locale";
 
 const PatchBody = z.object({
   fullName: z.string().trim().max(120).optional(),
+  /** Accepted for backward compatibility; always persisted as Arabic. */
   locale: z.string().trim().max(16).optional(),
   timezone: z.string().trim().max(64).optional(),
   businessName: z.string().trim().max(120).optional(),
@@ -41,7 +43,14 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  const updated = await updateAccountProfile(auth.user.id, parsed.data, auth.user.email ?? "");
+  const updated = await updateAccountProfile(
+    auth.user.id,
+    {
+      ...parsed.data,
+      locale: normalizeAppLocale(parsed.data.locale),
+    },
+    auth.user.email ?? ""
+  );
   if (!updated) {
     return NextResponse.json({ error: "تعذّر حفظ الملف الشخصي." }, { status: 503 });
   }

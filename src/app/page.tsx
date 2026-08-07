@@ -4,11 +4,6 @@ import { Footer } from "@/components/layout/footer";
 import { ScrollProgress } from "@/components/common/visual-effects";
 import { Hero } from "@/components/sections/hero";
 import { LogosStrip } from "@/components/sections/logos-strip";
-import { WhyLoseSales } from "@/components/sections/why-lose-sales";
-import { ConceptExplainer } from "@/components/sections/concept-explainer";
-import { ProductPreview } from "@/components/sections/product-preview";
-import { Features } from "@/components/sections/features";
-import { DecisionEngine } from "@/components/sections/decision-engine";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function SectionSkeleton() {
@@ -28,6 +23,26 @@ function SectionSkeleton() {
   );
 }
 
+const WhyLoseSales = dynamic(
+  () => import("@/components/sections/why-lose-sales").then((m) => ({ default: m.WhyLoseSales })),
+  { loading: () => <SectionSkeleton /> }
+);
+const ConceptExplainer = dynamic(
+  () => import("@/components/sections/concept-explainer").then((m) => ({ default: m.ConceptExplainer })),
+  { loading: () => <SectionSkeleton /> }
+);
+const ProductPreview = dynamic(
+  () => import("@/components/sections/product-preview").then((m) => ({ default: m.ProductPreview })),
+  { loading: () => <SectionSkeleton /> }
+);
+const Features = dynamic(
+  () => import("@/components/sections/features").then((m) => ({ default: m.Features })),
+  { loading: () => <SectionSkeleton /> }
+);
+const DecisionEngine = dynamic(
+  () => import("@/components/sections/decision-engine").then((m) => ({ default: m.DecisionEngine })),
+  { loading: () => <SectionSkeleton /> }
+);
 const ComparisonTable = dynamic(
   () => import("@/components/sections/comparison-table").then((m) => ({ default: m.ComparisonTable })),
   { loading: () => <SectionSkeleton /> }

@@ -8,6 +8,7 @@ import { PageShell, PageContent } from "@/components/app/page-shell";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useT, type TranslationKey } from "@/lib/i18n";
+import { isAuditInProgress, isPlaceholderAuditId } from "@/lib/audits/types";
 import type { AuditData } from "@/lib/types";
 
 type PhaseIcon = typeof FileSearch;
@@ -30,6 +31,16 @@ const PHASES: Phase[] = [
   { icon: Cpu, labelKey: "scanning.generating", detailKey: "scanning.generatingDetail" },
 ];
 
+function phaseIndexForStatus(status: string | undefined, phaseCount: number): number {
+  if (!status || isAuditInProgress(status)) {
+    if (status === "analyzing") return Math.min(4, phaseCount - 1);
+    if (status === "scraping") return Math.min(1, phaseCount - 1);
+    return 0;
+  }
+  if (status === "completed") return Math.max(0, phaseCount - 1);
+  return 0;
+}
+
 /**
  * Polls Supabase-backed audit status. No sessionStorage — audit id is the source of truth.
  */
@@ -41,6 +52,7 @@ export default function ScanningPage() {
   const [phase, setPhase] = React.useState(0);
   const [error, setError] = React.useState<string | null>(null);
   const [hasCompetitor, setHasCompetitor] = React.useState(false);
+  const [openingReport, setOpeningReport] = React.useState(false);
 
   const visiblePhases = React.useMemo(
     () => PHASES.filter((p) => !p.requiresCompetitor || hasCompetitor),
@@ -48,31 +60,39 @@ export default function ScanningPage() {
   );
 
   React.useEffect(() => {
-    if (error) return;
+    if (error || openingReport) return;
     const timer = setInterval(() => {
       setPhase((p) => (p >= visiblePhases.length - 1 ? p : p + 1));
     }, 900);
     return () => clearInterval(timer);
-  }, [visiblePhases.length, error]);
+  }, [visiblePhases.length, error, openingReport]);
 
   React.useEffect(() => {
-    if (!auditId || auditId === "demo") {
+    if (!auditId || isPlaceholderAuditId(auditId)) {
       router.replace("/audit/new");
       return;
     }
 
     let cancelled = false;
     let attempts = 0;
+    let redirected = false;
+
+    const goToReport = () => {
+      if (cancelled || redirected) return;
+      redirected = true;
+      setOpeningReport(true);
+      setPhase((p) => Math.max(p, visiblePhases.length - 1));
+      // Hard navigation avoids soft-nav stalls while the report route compiles.
+      window.location.assign(`/audit/${auditId}/report`);
+    };
 
     const poll = async () => {
       try {
-        const res = await fetch(`/api/audit/${auditId}`);
+        const res = await fetch(`/api/audit/${auditId}`, { cache: "no-store" });
         if (res.status === 404) {
-          // Still being written — keep polling briefly
           attempts += 1;
           if (attempts > 40) {
             if (!cancelled) setError(t("scanning.auditNotFound"));
-            return;
           }
           return;
         }
@@ -82,22 +102,37 @@ export default function ScanningPage() {
         }
         const data = (await res.json()) as { audit: AuditData };
         if (cancelled) return;
+
         setHasCompetitor(Boolean(data.audit.competitorUrl || data.audit.competitorBreakdown?.length));
-        if (data.audit.overallScore != null || data.audit.breakdown?.length) {
-          router.replace(`/audit/${auditId}/report`);
+        const status = data.audit.status;
+        setPhase((p) => Math.max(p, phaseIndexForStatus(status, visiblePhases.length)));
+
+        if (status === "failed") {
+          setError(t("scanning.failed"));
+          return;
+        }
+
+        const ready =
+          status === "completed" ||
+          ((data.audit.breakdown?.length ?? 0) > 0 &&
+            data.audit.overallScore != null &&
+            !isAuditInProgress(status ?? ""));
+
+        if (ready) {
+          goToReport();
         }
       } catch {
-        if (!cancelled) setError(t("scanning.statusError"));
+        if (!cancelled && !redirected) setError(t("scanning.statusError"));
       }
     };
 
     void poll();
-    const timer = setInterval(() => void poll(), 1500);
+    const timer = setInterval(() => void poll(), 1200);
     return () => {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [auditId, router]);
+  }, [auditId, router, t, visiblePhases.length]);
 
   return (
     <PageShell>
@@ -105,24 +140,41 @@ export default function ScanningPage() {
         <div className="text-center mb-10">
           <div className="mx-auto size-16 rounded-2xl gradient-brand grid place-items-center text-white shadow-glow mb-5 relative">
             {error ? <FileSearch className="size-8" /> : <Cpu className="size-8" />}
-            {!error && <span className="absolute inset-0 rounded-2xl border-2 border-primary/40 animate-pulse-ring" />}
+            {!error && !openingReport && (
+              <span className="absolute inset-0 rounded-2xl border-2 border-primary/40 animate-pulse-ring" />
+            )}
           </div>
           <h2 className="font-display text-2xl sm:text-3xl font-bold">
-            {error ? t("scanning.failed") : t("scanning.analyzing")}
+            {error
+              ? t("scanning.failed")
+              : openingReport
+                ? t("scanning.openingReport")
+                : t("scanning.analyzing")}
           </h2>
-          <p className="mt-2 text-muted-foreground text-sm">{error ?? t("scanning.takesTime")}</p>
+          <p className="mt-2 text-muted-foreground text-sm">
+            {error ?? (openingReport ? t("scanning.openingReportHint") : t("scanning.takesTime"))}
+          </p>
           {error && (
-            <Button className="mt-4 rounded-full" onClick={() => router.push("/audit/new")}>
-              {t("compare.newAudit")}
-            </Button>
+            <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
+              <Button className="rounded-full" onClick={() => router.push("/audit/new")}>
+                {t("compare.newAudit")}
+              </Button>
+              <Button
+                variant="outline"
+                className="rounded-full"
+                onClick={() => window.location.reload()}
+              >
+                {t("scanning.retry")}
+              </Button>
+            </div>
           )}
         </div>
 
         {!error && (
           <div className="space-y-2.5">
             {visiblePhases.map((p, i) => {
-              const isDone = i < phase;
-              const isActive = i === phase;
+              const isDone = openingReport || i < phase;
+              const isActive = !openingReport && i === phase;
               return (
                 <motion.div
                   key={p.labelKey}

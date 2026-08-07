@@ -1,20 +1,17 @@
 /**
  * Onboarding step definitions — one question per step.
  * Pure module — safe for client and server.
+ *
+ * Core path: business → store → country → platform → optional competitor.
+ * Language defaults to Arabic (product is Arabic-first). Extra profile
+ * fields remain editable later in Settings.
  */
 
 export const ONBOARDING_STEPS = [
   "business-name",
   "store-url",
   "country",
-  "language",
   "platform",
-  "store-size",
-  "category",
-  "goal",
-  "traffic",
-  "orders",
-  "challenge",
   "competitor",
 ] as const;
 
@@ -28,27 +25,13 @@ export const STEP_ANSWER_FIELD: Record<
   | "businessName"
   | "storeUrl"
   | "country"
-  | "primaryLanguage"
   | "platform"
-  | "storeSize"
-  | "businessCategory"
-  | "primaryGoal"
-  | "monthlyTraffic"
-  | "monthlyOrders"
-  | "mainChallenge"
   | "competitorUrl"
 > = {
   "business-name": "businessName",
   "store-url": "storeUrl",
   country: "country",
-  language: "primaryLanguage",
   platform: "platform",
-  "store-size": "storeSize",
-  category: "businessCategory",
-  goal: "primaryGoal",
-  traffic: "monthlyTraffic",
-  orders: "monthlyOrders",
-  challenge: "mainChallenge",
   competitor: "competitorUrl",
 };
 
@@ -200,8 +183,15 @@ export const COUNTRY_OPTIONS = [
 /** App routes locked until onboarding_completed_at is set. */
 export const ONBOARDING_GATED_PREFIXES = [
   "/dashboard",
+  "/health",
   "/audit",
   "/history",
+  "/reports",
+  "/monitor",
+  "/geo",
+  "/alerts",
+  "/notifications",
+  "/tasks",
   "/checkout",
   "/settings",
 ] as const;

@@ -13,16 +13,9 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useT, type TranslationKey } from "@/lib/i18n";
 import {
-  CATEGORY_OPTIONS,
-  CHALLENGE_OPTIONS,
   COUNTRY_OPTIONS,
-  GOAL_OPTIONS,
-  LANGUAGE_OPTIONS,
   ONBOARDING_STEP_COUNT,
-  ORDERS_OPTIONS,
   PLATFORM_OPTIONS,
-  STORE_SIZE_OPTIONS,
-  TRAFFIC_OPTIONS,
   isOptionalStep,
   onboardingPathForStep,
   platformLabel,
@@ -68,37 +61,9 @@ const STEP_COPY: Record<OnboardingStepSlug, { titleKey: TranslationKey; subtitle
     titleKey: "onboarding.step.country.title",
     subtitleKey: "onboarding.step.country.subtitle",
   },
-  language: {
-    titleKey: "onboarding.step.language.title",
-    subtitleKey: "onboarding.step.language.subtitle",
-  },
   platform: {
     titleKey: "onboarding.step.platform.title",
     subtitleKey: "onboarding.step.platform.subtitle",
-  },
-  "store-size": {
-    titleKey: "onboarding.step.store-size.title",
-    subtitleKey: "onboarding.step.store-size.subtitle",
-  },
-  category: {
-    titleKey: "onboarding.step.category.title",
-    subtitleKey: "onboarding.step.category.subtitle",
-  },
-  goal: {
-    titleKey: "onboarding.step.goal.title",
-    subtitleKey: "onboarding.step.goal.subtitle",
-  },
-  traffic: {
-    titleKey: "onboarding.step.traffic.title",
-    subtitleKey: "onboarding.step.traffic.subtitle",
-  },
-  orders: {
-    titleKey: "onboarding.step.orders.title",
-    subtitleKey: "onboarding.step.orders.subtitle",
-  },
-  challenge: {
-    titleKey: "onboarding.step.challenge.title",
-    subtitleKey: "onboarding.step.challenge.subtitle",
   },
   competitor: {
     titleKey: "onboarding.step.competitor.title",
@@ -236,7 +201,7 @@ export function OnboardingFlow({ stepSlug }: { stepSlug: OnboardingStepSlug }) {
             router.replace(`/auth?next=${encodeURIComponent(`/onboarding/${stepSlug}`)}`);
             return;
           }
-          throw new Error("Failed to load");
+          throw new Error("تعذّر التحميل");
         }
         const data = (await res.json()) as { onboarding: OnboardingStatePayload };
         if (cancelled) return;
@@ -289,25 +254,11 @@ export function OnboardingFlow({ stepSlug }: { stepSlug: OnboardingStepSlug }) {
       case "business-name":
         return { businessName: f.businessName };
       case "store-url":
-        return { storeUrl: normalizeStoreUrl(f.storeUrl) };
+        return { storeUrl: normalizeStoreUrl(f.storeUrl), primaryLanguage: "ar" };
       case "country":
-        return { country: f.country };
-      case "language":
-        return { primaryLanguage: f.primaryLanguage };
+        return { country: f.country, primaryLanguage: f.primaryLanguage || "ar" };
       case "platform":
         return { platform: f.platform };
-      case "store-size":
-        return { storeSize: f.storeSize };
-      case "category":
-        return { businessCategory: f.businessCategory };
-      case "goal":
-        return { primaryGoal: f.primaryGoal };
-      case "traffic":
-        return { monthlyTraffic: f.monthlyTraffic };
-      case "orders":
-        return { monthlyOrders: f.monthlyOrders };
-      case "challenge":
-        return { mainChallenge: f.mainChallenge };
       case "competitor":
         return {
           competitorUrl: f.competitorUrl.trim()
@@ -505,34 +456,6 @@ export function OnboardingFlow({ stepSlug }: { stepSlug: OnboardingStepSlug }) {
             </div>
           )}
 
-          {stepSlug === "language" && (
-            <div className="mt-8 space-y-2">
-              <Label className="text-sm font-medium">
-                {t("onboarding.field.primaryLanguage")} <span className="text-rose-500">*</span>
-              </Label>
-              <select
-                value={form.primaryLanguage}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (!v) {
-                    setField("primaryLanguage", v);
-                    return;
-                  }
-                  selectAndContinue("primaryLanguage", v);
-                }}
-                className="flex h-12 w-full rounded-xl border border-input bg-background px-3 text-sm"
-                autoFocus
-              >
-                <option value="">{t("onboarding.select")}</option>
-                {LANGUAGE_OPTIONS.map((l) => (
-                  <option key={l.value} value={l.value}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
           {stepSlug === "platform" && (
             <div>
               {form.platform && form.platformConfidence != null && (
@@ -551,54 +474,6 @@ export function OnboardingFlow({ stepSlug }: { stepSlug: OnboardingStepSlug }) {
             </div>
           )}
 
-          {stepSlug === "store-size" && (
-            <OptionGrid
-              options={STORE_SIZE_OPTIONS}
-              value={form.storeSize}
-              onChange={(v) => selectAndContinue("storeSize", v)}
-            />
-          )}
-
-          {stepSlug === "category" && (
-            <OptionGrid
-              options={CATEGORY_OPTIONS}
-              value={form.businessCategory}
-              onChange={(v) => selectAndContinue("businessCategory", v)}
-            />
-          )}
-
-          {stepSlug === "goal" && (
-            <OptionGrid
-              options={GOAL_OPTIONS}
-              value={form.primaryGoal}
-              onChange={(v) => selectAndContinue("primaryGoal", v)}
-            />
-          )}
-
-          {stepSlug === "traffic" && (
-            <OptionGrid
-              options={TRAFFIC_OPTIONS}
-              value={form.monthlyTraffic}
-              onChange={(v) => selectAndContinue("monthlyTraffic", v)}
-            />
-          )}
-
-          {stepSlug === "orders" && (
-            <OptionGrid
-              options={ORDERS_OPTIONS}
-              value={form.monthlyOrders}
-              onChange={(v) => selectAndContinue("monthlyOrders", v)}
-            />
-          )}
-
-          {stepSlug === "challenge" && (
-            <OptionGrid
-              options={CHALLENGE_OPTIONS}
-              value={form.mainChallenge}
-              onChange={(v) => selectAndContinue("mainChallenge", v)}
-            />
-          )}
-
           {stepSlug === "competitor" && (
             <div className="mt-8 space-y-2">
               <Label className="text-sm font-medium text-muted-foreground">
@@ -612,6 +487,7 @@ export function OnboardingFlow({ stepSlug }: { stepSlug: OnboardingStepSlug }) {
                 placeholder="https://competitor.com"
                 autoFocus
               />
+              <p className="text-xs text-muted-foreground pt-1">{t("onboarding.competitorHint")}</p>
             </div>
           )}
 

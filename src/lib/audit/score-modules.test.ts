@@ -52,11 +52,29 @@ describe("score modules", () => {
     ]) {
       expect(result.score).toBeGreaterThanOrEqual(0);
       expect(result.score).toBeLessThanOrEqual(100);
-      expect(result.findings.length).toBeGreaterThan(0);
       expect(["low", "medium", "high"]).toContain(result.severity);
       expect(result.summary.length).toBeGreaterThan(0);
-      expect(result.findings.some((f) => /[\u0600-\u06FF]/.test(f))).toBe(true);
     }
+  });
+
+  it("emits gap findings only — not success fluff as recommendations", () => {
+    const rich = page({
+      markdown: CLEAR_POLICIES_AR + "\nادفع بـ مدى أو Tabby.",
+    });
+    const conversion = scoreConversionModule(rich);
+    const seo = scoreSeoModule(rich);
+    expect(conversion.findings.every((f) => !/^تم رصد|^توجد |^يوجد /.test(f))).toBe(true);
+    expect(seo.findings.every((f) => !/موجود|تم رصد|غني/.test(f))).toBe(true);
+
+    const weak = page({
+      title: "",
+      description: "",
+      markdown: "buy",
+      imageCount: 0,
+      structuredData: {},
+    });
+    expect(scoreConversionModule(weak).findings.length).toBeGreaterThan(0);
+    expect(scoreSeoModule(weak).findings.length).toBeGreaterThan(0);
   });
 
   it("is deterministic for the same page input", () => {
@@ -116,7 +134,8 @@ describe("local payment trust sub-check", () => {
       })
     );
     expect(withPay.score).toBeGreaterThan(without.score);
-    expect(withPay.findings.some((f) => f.includes("مدى") || f.includes("تابي"))).toBe(true);
+    expect(withPay.findings.some((f) => f === TRUST_PAYMENT_MISSING_FINDING)).toBe(false);
+    expect(withPay.summary).toMatch(/مدى|تابي|دفع/);
     expect(withPay.severity).not.toBe("high");
   });
 
@@ -178,7 +197,8 @@ describe("shipping & returns clarity sub-check", () => {
       })
     );
     expect(strong.score).toBeGreaterThan(weak.score);
-    expect(strong.findings.some((f) => f.includes("واضحة ومحددة"))).toBe(true);
+    expect(strong.findings.some((f) => f.includes("مدة الشحن"))).toBe(false);
+    expect(strong.findings.some((f) => f.includes("سياسة الإرجاع"))).toBe(false);
   });
 
   it("enriches Gemini payloads with shipping findings without changing anchored score", () => {

@@ -40,7 +40,7 @@ export function Navbar() {
 
   React.useEffect(() => {
     setMounted(true);
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -96,10 +96,10 @@ export function Navbar() {
               type="button"
               onClick={() => scrollTo(item.target)}
               className={cn(
-                "h-9 px-3 flex items-center text-sm font-medium rounded-md transition-colors",
+                "h-9 px-3 flex items-center text-sm font-medium rounded-lg transition-colors",
                 active === item.target
                   ? "text-foreground bg-accent/70"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
               )}
             >
               {t(item.labelKey)}
@@ -114,7 +114,7 @@ export function Navbar() {
               size="icon"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               aria-label={t("nav.toggleTheme")}
-              className="size-9 rounded-md"
+              className="size-9 rounded-full"
             >
               {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </Button>
@@ -124,7 +124,7 @@ export function Navbar() {
             <div className="hidden sm:flex items-center gap-2">
               <Link
                 href="/dashboard"
-                className="flex h-9 items-center gap-2 px-2 rounded-md hover:bg-accent/60 transition-colors"
+                className="flex h-9 items-center gap-2 px-2 rounded-lg hover:bg-accent/60 transition-colors"
               >
                 <span className="size-7 rounded-full gradient-brand text-white text-xs font-bold grid place-items-center">
                   {initials}
@@ -133,8 +133,16 @@ export function Navbar() {
                   {displayName.split(" ")[0]}
                 </span>
               </Link>
-              <Button size="sm" onClick={startAuditAndNavigate} className="h-9 px-4 font-semibold">
+              <Button size="sm" onClick={startAuditAndNavigate} className="h-9 px-4 font-semibold rounded-full shadow-glow">
                 {t("nav.newAudit")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void handleLogout()}
+                className="h-9"
+              >
+                {t("navbar.logout")}
               </Button>
             </div>
           ) : (
@@ -148,7 +156,7 @@ export function Navbar() {
                 {t("navbar.login")}
               </Button>
               {!isHome && (
-                <Button size="sm" onClick={startAuditAndNavigate} className="h-9 px-4 font-semibold">
+                <Button size="sm" onClick={startAuditAndNavigate} className="h-9 px-4 font-semibold rounded-full shadow-glow">
                   {t("navbar.startFreeAudit")}
                 </Button>
               )}
@@ -158,7 +166,7 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="size-9 rounded-md lg:hidden"
+            className="size-9 rounded-full lg:hidden"
             onClick={() => setMobileOpen((v) => !v)}
             aria-label={mobileOpen ? t("nav.closeMenu") : t("nav.openMenu")}
             aria-expanded={mobileOpen}
@@ -180,7 +188,7 @@ export function Navbar() {
               key={item.target}
               type="button"
               onClick={() => scrollTo(item.target)}
-              className="block w-full text-start px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-md"
+              className="block w-full text-start px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-lg"
             >
               {t(item.labelKey)}
             </button>
@@ -203,7 +211,7 @@ export function Navbar() {
                 setMobileOpen(false);
                 startAuditAndNavigate();
               }}
-              className="w-full"
+              className="w-full rounded-full shadow-glow"
             >
               {t("navbar.startFreeAudit")}
             </Button>

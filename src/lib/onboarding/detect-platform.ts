@@ -69,9 +69,11 @@ const DETECTORS: Detector[] = [
   },
   {
     platform: "salla",
-    weight: 0.93,
+    weight: 0.99,
     test: ({ html, host }) => {
-      if (/\.salla\.sa$/i.test(host) || /salla\.sa/i.test(host)) return "salla_host";
+      if (/\.salla\.sa$/i.test(host) || /(^|\.)salla\.sa$/i.test(host) || host === "salla.sa") {
+        return "salla_host";
+      }
       if (/cdn\.salla\.sa|salla\.cloud|window\.salla/i.test(html)) return "salla_assets";
       if (/data-salla|salla-product/i.test(html)) return "salla_markup";
       return null;
@@ -79,9 +81,11 @@ const DETECTORS: Detector[] = [
   },
   {
     platform: "zid",
-    weight: 0.93,
+    weight: 0.99,
     test: ({ html, host }) => {
-      if (/\.zid\.store$/i.test(host) || /zid\.store/i.test(host)) return "zid_host";
+      if (/\.zid\.store$/i.test(host) || /(^|\.)zid\.store$/i.test(host) || host === "zid.store") {
+        return "zid_host";
+      }
       if (/cdn\.zid\.store|zid\.sa|zid-app/i.test(html)) return "zid_assets";
       if (/data-zid|zid-theme/i.test(html)) return "zid_markup";
       return null;

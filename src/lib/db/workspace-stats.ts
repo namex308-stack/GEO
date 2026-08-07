@@ -5,82 +5,28 @@
 import "server-only";
 
 import { getSupabaseAdmin } from "@/lib/supabase";
-import { ensurePersonalWorkspace, listAuditsForUser, type AuditHistoryItem } from "@/lib/db/audit-repository";
+import { ensurePersonalWorkspace, listAuditsForUser } from "@/lib/db/audit-repository";
+import { countUnreadNotificationsForUser } from "@/lib/db/notifications-repository";
+import { emitSubscriptionWarningNotification } from "@/lib/notifications/emit";
 import type { PlanId, UsageMetric } from "@/lib/db/types";
+import { parseImpact, parseSeverity } from "@/lib/audits/parse";
+import { buildScoreTrend } from "@/lib/dashboard/trend";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
+import type {
+  DashboardPayload,
+  DashboardPriorityIssue,
+  DashboardTopIssue,
+  PlanLimits,
+  UsageCounts,
+} from "@/lib/dashboard/types";
 
-export type PlanLimits = {
-  planId: PlanId;
-  displayName: string;
-  auditsPerMonth: number | null;
-  aiGensPerMonth: number | null;
-  storesLimit: number | null;
-  features: {
-    aiGenerator: boolean;
-    competitor: boolean;
-    api: boolean;
-  };
-};
-
-export type UsageCounts = Record<UsageMetric, number>;
-
-export type DashboardPriorityIssue = {
-  id: string;
-  auditId: string;
-  problem: string;
-  solution: string;
-  severity: "critical" | "warning" | "opportunity";
-  impact: "high" | "medium" | "low";
-  effort: string | null;
-  pillar: string | null;
-  projectedImpact: string | null;
-};
-
-export type DashboardTopIssue = {
-  problem: string;
-  count: number;
-  severity: "critical" | "warning" | "opportunity";
-  auditId: string | null;
-};
-
-export type DashboardPayload = {
-  plan: PlanLimits;
-  stats: {
-    avgScore: number | null;
-    totalAudits: number;
-    auditsThisMonth: number;
-    auditsLimit: number | null;
-    geoScore: number | null;
-    openRecommendations: number;
-    totalRecommendations: number;
-    latestStoreScore: number | null;
-    /** Approx. pages touched = completed audits (1 product page per audit in MVP). */
-    pagesScanned: number;
-  };
-  /** Latest completed audit used for GEO + decision context. */
-  latestAudit: {
-    id: string;
-    productName: string;
-    storeName: string;
-    overallScore: number | null;
-    completedAt: string | null;
-  } | null;
-  geoSignals: {
-    chatgpt: number | null;
-    perplexity: number | null;
-    googleAi: number | null;
-  } | null;
-  /** Highest-priority open recommendation from the latest audit. */
-  priorityIssue: DashboardPriorityIssue | null;
-  /** Next open fixes after the priority issue (same audit). */
-  nextFixes: DashboardPriorityIssue[];
-  /** Aggregated open issues across recent audits. */
-  topIssues: DashboardTopIssue[];
-  trend: { label: string; score: number; date: string }[];
-  recent: AuditHistoryItem[];
-  /** Open recommendation count — used as actionable notification badge. */
-  notificationCount: number;
-  usagePct: number;
-};
+export type {
+  DashboardPayload,
+  DashboardPriorityIssue,
+  DashboardTopIssue,
+  PlanLimits,
+  UsageCounts,
+} from "@/lib/dashboard/types";
 
 export type UsagePayload = {
   plan: PlanLimits;
@@ -106,12 +52,27 @@ const EMPTY_COUNTS: UsageCounts = {
   api_call: 0,
 };
 
+const PLAN_DISPLAY_NAMES_AR: Record<PlanId, string> = {
+  free: "مجاني",
+  pro: "احترافي",
+  business: "أعمال",
+};
+
+function arabicPlanDisplayName(planId: PlanId, catalogName?: string | null): string {
+  return PLAN_DISPLAY_NAMES_AR[planId] ?? catalogName?.trim() ?? planId;
+}
+
 function startOfMonth(d = new Date()): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 0, 0, 0));
 }
 
 function endOfMonth(d = new Date()): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0, 23, 59, 59));
+}
+
+/** The current calendar-month usage period, shared by dashboard display and quota enforcement. */
+export function getCurrentUsagePeriod(): { start: string; end: string } {
+  return { start: startOfMonth().toISOString(), end: endOfMonth().toISOString() };
 }
 
 async function workspaceIdsForUser(userId: string): Promise<string[]> {
@@ -122,6 +83,50 @@ async function workspaceIdsForUser(userId: string): Promise<string[]> {
     .select("workspace_id")
     .eq("user_id", userId);
   return (data ?? []).map((m) => m.workspace_id as string);
+}
+
+function planLimitsFromCatalog(
+  planId: PlanId,
+  catalog: {
+    display_name: string | null;
+    audits_per_month: number | null;
+    ai_gens_per_month: number | null;
+    stores_limit: number | null;
+    features: unknown;
+  } | null,
+  fallback: PlanLimits
+): PlanLimits {
+  if (!catalog) {
+    return { ...fallback, planId: planId === "free" ? "free" : planId };
+  }
+
+  const featuresRaw =
+    catalog.features && typeof catalog.features === "object"
+      ? (catalog.features as Record<string, unknown>)
+      : {};
+
+  return {
+    planId,
+    displayName: arabicPlanDisplayName(planId, catalog.display_name),
+    auditsPerMonth: (catalog.audits_per_month as number | null) ?? null,
+    aiGensPerMonth: (catalog.ai_gens_per_month as number | null) ?? null,
+    storesLimit: (catalog.stores_limit as number | null) ?? null,
+    features: {
+      aiGenerator: Boolean(featuresRaw.ai_generator),
+      competitor: Boolean(featuresRaw.competitor),
+      api: Boolean(featuresRaw.api),
+    },
+  };
+}
+
+/** Paid entitlement is active only while subscription status is active and period has not ended. */
+function isPaidSubscriptionActive(sub: {
+  status: string | null;
+  current_period_end: string | null;
+} | null): boolean {
+  if (!sub || sub.status !== "active") return false;
+  if (!sub.current_period_end) return false;
+  return new Date(sub.current_period_end).getTime() > Date.now();
 }
 
 export async function getPlanForUser(userId: string): Promise<PlanLimits> {
@@ -145,7 +150,42 @@ export async function getPlanForUser(userId: string): Promise<PlanLimits> {
     .eq("id", workspaceId)
     .maybeSingle();
 
-  const planId = ((ws?.plan_id as string) || "free") as PlanId;
+  let planId = ((ws?.plan_id as string) || "free") as PlanId;
+
+  if (planId !== "free") {
+    const { data: sub } = await sb
+      .from("subscriptions")
+      .select("id, status, current_period_end")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!isPaidSubscriptionActive(sub)) {
+      const nowIso = new Date().toISOString();
+      const { error: downgradeError } = await sb
+        .from("workspaces")
+        .update({ plan_id: "free", updated_at: nowIso })
+        .eq("id", workspaceId);
+      if (downgradeError) {
+        console.error("[billing] expired plan downgrade failed:", downgradeError.message, {
+          userId,
+          workspaceId,
+        });
+      } else if (sub?.id && sub.status === "active") {
+        await sb
+          .from("subscriptions")
+          .update({ status: "canceled", updated_at: nowIso })
+          .eq("id", sub.id);
+        await emitSubscriptionWarningNotification({
+          workspaceId,
+          kind: "expired",
+          planLabel: planId,
+        });
+      }
+      planId = "free";
+    }
+  }
 
   const { data: catalog } = await sb
     .from("plan_catalog")
@@ -153,27 +193,7 @@ export async function getPlanForUser(userId: string): Promise<PlanLimits> {
     .eq("id", planId)
     .maybeSingle();
 
-  if (!catalog) {
-    return { ...fallback, planId };
-  }
-
-  const featuresRaw =
-    catalog.features && typeof catalog.features === "object"
-      ? (catalog.features as Record<string, unknown>)
-      : {};
-
-  return {
-    planId,
-    displayName: (catalog.display_name as string) || planId,
-    auditsPerMonth: (catalog.audits_per_month as number | null) ?? null,
-    aiGensPerMonth: (catalog.ai_gens_per_month as number | null) ?? null,
-    storesLimit: (catalog.stores_limit as number | null) ?? null,
-    features: {
-      aiGenerator: Boolean(featuresRaw.ai_generator),
-      competitor: Boolean(featuresRaw.competitor),
-      api: Boolean(featuresRaw.api),
-    },
-  };
+  return planLimitsFromCatalog(planId, catalog, fallback);
 }
 
 export async function getUsageCountsForUser(
@@ -211,48 +231,80 @@ export async function getUsageCountsForUser(
 
 function usagePct(used: number, limit: number | null): number {
   if (limit == null || limit <= 0) return used > 0 ? 5 : 0;
-  return Math.max(0, Math.min(100, Math.round((used / limit) * 100)));
+  // Allow >100 so over-quota Free usage is visible in critical metrics.
+  return Math.max(0, Math.round((used / limit) * 100));
+}
+
+/** Lightweight shell payload — topbar / nav only (not the full dashboard). */
+export type ShellPayload = {
+  planName: string;
+  displayName: string | null;
+  latestAuditId: string | null;
+  notificationCount: number;
+  features: { competitor: boolean; aiGenerator: boolean };
+};
+
+export async function getShellForUser(userId: string): Promise<ShellPayload> {
+  const [plan, audits, profileName] = await Promise.all([
+    getPlanForUser(userId),
+    listAuditsForUser(userId, 8),
+    getProfileDisplayName(userId),
+  ]);
+
+  const latestCompleted = audits.find((a) => a.status === "completed") ?? null;
+  const latestAny = latestCompleted ?? audits[0] ?? null;
+  const notificationCount = await countUnreadNotificationsForUser(userId);
+
+  return {
+    planName: plan.displayName,
+    displayName: profileName,
+    latestAuditId: latestAny?.id ?? null,
+    notificationCount,
+    features: {
+      competitor: Boolean(plan.features.competitor),
+      aiGenerator: Boolean(plan.features.aiGenerator),
+    },
+  };
 }
 
 export async function getDashboardForUser(userId: string): Promise<DashboardPayload> {
-  const plan = await getPlanForUser(userId);
-  const audits = await listAuditsForUser(userId, 50);
-  const completed = audits.filter((a) => a.status === "completed" && a.overallScore != null);
-  const latest = completed[0] ?? null;
-
   const monthStart = startOfMonth().toISOString();
   const monthEnd = endOfMonth().toISOString();
-  const counts = await getUsageCountsForUser(userId, monthStart, monthEnd);
+  const [plan, audits, counts] = await Promise.all([
+    getPlanForUser(userId),
+    listAuditsForUser(userId, 50),
+    getUsageCountsForUser(userId, monthStart, monthEnd),
+  ]);
+  const completed = audits.filter((a) => a.status === "completed" && a.overallScore != null);
+  const latest = completed[0] ?? null;
 
   const scores = completed.map((a) => a.overallScore as number);
   const avgScore =
     scores.length > 0 ? Math.round(scores.reduce((s, n) => s + n, 0) / scores.length) : null;
 
   const auditsThisMonth = counts.audit;
-  const recent = audits.slice(0, 5);
+  // Prefer completed audits with real scores for the recent table; fill with others.
+  const recent = [
+    ...audits.filter((a) => a.status === "completed" && a.overallScore != null),
+    ...audits.filter((a) => !(a.status === "completed" && a.overallScore != null)),
+  ].slice(0, 5);
+  const trend = buildScoreTrend(completed, { locale: "ar", limit: 24 });
 
-  // Trend: last up to 8 completed audits oldest→newest for chart
-  const trendSource = [...completed].reverse().slice(-8);
-  const trend = trendSource.map((a) => ({
-    label: new Date(a.completedAt || a.createdAt).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-    }),
-    score: a.overallScore as number,
-    date: a.completedAt || a.createdAt,
-  }));
-
-  const [geoScore, geoSignals, decision, recStats, topIssues, pageStats] = await Promise.all([
-    getLatestGeoScore(userId, latest?.id ?? null),
-    getLatestGeoSignals(latest?.id ?? null),
-    getDecisionRecommendations(latest?.id ?? null),
-    getRecommendationStats(userId),
-    getTopIssuesForUser(userId),
-    getPageStatsForUser(userId),
-  ]);
+  const [geoScore, geoSignals, decision, recStats, topIssues, pageStats, profileName] =
+    await Promise.all([
+      getLatestGeoScore(userId, latest?.id ?? null),
+      getLatestGeoSignals(latest?.id ?? null),
+      getDecisionRecommendations(latest?.id ?? null),
+      getRecommendationStats(userId),
+      getTopIssuesForUser(userId),
+      getPageStatsForUser(userId),
+      getProfileDisplayName(userId),
+    ]);
 
   const recentEnriched = recent.map((r) => ({
     ...r,
+    productName: decodeHtmlEntities(r.productName),
+    storeName: decodeHtmlEntities(r.storeName),
     pageCount: pageStats.byAudit[r.id] ?? 0,
     openIssues: pageStats.openIssuesByAudit[r.id] ?? 0,
   }));
@@ -269,12 +321,13 @@ export async function getDashboardForUser(userId: string): Promise<DashboardPayl
       totalRecommendations: recStats.total,
       latestStoreScore: latest?.overallScore ?? null,
       pagesScanned: pageStats.totalPages,
+      pagesThisMonth: pageStats.pagesThisMonth,
     },
     latestAudit: latest
       ? {
           id: latest.id,
-          productName: latest.productName,
-          storeName: latest.storeName,
+          productName: decodeHtmlEntities(latest.productName),
+          storeName: decodeHtmlEntities(latest.storeName),
           overallScore: latest.overallScore,
           completedAt: latest.completedAt,
         }
@@ -287,7 +340,29 @@ export async function getDashboardForUser(userId: string): Promise<DashboardPayl
     recent: recentEnriched,
     notificationCount: recStats.open,
     usagePct: usagePct(auditsThisMonth, plan.auditsPerMonth),
+    displayName: profileName,
   };
+}
+
+async function getProfileDisplayName(userId: string): Promise<string | null> {
+  const sb = getSupabaseAdmin();
+  if (!sb) return null;
+  const { data } = await sb
+    .from("profiles")
+    .select("full_name")
+    .eq("id", userId)
+    .maybeSingle();
+  const name = typeof data?.full_name === "string" ? data.full_name.trim() : "";
+  if (!name) return null;
+
+  // Heal stale auth metadata (e.g. placeholder "NAME X") so shell + marketing nav match settings.
+  void sb.auth.admin
+    .updateUserById(userId, { user_metadata: { full_name: name.slice(0, 120) } })
+    .then(({ error }) => {
+      if (error) console.error("[profiles] auth metadata heal failed:", error.message);
+    });
+
+  return name;
 }
 
 async function getLatestGeoScore(userId: string, auditId: string | null): Promise<number | null> {
@@ -379,14 +454,8 @@ function mapPriorityRow(
     projected_impact: string | null;
   }
 ): DashboardPriorityIssue {
-  const severity =
-    row.severity === "critical" || row.severity === "warning" || row.severity === "opportunity"
-      ? row.severity
-      : "opportunity";
-  const impact =
-    row.impact === "high" || row.impact === "medium" || row.impact === "low"
-      ? row.impact
-      : "medium";
+  const severity = parseSeverity(row.severity);
+  const impact = parseImpact(row.impact);
 
   return {
     id: row.id,
@@ -465,12 +534,17 @@ async function getRecommendationStats(
 
   const { data, error } = await sb
     .from("recommendations")
-    .select("id, status")
+    .select("id, status, severity")
     .in("audit_id", ids);
 
   if (error || !data) return { open: 0, total: 0 };
-  const total = data.length;
-  const open = data.filter((r) => r.status === "open").length;
+  // Count real problems only — exclude filler "opportunity" success fluff.
+  const actionable = data.filter((r) => {
+    const severity = String(r.severity || "");
+    return severity === "critical" || severity === "warning";
+  });
+  const total = actionable.length;
+  const open = actionable.filter((r) => r.status === "open").length;
   return { open, total };
 }
 
@@ -486,7 +560,8 @@ async function getTopIssuesForUser(userId: string): Promise<DashboardTopIssue[]>
     .from("recommendations")
     .select("problem, severity, status, audit_id")
     .in("audit_id", ids)
-    .eq("status", "open");
+    .eq("status", "open")
+    .in("severity", ["critical", "warning"]);
 
   if (error || !data?.length) {
     if (error) console.error("[dashboard] top issues failed:", error.message);
@@ -524,28 +599,21 @@ async function getTopIssuesForUser(userId: string): Promise<DashboardTopIssue[]>
       return (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9);
     })
     .slice(0, 5)
-    .map((item) => {
-      const severity =
-        item.severity === "critical" ||
-        item.severity === "warning" ||
-        item.severity === "opportunity"
-          ? item.severity
-          : "opportunity";
-      return {
-        problem: item.problem,
-        count: item.count,
-        severity,
-        auditId: item.auditId,
-      };
-    });
+    .map((item) => ({
+      problem: item.problem,
+      count: item.count,
+      severity: parseSeverity(item.severity),
+      auditId: item.auditId,
+    }));
 }
 
 async function getPageStatsForUser(userId: string): Promise<{
   totalPages: number;
+  pagesThisMonth: number;
   byAudit: Record<string, number>;
   openIssuesByAudit: Record<string, number>;
 }> {
-  const empty = { totalPages: 0, byAudit: {}, openIssuesByAudit: {} };
+  const empty = { totalPages: 0, pagesThisMonth: 0, byAudit: {}, openIssuesByAudit: {} };
   const sb = getSupabaseAdmin();
   if (!sb) return empty;
 
@@ -553,15 +621,32 @@ async function getPageStatsForUser(userId: string): Promise<{
   const ids = audits.map((a) => a.id);
   if (!ids.length) return empty;
 
+  const monthStartTs = startOfMonth().getTime();
+  const auditsThisMonthIds = new Set(
+    audits
+      .filter((a) => {
+        const ts = new Date(a.completedAt || a.createdAt).getTime();
+        return Number.isFinite(ts) && ts >= monthStartTs;
+      })
+      .map((a) => a.id)
+  );
+
   const [{ data: pages }, { data: recs }] = await Promise.all([
     sb.from("audit_pages").select("audit_id").in("audit_id", ids),
-    sb.from("recommendations").select("audit_id, status").in("audit_id", ids).eq("status", "open"),
+    sb
+      .from("recommendations")
+      .select("audit_id, status, severity")
+      .in("audit_id", ids)
+      .eq("status", "open")
+      .in("severity", ["critical", "warning"]),
   ]);
 
   const byAudit: Record<string, number> = {};
+  let pagesThisMonth = 0;
   for (const row of pages ?? []) {
     const id = String(row.audit_id);
     byAudit[id] = (byAudit[id] ?? 0) + 1;
+    if (auditsThisMonthIds.has(id)) pagesThisMonth += 1;
   }
 
   const openIssuesByAudit: Record<string, number> = {};
@@ -572,6 +657,7 @@ async function getPageStatsForUser(userId: string): Promise<{
 
   return {
     totalPages: (pages ?? []).length,
+    pagesThisMonth,
     byAudit,
     openIssuesByAudit,
   };
@@ -661,7 +747,7 @@ export async function getAccountProfile(
   return {
     fullName: (data?.full_name as string) || "",
     email,
-    locale: (data?.locale as string) || "ar",
+    locale: "ar",
     timezone: (data?.timezone as string) || "",
     avatarUrl: (data?.avatar_url as string) || "",
     businessName: (data?.business_name as string) || "",
@@ -679,7 +765,8 @@ export async function updateAccountProfile(
 
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (patch.fullName !== undefined) update.full_name = patch.fullName.trim().slice(0, 120);
-  if (patch.locale !== undefined) update.locale = patch.locale.trim().slice(0, 16);
+  // Product UI is Arabic-only — never persist English or other UI locales.
+  if (patch.locale !== undefined) update.locale = "ar";
   if (patch.timezone !== undefined) update.timezone = patch.timezone.trim().slice(0, 64);
   if (patch.businessName !== undefined) update.business_name = patch.businessName.trim().slice(0, 120);
   if (patch.country !== undefined) update.country = patch.country.trim().slice(0, 40);
@@ -688,6 +775,16 @@ export async function updateAccountProfile(
   if (error) {
     console.error("[profiles] update account failed:", error.message);
     return null;
+  }
+
+  // Keep auth metadata in sync so shell greeting / avatar name match settings.
+  if (patch.fullName !== undefined) {
+    const { error: metaError } = await sb.auth.admin.updateUserById(userId, {
+      user_metadata: { full_name: patch.fullName.trim().slice(0, 120) },
+    });
+    if (metaError) {
+      console.error("[profiles] auth metadata sync failed:", metaError.message);
+    }
   }
 
   return getAccountProfile(userId, email);

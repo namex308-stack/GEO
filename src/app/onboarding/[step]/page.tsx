@@ -2,11 +2,18 @@ import { notFound, redirect } from "next/navigation";
 import { OnboardingFlow } from "@/components/app/onboarding-flow";
 import { isOnboardingStepSlug } from "@/lib/onboarding/constants";
 
-/** Legacy quiz / multi-field URLs → one-question-per-step slugs. */
+/** Legacy quiz / multi-field URLs → current one-question-per-step slugs. */
 const LEGACY: Record<string, string> = {
   store: "business-name",
   business: "business-name",
-  goals: "challenge",
+  language: "platform",
+  "store-size": "competitor",
+  category: "competitor",
+  goal: "competitor",
+  traffic: "competitor",
+  orders: "competitor",
+  challenge: "competitor",
+  goals: "competitor",
 };
 
 export default async function OnboardingStepPage({

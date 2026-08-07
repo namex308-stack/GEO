@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** Legacy quiz URL → enterprise challenge step. */
+/** Legacy quiz URL → optional competitor (last) step. */
 export default function LegacyGoalsRedirect() {
-  redirect("/onboarding/challenge");
+  redirect("/onboarding/competitor");
 }

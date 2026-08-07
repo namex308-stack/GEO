@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { BLOG_SLUGS, ROUTES } from "@/lib/routes";
+import { getSiteUrl } from "@/lib/site-url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "https://convaudit.com";
+  const base = getSiteUrl();
   const now = new Date();
 
   const routes = [

@@ -19,9 +19,10 @@ describe("locale helpers", () => {
     );
   });
 
-  it("normalizes locale with Arabic-first default", () => {
+  it("normalizes every locale value to Arabic-only", () => {
     expect(normalizeAppLocale("ar")).toBe("ar");
-    expect(normalizeAppLocale("en-US")).toBe("en");
+    expect(normalizeAppLocale("en-US")).toBe("ar");
+    expect(normalizeAppLocale("en")).toBe("ar");
     expect(normalizeAppLocale("")).toBe("ar");
     expect(normalizeAppLocale(null)).toBe("ar");
   });

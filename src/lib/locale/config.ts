@@ -14,11 +14,10 @@ export interface LocaleConfig {
 }
 
 /**
- * Locale registry. Public routes are always Latin (`/pricing`, `/dashboard`,
- * `/blog/...`) regardless of locale — this registry only controls which
- * message catalog and text direction render for a given request. Adding a
- * new locale never touches routing: enable it here, add its catalog under
- * `messages/`, and it becomes selectable.
+ * Locale registry (Arabic product UI only — English is not supported).
+ * Public routes stay Latin (`/pricing`, `/dashboard`, `/blog/...`).
+ * Future Arabic dialects (e.g. `ar-gulf`) can be enabled here without
+ * touching routing.
  */
 export const LOCALES: Record<LocaleId, LocaleConfig> = {
   ar: {

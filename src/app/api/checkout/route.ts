@@ -7,7 +7,7 @@ import {
   getKashierMode,
   isKashierConfigured,
 } from "@/lib/kashier";
-import { getAuthUser } from "@/lib/auth/get-user";
+import { requireApiUser } from "@/lib/auth/require-api-user";
 import { getCheckoutPrice } from "@/lib/billing/plans";
 import { activateSubscription } from "@/lib/billing/activate-subscription";
 import { buildPostPaymentPath } from "@/lib/billing/upgrade-flow";
@@ -16,6 +16,7 @@ import {
   isKashierPaymentMethodId,
   type KashierPaymentMethodId,
 } from "@/lib/kashier/methods";
+import { getSiteUrl } from "@/lib/site-url";
 
 const Body = z.object({
   planId: z.enum(["pro", "business"]),
@@ -32,14 +33,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
     }
 
-    const user = await getAuthUser();
-    if (!user) {
-      console.warn("[api/checkout] unauthorized");
-      return NextResponse.json({ error: "غير مصرح بالوصول" }, { status: 401 });
-    }
+    const auth = await requireApiUser();
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
 
     const { planId, period, paymentMethod: methodId } = parsed.data;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = getSiteUrl();
     const amount = getCheckoutPrice(planId, period);
     const orderId = buildOrderId(user.id, planId, period);
 
