@@ -13,6 +13,11 @@ import {
 } from "@/lib/db/audit-repository";
 import { getCurrentUsagePeriod, getPlanForUser } from "@/lib/db/workspace-stats";
 import { aiLimitReachedMessage } from "@/lib/billing/quota";
+import {
+  aiGeneratorLockedMessage,
+  ENTITLEMENT_CODES,
+  isPlanFeatureEnabled,
+} from "@/lib/billing/entitlements";
 import { assertSafePublicHttpUrl } from "@/lib/url-safety";
 import { normalizeAppLocale } from "@/lib/locale";
 import { toJsonValue } from "@/lib/audits/parse";
@@ -74,11 +79,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "تم تجاوز الحد المسموح" }, { status: 429 });
     }
 
-    if (!plan.features.aiGenerator) {
+    if (!isPlanFeatureEnabled(plan, "aiGenerator")) {
       return NextResponse.json(
         {
-          error: "مولّد AI غير متاح في باقتك الحالية. قم بالترقية للمتابعة.",
-          code: "AI_GENERATOR_LOCKED",
+          error: aiGeneratorLockedMessage(),
+          code: ENTITLEMENT_CODES.AI_GENERATOR_LOCKED,
           plan: plan.planId,
         },
         { status: 403 }

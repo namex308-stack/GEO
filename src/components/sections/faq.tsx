@@ -11,16 +11,7 @@ import { ArrowRight } from "lucide-react";
 import { useNavigateAfterAction } from "@/lib/use-navigate";
 import { useT } from "@/lib/i18n";
 import { Container, Section, SectionHeader } from "@/components/design-system/section";
-
-const FAQS = [
-  { qKey: "faq.q1" as const, aKey: "faq.a1" as const },
-  { qKey: "faq.q2" as const, aKey: "faq.a2" as const },
-  { qKey: "faq.q3" as const, aKey: "faq.a3" as const },
-  { qKey: "faq.q4" as const, aKey: "faq.a4" as const },
-  { qKey: "faq.q5" as const, aKey: "faq.a5" as const },
-  { qKey: "faq.q6" as const, aKey: "faq.a6" as const },
-  { qKey: "faq.q7" as const, aKey: "faq.a7" as const },
-] as const;
+import { HOME_FAQ_KEYS } from "@/lib/seo/faq-keys";
 
 export function FAQ() {
   const { startAuditAndNavigate } = useNavigateAfterAction();
@@ -36,7 +27,7 @@ export function FAQ() {
         />
 
         <Accordion type="single" collapsible className="space-y-3">
-          {FAQS.map((f, i) => (
+          {HOME_FAQ_KEYS.map((f, i) => (
             <AccordionItem
               key={f.qKey}
               value={`item-${i}`}

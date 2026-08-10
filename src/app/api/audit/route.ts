@@ -24,6 +24,12 @@ import {
 } from "@/lib/db/audit-repository";
 import { getCurrentUsagePeriod, getPlanForUser } from "@/lib/db/workspace-stats";
 import { auditLimitReachedMessage } from "@/lib/billing/quota";
+import {
+  competitorLockedMessage,
+  ENTITLEMENT_CODES,
+  isPlanFeatureEnabled,
+  storeLimitReachedBody,
+} from "@/lib/billing/entitlements";
 import { emitSubscriptionWarningNotification } from "@/lib/notifications/emit";
 import type { AnalyzerJsonResult } from "@/lib/db/types";
 import { assertSafePublicHttpUrl } from "@/lib/url-safety";
@@ -36,6 +42,10 @@ import {
 } from "@/lib/db/onboarding-repository";
 import { normalizeAppLocale } from "@/lib/locale";
 import type { OnboardingAnswers } from "@/lib/types";
+
+/** Allow crawl + Gemini + persist to finish inside `after()` on Vercel. */
+export const runtime = "nodejs";
+export const maxDuration = 300;
 
 const OptionalHttpUrl = z.string().url().optional().or(z.literal(""));
 
@@ -73,6 +83,7 @@ async function runAuditPipeline(input: {
   resolvedStoreUrl: string | undefined;
   resolvedCompetitorUrl: string | undefined;
   storeId: string | null;
+  storesLimit: number | null;
   onboarding: OnboardingAnswers | null;
   onboardingState: OnboardingState;
   usageEventId: string | null;
@@ -84,6 +95,7 @@ async function runAuditPipeline(input: {
     resolvedStoreUrl,
     resolvedCompetitorUrl,
     storeId,
+    storesLimit,
     onboarding,
     onboardingState,
     usageEventId,
@@ -183,6 +195,7 @@ async function runAuditPipeline(input: {
         detectedTheme: onboardingState.platform || null,
         verifiedAt: onboardingState.storeVerifiedAt,
         markCrawled: true,
+        storesLimit,
       });
     }
 
@@ -268,12 +281,12 @@ export async function POST(req: NextRequest) {
     }
 
     let resolvedCompetitorUrl = competitorCandidate;
-    if (resolvedCompetitorUrl && !plan.features.competitor) {
+    if (resolvedCompetitorUrl && !isPlanFeatureEnabled(plan, "competitor")) {
       if (competitorUrlInput) {
         return NextResponse.json(
           {
-            error: "مقارنة المنافسين غير متاحة في باقتك الحالية. قم بالترقية للمتابعة.",
-            code: "COMPETITOR_LOCKED",
+            error: competitorLockedMessage(),
+            code: ENTITLEMENT_CODES.COMPETITOR_LOCKED,
             plan: plan.planId,
           },
           { status: 403 }
@@ -282,18 +295,33 @@ export async function POST(req: NextRequest) {
       resolvedCompetitorUrl = undefined;
     }
 
-    const storeId = resolvedStoreUrl
-      ? await ensureWorkspaceStore({
-          workspaceId,
-          storeUrl: resolvedStoreUrl,
-          name: onboardingState.businessName || onboardingState.homepageTitle || undefined,
-          platform: onboardingState.platform || null,
-          country: onboardingState.country || null,
-          language: onboardingState.primaryLanguage || null,
-          verifiedAt: onboardingState.storeVerifiedAt,
-          markCrawled: true,
-        })
-      : null;
+    let storeId: string | null = null;
+    if (resolvedStoreUrl) {
+      const storeResult = await ensureWorkspaceStore({
+        workspaceId,
+        storeUrl: resolvedStoreUrl,
+        name: onboardingState.businessName || onboardingState.homepageTitle || undefined,
+        platform: onboardingState.platform || null,
+        country: onboardingState.country || null,
+        language: onboardingState.primaryLanguage || null,
+        verifiedAt: onboardingState.storeVerifiedAt,
+        markCrawled: true,
+        storesLimit: plan.storesLimit,
+      });
+      if (!storeResult.ok) {
+        if (storeResult.code === "STORE_LIMIT_REACHED") {
+          return NextResponse.json(
+            storeLimitReachedBody(plan, storeResult.used),
+            { status: 403 }
+          );
+        }
+        return NextResponse.json(
+          { error: "تعذّر تجهيز المتجر. حاول مرة أخرى." },
+          { status: 503 }
+        );
+      }
+      storeId = storeResult.storeId;
+    }
 
     const auditId = await createAuditRecord({
       workspaceId,
@@ -354,6 +382,7 @@ export async function POST(req: NextRequest) {
         resolvedStoreUrl,
         resolvedCompetitorUrl,
         storeId,
+        storesLimit: plan.storesLimit,
         onboarding,
         onboardingState,
         usageEventId,

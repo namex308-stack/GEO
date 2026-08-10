@@ -1,13 +1,98 @@
 /**
  * Single source of truth for this deployment's public base URL.
  *
- * `layout.tsx` (metadataBase), `sitemap.ts`, `robots.ts`, and `manifest.ts`
- * previously each hard-coded their own fallback (some `localhost:3000`,
- * others a placeholder production domain) — a mismatch would make canonical
- * URLs, Open Graph `url`, and sitemap entries point at different domains.
- * Every SEO-facing file should read the base URL from here instead.
+ * Every SEO-facing surface (metadataBase, canonicals, Open Graph, Twitter,
+ * sitemap, robots, JSON-LD, llms.txt) and any redirect that must match the
+ * public origin should read through this module — never re-parse
+ * NEXT_PUBLIC_APP_URL or hard-code localhost fallbacks elsewhere.
+ *
+ * Production policy:
+ * - Missing NEXT_PUBLIC_APP_URL → throw (no silent localhost fallback)
+ * - Vercel production / ENFORCE_PUBLIC_SITE_URL=1 → reject loopback + require https
+ * - Any non-loopback production URL → require https
  */
+
+const DEV_FALLBACK = "http://localhost:3000";
+
+function isLoopbackHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host === "::1";
+}
+
+function isProductionRuntime(): boolean {
+  return process.env.NODE_ENV === "production";
+}
+
+/**
+ * Strict public-URL checks for real hosted production (not local `next build`
+ * with an explicit localhost env for smoke-testing a production bundle).
+ */
+function mustRejectLoopbackSiteUrl(): boolean {
+  if (process.env.VERCEL_ENV === "production") return true;
+  // Opt-in for non-Vercel production hosts (Docker/VPS).
+  if (process.env.ENFORCE_PUBLIC_SITE_URL === "1") return true;
+  return false;
+}
+
 export function getSiteUrl(): string {
   const raw = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  return (raw || "http://localhost:3000").replace(/\/+$/, "");
+
+  if (!raw) {
+    if (isProductionRuntime()) {
+      throw new Error(
+        "NEXT_PUBLIC_APP_URL is required in production. " +
+          "It sets metadataBase, canonical URLs, sitemap, robots host, Open Graph, and JSON-LD. " +
+          "Set it to your public HTTPS origin (e.g. https://convaudit.com)."
+      );
+    }
+    return DEV_FALLBACK;
+  }
+
+  const normalized = raw.replace(/\/+$/, "");
+
+  let parsed: URL;
+  try {
+    parsed = new URL(normalized);
+  } catch {
+    throw new Error(
+      `NEXT_PUBLIC_APP_URL is invalid (${JSON.stringify(raw)}). ` +
+        "Expected an absolute URL such as https://convaudit.com."
+    );
+  }
+
+  const loopback = isLoopbackHostname(parsed.hostname);
+
+  if (loopback && mustRejectLoopbackSiteUrl()) {
+    throw new Error(
+      "NEXT_PUBLIC_APP_URL must not be a localhost/loopback URL in production. " +
+        "Canonical URLs, sitemap, and Open Graph would point at an unreachable host."
+    );
+  }
+
+  // Production public origins must be HTTPS (explicit localhost local prod builds exempt).
+  if (isProductionRuntime() && !loopback && parsed.protocol !== "https:") {
+    throw new Error(
+      "NEXT_PUBLIC_APP_URL must use https:// in production " +
+        `(received protocol ${parsed.protocol}).`
+    );
+  }
+
+  return normalized;
+}
+
+/**
+ * Build an absolute public URL from a path (or absolute URL passthrough).
+ * Paths should start with `/`. Uses getSiteUrl() — never hard-code the domain.
+ */
+export function absoluteUrl(pathOrUrl: string = "/"): string {
+  const base = getSiteUrl();
+  const trimmed = pathOrUrl.trim();
+  if (!trimmed || trimmed === "/") return base;
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed.replace(/\/+$/, "");
+  }
+
+  const path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return `${base}${path}`;
 }

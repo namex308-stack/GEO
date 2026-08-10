@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { BLOG_POSTS } from "@/lib/blog-posts";
+import { notFound } from "next/navigation";
+import { JsonLd } from "@/components/seo/json-ld";
+import { getBlogPostMeta } from "@/lib/blog-posts";
 import { translate } from "@/lib/locale/t";
 import { ROUTES } from "@/lib/routes";
+import { publicPageMetadata } from "@/lib/seo/page-metadata";
+import { buildBlogArticleJsonLd } from "@/lib/seo/structured-data";
 
 export async function generateMetadata({
   params,
@@ -10,34 +14,44 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = BLOG_POSTS.find((p) => p.slug === slug);
-  // Unknown slugs 404 in the page itself; leave metadata to the parent /blog default.
-  if (!post) return {};
+  const post = getBlogPostMeta(slug);
+  // Server-side 404 — client `notFound()` alone does not set HTTP 404 on the document.
+  if (!post) notFound();
 
   const title = translate(post.titleKey);
   const description = translate(post.excerptKey);
   const url = ROUTES.blogPost(slug);
 
-  return {
+  return publicPageMetadata({
     title,
     description,
-    alternates: { canonical: url },
-    openGraph: {
-      title,
-      description,
-      url,
-      type: "article",
-      siteName: "ConvAudit",
-      locale: "ar_EG",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-    },
-  };
+    path: url,
+    type: "article",
+  });
 }
 
-export default function BlogPostLayout({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+export default async function BlogPostLayout({
+  children,
+  params,
+}: {
+  children: ReactNode;
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const post = getBlogPostMeta(slug);
+  if (!post) notFound();
+
+  return (
+    <>
+      <JsonLd
+        data={buildBlogArticleJsonLd({
+          title: translate(post.titleKey),
+          description: translate(post.excerptKey),
+          path: ROUTES.blogPost(slug),
+          publishedOn: post.publishedOn,
+        })}
+      />
+      {children}
+    </>
+  );
 }

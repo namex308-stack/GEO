@@ -10,6 +10,7 @@ import { mapAmountToPlan, type BillingPeriod, type PlanId } from "@/lib/billing/
 import { buildPostPaymentPath } from "@/lib/billing/upgrade-flow";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { activateSubscription } from "@/lib/billing/activate-subscription";
+import { absoluteUrl, getSiteUrl } from "@/lib/site-url";
 
 type PaidPlan = Exclude<PlanId, "free">;
 
@@ -185,7 +186,7 @@ export async function GET(req: NextRequest) {
       console.warn("[webhook/kashier] GET success without orderId — redirect only");
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = getSiteUrl();
     const parsed = orderId ? parseOrderId(orderId) : null;
     const fromAmount = amount != null ? mapAmountToPlan(amount) : null;
     const plan = parsed?.plan ?? fromAmount?.plan ?? "pro";
@@ -199,12 +200,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(dest);
     }
 
-    const failureDest = `${appUrl}/checkout?error=payment_failed`;
+    const failureDest = absoluteUrl("/checkout?error=payment_failed");
     console.info("[webhook/kashier] redirecting to failure", { failureDest });
     return NextResponse.redirect(failureDest);
   } catch (err) {
     console.error("[webhook/kashier] GET callback error:", err);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    return NextResponse.redirect(`${appUrl}/checkout?error=payment_failed`);
+    return NextResponse.redirect(absoluteUrl("/checkout?error=payment_failed"));
   }
 }

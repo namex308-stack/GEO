@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigateAfterAction } from "@/lib/use-navigate";
@@ -11,7 +12,7 @@ import { DotPattern } from "@/components/magicui/dot-pattern";
 
 export function CTA() {
   const t = useT();
-  const { startAuditAndNavigate } = useNavigateAfterAction();
+  const { startAuditAndNavigate, startAuditHref } = useNavigateAfterAction();
   return (
     <Section>
       <Container className="max-w-5xl">
@@ -30,13 +31,17 @@ export function CTA() {
                 {t("cta.subtitle")}
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-                <Button
-                  size="lg"
-                  onClick={startAuditAndNavigate}
-                  className="h-11 px-7 font-semibold group"
-                >
-                  {t("cta.button")}
-                  <ArrowRight className="size-4 ms-0.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
+                <Button size="lg" asChild className="h-11 px-7 font-semibold group">
+                  <Link
+                    href={startAuditHref}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      startAuditAndNavigate();
+                    }}
+                  >
+                    {t("cta.button")}
+                    <ArrowRight className="size-4 ms-0.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
                 </Button>
               </div>
               <p className="mt-4 text-sm text-muted-foreground">{t("cta.social")}</p>

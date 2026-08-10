@@ -7,23 +7,16 @@ import {
   isOnboardingPath,
   onboardingPathForStep,
 } from "@/lib/onboarding/constants";
+import {
+  AUTH_APP_PATHS,
+  PROTECTED_APP_PATHS,
+} from "@/lib/seo/private-app-paths";
 
 /** App routes that require a Supabase session. */
-const PROTECTED_PATHS = [
-  "/dashboard",
-  "/health",
-  "/audit",
-  "/history",
-  "/reports",
-  "/monitor",
-  "/geo",
-  "/settings",
-  "/checkout",
-  "/onboarding",
-];
+const PROTECTED_PATHS = [...PROTECTED_APP_PATHS];
 
 /** Real auth entry in this app (no /login or /signup pages). */
-const AUTH_PATHS = ["/auth"];
+const AUTH_PATHS = [...AUTH_APP_PATHS];
 
 /** Guard against Supabase network hangs blocking the whole request. */
 function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {

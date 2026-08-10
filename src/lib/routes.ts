@@ -34,11 +34,5 @@ export const ROUTES = {
   auditGenerate: (id: string) => `/audit/${id}/generate`,
 } as const;
 
-export const BLOG_SLUGS = [
-  "geo-ai-visibility-guide",
-  "conversion-rate-optimization",
-  "product-schema-markup",
-  "competitor-analysis-strategy",
-  "ai-product-descriptions",
-  "trust-signals-ecommerce",
-] as const;
+/** Re-export from blog-posts so sitemap/routes stay aligned with metadata. */
+export { BLOG_SLUGS } from "@/lib/blog-posts";

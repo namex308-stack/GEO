@@ -1,8 +1,19 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Home, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { translate as t } from "@/lib/locale/t";
+
+/** Soft-404 guard — App Router still returns HTTP 404; robots meta blocks indexing if linked. */
+export const metadata: Metadata = {
+  title: "الصفحة غير موجودة",
+  robots: {
+    index: false,
+    follow: true,
+    googleBot: { index: false, follow: true },
+  },
+};
 
 export default function NotFound() {
   return (

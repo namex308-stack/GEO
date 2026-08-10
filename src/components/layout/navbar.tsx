@@ -9,6 +9,7 @@ import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/providers/auth-provider";
 import { getUserDisplayName, getUserInitials } from "@/lib/auth/display-user";
+import { ROUTES } from "@/lib/routes";
 import { useNavigateAfterAction } from "@/lib/use-navigate";
 import { cn } from "@/lib/utils";
 import { useT, type TranslationKey } from "@/lib/i18n";
@@ -26,7 +27,12 @@ export function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthed, user, loading, signOut } = useAuth();
-  const { startAuditAndNavigate, openLoginAndNavigate } = useNavigateAfterAction();
+  const {
+    startAuditAndNavigate,
+    startAuditHref,
+    loginHref,
+    newAuditHref,
+  } = useNavigateAfterAction();
   const { theme, setTheme } = useTheme();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -64,6 +70,12 @@ export function Navbar() {
     router.refresh();
   };
 
+  const onStartAuditClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setMobileOpen(false);
+    startAuditAndNavigate();
+  };
+
   const showAuthed = mounted && !loading && isAuthed && user;
   const displayName = user ? getUserDisplayName(user) : "";
   const initials = user ? getUserInitials(user) : "";
@@ -91,10 +103,18 @@ export function Navbar() {
 
         <div className="hidden lg:flex items-center gap-1">
           {NAV.map((item) => (
-            <button
+            <Link
               key={item.target}
-              type="button"
-              onClick={() => scrollTo(item.target)}
+              href={`/#${item.target}`}
+              onClick={(e) => {
+                if (isHome) {
+                  e.preventDefault();
+                  scrollTo(item.target);
+                } else {
+                  setActive(item.target);
+                  setMobileOpen(false);
+                }
+              }}
               className={cn(
                 "h-9 px-3 flex items-center text-sm font-medium rounded-lg transition-colors",
                 active === item.target
@@ -103,7 +123,7 @@ export function Navbar() {
               )}
             >
               {t(item.labelKey)}
-            </button>
+            </Link>
           ))}
         </div>
 
@@ -123,7 +143,7 @@ export function Navbar() {
           {showAuthed ? (
             <div className="hidden sm:flex items-center gap-2">
               <Link
-                href="/dashboard"
+                href={ROUTES.dashboard}
                 className="flex h-9 items-center gap-2 px-2 rounded-lg hover:bg-accent/60 transition-colors"
               >
                 <span className="size-7 rounded-full gradient-brand text-white text-xs font-bold grid place-items-center">
@@ -133,8 +153,10 @@ export function Navbar() {
                   {displayName.split(" ")[0]}
                 </span>
               </Link>
-              <Button size="sm" onClick={startAuditAndNavigate} className="h-9 px-4 font-semibold rounded-full shadow-glow">
-                {t("nav.newAudit")}
+              <Button size="sm" asChild className="h-9 px-4 font-semibold rounded-full shadow-glow">
+                <Link href={newAuditHref} onClick={onStartAuditClick}>
+                  {t("nav.newAudit")}
+                </Link>
               </Button>
               <Button
                 variant="ghost"
@@ -150,14 +172,16 @@ export function Navbar() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => openLoginAndNavigate()}
+                asChild
                 className="hidden h-9 sm:inline-flex"
               >
-                {t("navbar.login")}
+                <Link href={loginHref}>{t("navbar.login")}</Link>
               </Button>
               {!isHome && (
-                <Button size="sm" onClick={startAuditAndNavigate} className="h-9 px-4 font-semibold rounded-full shadow-glow">
-                  {t("navbar.startFreeAudit")}
+                <Button size="sm" asChild className="h-9 px-4 font-semibold rounded-full shadow-glow">
+                  <Link href={startAuditHref} onClick={onStartAuditClick}>
+                    {t("navbar.startFreeAudit")}
+                  </Link>
                 </Button>
               )}
             </>
@@ -184,36 +208,38 @@ export function Navbar() {
       >
         <div className="px-4 py-4 space-y-1">
           {NAV.map((item) => (
-            <button
+            <Link
               key={item.target}
-              type="button"
-              onClick={() => scrollTo(item.target)}
+              href={`/#${item.target}`}
+              onClick={(e) => {
+                if (isHome) {
+                  e.preventDefault();
+                  scrollTo(item.target);
+                } else {
+                  setActive(item.target);
+                  setMobileOpen(false);
+                }
+              }}
               className="block w-full text-start px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-lg"
             >
               {t(item.labelKey)}
-            </button>
+            </Link>
           ))}
           <div className="pt-2 border-t border-border/60 flex flex-col gap-2">
             {!showAuthed && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setMobileOpen(false);
-                  openLoginAndNavigate();
-                }}
-                className="w-full"
-              >
-                {t("navbar.login")}
+              <Button variant="outline" asChild className="w-full">
+                <Link href={loginHref} onClick={() => setMobileOpen(false)}>
+                  {t("navbar.login")}
+                </Link>
               </Button>
             )}
-            <Button
-              onClick={() => {
-                setMobileOpen(false);
-                startAuditAndNavigate();
-              }}
-              className="w-full rounded-full shadow-glow"
-            >
-              {t("navbar.startFreeAudit")}
+            <Button asChild className="w-full rounded-full shadow-glow">
+              <Link
+                href={showAuthed ? newAuditHref : startAuditHref}
+                onClick={onStartAuditClick}
+              >
+                {t("navbar.startFreeAudit")}
+              </Link>
             </Button>
             {showAuthed && (
               <Button

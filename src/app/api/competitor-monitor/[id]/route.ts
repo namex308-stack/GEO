@@ -8,6 +8,11 @@ import {
 } from "@/lib/db/competitor-monitor-repository";
 import { buildMonitorInsights } from "@/lib/competitor-monitor/diff";
 import type { CompetitorTargetDetail } from "@/lib/competitor-monitor/types";
+import { getPlanForUser } from "@/lib/db/workspace-stats";
+import {
+  featureLockedBody,
+  isPlanFeatureEnabled,
+} from "@/lib/billing/entitlements";
 
 const ParamsSchema = z.object({
   id: z.string().uuid(),
@@ -19,6 +24,13 @@ export async function GET(
 ) {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
+
+  const plan = await getPlanForUser(auth.user.id);
+  if (!isPlanFeatureEnabled(plan, "competitor")) {
+    return NextResponse.json(featureLockedBody("competitor", plan.planId), {
+      status: 403,
+    });
+  }
 
   const raw = await ctx.params;
   const parsed = ParamsSchema.safeParse(raw);

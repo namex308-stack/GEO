@@ -25,6 +25,21 @@ import { syncGrowthTasksFromAudit } from "@/lib/growth-tasks/emit";
 export type { AuditHistoryItem } from "@/lib/audits/types";
 
 /** Upsert the workspace primary store from onboarding / audit context; return store id. */
+export type EnsureWorkspaceStoreResult =
+  | { ok: true; storeId: string }
+  | { ok: false; code: "STORE_LIMIT_REACHED"; used: number; limit: number }
+  | { ok: false; code: "FAILED" };
+
+export async function countWorkspaceStores(workspaceId: string): Promise<number> {
+  const sb = getSupabaseAdmin();
+  if (!sb) return 0;
+  const { count } = await sb
+    .from("stores")
+    .select("id", { count: "exact", head: true })
+    .eq("workspace_id", workspaceId);
+  return count ?? 0;
+}
+
 export async function ensureWorkspaceStore(input: {
   workspaceId: string;
   storeUrl: string;
@@ -36,12 +51,14 @@ export async function ensureWorkspaceStore(input: {
   detectedTheme?: string | null;
   verifiedAt?: string | null;
   markCrawled?: boolean;
-}): Promise<string | null> {
+  /** When provided, refuse inserting a new store beyond this limit (`null` = unlimited). */
+  storesLimit?: number | null;
+}): Promise<EnsureWorkspaceStoreResult> {
   const sb = getSupabaseAdmin();
-  if (!sb) return null;
+  if (!sb) return { ok: false, code: "FAILED" };
 
   const primaryUrl = input.storeUrl.trim();
-  if (!primaryUrl) return null;
+  if (!primaryUrl) return { ok: false, code: "FAILED" };
 
   const now = new Date().toISOString();
   const name =
@@ -70,14 +87,22 @@ export async function ensureWorkspaceStore(input: {
     if (input.markCrawled) patch.last_crawled_at = now;
 
     await sb.from("stores").update(patch).eq("id", existing.id);
-    return existing.id as string;
+    return { ok: true, storeId: existing.id as string };
   }
 
-  // Prefer a single primary store per workspace when creating the first one.
   const { count } = await sb
     .from("stores")
     .select("id", { count: "exact", head: true })
     .eq("workspace_id", input.workspaceId);
+
+  const used = count ?? 0;
+  if (
+    input.storesLimit !== undefined &&
+    input.storesLimit !== null &&
+    used >= input.storesLimit
+  ) {
+    return { ok: false, code: "STORE_LIMIT_REACHED", used, limit: input.storesLimit };
+  }
 
   const { data, error } = await sb
     .from("stores")
@@ -90,7 +115,7 @@ export async function ensureWorkspaceStore(input: {
       language: input.language ?? null,
       currency: input.currency ?? null,
       detected_theme: input.detectedTheme ?? null,
-      is_primary: !count || count === 0,
+      is_primary: used === 0,
       verified_at: input.verifiedAt ?? null,
       last_crawled_at: input.markCrawled ? now : null,
     })
@@ -99,9 +124,9 @@ export async function ensureWorkspaceStore(input: {
 
   if (error || !data) {
     console.error("[stores] upsert failed:", error?.message);
-    return null;
+    return { ok: false, code: "FAILED" };
   }
-  return data.id as string;
+  return { ok: true, storeId: data.id as string };
 }
 
 /** Ensure the user has a personal workspace; return its id. */

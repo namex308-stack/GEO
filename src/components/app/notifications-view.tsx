@@ -41,20 +41,26 @@ function priorityClass(priority: NotificationRecord["priority"]): string {
   }
 }
 
-function categoryIcon(category: NotificationCategory) {
+function CategoryIcon({
+  category,
+  className,
+}: {
+  category: NotificationCategory;
+  className?: string;
+}) {
   switch (category) {
     case "ai_alert":
-      return AlertTriangle;
+      return <AlertTriangle className={className} />;
     case "weekly_report":
-      return FileText;
+      return <FileText className={className} />;
     case "competitor_change":
-      return Swords;
+      return <Swords className={className} />;
     case "score_change":
-      return TrendingDown;
+      return <TrendingDown className={className} />;
     case "completed_task":
-      return ListChecks;
+      return <ListChecks className={className} />;
     case "subscription_warning":
-      return CreditCard;
+      return <CreditCard className={className} />;
     default: {
       const _exhaustive: never = category;
       return _exhaustive;
@@ -167,7 +173,6 @@ function NotificationCard({
   onArchive: (id: string) => void;
 }) {
   const t = useT();
-  const Icon = categoryIcon(item.category);
 
   return (
     <Card
@@ -179,7 +184,10 @@ function NotificationCard({
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-3">
           <CardTitle className="text-base leading-relaxed flex items-start gap-2">
-            <Icon className="size-4 text-primary mt-1 shrink-0" />
+            <CategoryIcon
+              category={item.category}
+              className="size-4 text-primary mt-1 shrink-0"
+            />
             <span>{item.title}</span>
           </CardTitle>
           <div className="flex flex-wrap items-center gap-1.5 shrink-0">

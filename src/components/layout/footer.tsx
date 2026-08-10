@@ -2,9 +2,15 @@
 
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
+import { ROUTES } from "@/lib/routes";
 import { useT, type TranslationKey } from "@/lib/i18n";
 
-const COLS: readonly {
+/**
+ * Public footer link inventory — real `href`s only (no JS-only destinations).
+ * Sitemap indexable pages are covered here; `/status` and `/changelog` remain
+ * linked for humans but are noindex placeholders (not in sitemap).
+ */
+export const FOOTER_LINK_COLS: readonly {
   titleKey: TranslationKey;
   links: readonly { labelKey: TranslationKey; href: string }[];
 }[] = [
@@ -14,27 +20,27 @@ const COLS: readonly {
       { labelKey: "footer.link.features", href: "/#features" },
       { labelKey: "footer.link.howItWorks", href: "/#how" },
       { labelKey: "footer.link.methodology", href: "/#methodology" },
-      { labelKey: "footer.pricing", href: "/pricing" },
-      { labelKey: "footer.docs", href: "/docs" },
+      { labelKey: "footer.pricing", href: ROUTES.pricing },
+      { labelKey: "footer.docs", href: ROUTES.docs },
     ],
   },
   {
     titleKey: "footer.col.trust",
     links: [
-      { labelKey: "footer.link.security", href: "/security" },
-      { labelKey: "footer.link.privacy", href: "/privacy" },
-      { labelKey: "footer.link.infrastructure", href: "/security#infrastructure" },
-      { labelKey: "footer.link.compliance", href: "/security#compliance" },
-      { labelKey: "footer.link.systemStatus", href: "/status" },
+      { labelKey: "footer.link.security", href: ROUTES.security },
+      { labelKey: "footer.link.privacy", href: ROUTES.privacy },
+      { labelKey: "footer.link.infrastructure", href: `${ROUTES.security}#infrastructure` },
+      { labelKey: "footer.link.compliance", href: `${ROUTES.security}#compliance` },
+      { labelKey: "footer.link.systemStatus", href: ROUTES.status },
     ],
   },
   {
     titleKey: "footer.col.resources",
     links: [
-      { labelKey: "footer.link.changelog", href: "/changelog" },
-      { labelKey: "footer.link.roadmap", href: "/roadmap" },
-      { labelKey: "footer.blog", href: "/blog" },
-      { labelKey: "footer.link.affiliateProgram", href: "/affiliate" },
+      { labelKey: "footer.link.changelog", href: ROUTES.changelog },
+      { labelKey: "footer.link.roadmap", href: ROUTES.roadmap },
+      { labelKey: "footer.blog", href: ROUTES.blog },
+      { labelKey: "footer.link.affiliateProgram", href: ROUTES.affiliate },
     ],
   },
 ];
@@ -46,7 +52,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-ring">
+            <Link href={ROUTES.home} className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-ring">
               <Logo />
             </Link>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs leading-relaxed">
@@ -54,7 +60,7 @@ export function Footer() {
             </p>
           </div>
 
-          {COLS.map((col) => (
+          {FOOTER_LINK_COLS.map((col) => (
             <div key={col.titleKey}>
               <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground/80">
                 {t(col.titleKey)}

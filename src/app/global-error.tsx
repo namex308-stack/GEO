@@ -21,6 +21,10 @@ export default function GlobalError({
 
   return (
     <html lang="ar" dir="rtl">
+      <head>
+        <meta name="robots" content="noindex, nofollow" />
+        <meta name="googlebot" content="noindex, nofollow" />
+      </head>
       <body
         style={{
           margin: 0,

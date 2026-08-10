@@ -2,18 +2,26 @@ import "server-only";
 
 import {
   getLatestAuditPairForStore,
+  getWeeklyReportByStorePeriod,
   getWorkspaceOwnerEmail,
   listActiveStoresForWeeklyReport,
   markWeeklyReportEmailSent,
   upsertWeeklyReport,
   type ActiveStoreCandidate,
 } from "@/lib/db/weekly-report-repository";
+import {
+  normalizeEmailRecipient,
+  sendTransactionalEmail,
+} from "@/lib/email";
 import { emitWeeklyReportNotification } from "@/lib/notifications/emit";
 import { generateAiExecutiveSummary } from "./ai-summary";
 import { buildWeeklyReportPayload, weeklyPeriodBounds } from "./build";
+import {
+  isWeeklyReportDue,
+  shouldSendWeeklyReportEmail,
+  shouldSkipWeeklyReportRegeneration,
+} from "./cadence";
 import { renderWeeklyReportEmailHtml } from "./email-template";
-
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type WeeklyReportJobResult = {
   considered: number;
@@ -24,61 +32,85 @@ export type WeeklyReportJobResult = {
   reportIds: string[];
 };
 
-function isDue(store: ActiveStoreCandidate, now: Date): boolean {
-  if (!store.lastReportAt) return true;
-  const last = new Date(store.lastReportAt).getTime();
-  if (!Number.isFinite(last)) return true;
-  return now.getTime() - last >= SEVEN_DAYS_MS;
-}
-
-async function sendWeeklyReportEmail(input: {
-  to: string;
+/**
+ * Deliver weekly report email to the workspace owner only.
+ * Soft-fails when Resend is unset or the provider errors — never marks sent
+ * unless the provider returns success.
+ */
+async function deliverWeeklyReportEmail(input: {
+  reportId: string;
+  workspaceId: string;
   subject: string;
   html: string;
 }): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  if (!apiKey) return false;
-
-  const from =
-    process.env.RESEND_FROM_EMAIL?.trim() || "ConvAudit <reports@convaudit.com>";
-
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: [input.to],
-        subject: input.subject,
-        html: input.html,
-      }),
+  const ownerEmail = await getWorkspaceOwnerEmail(input.workspaceId);
+  const to = normalizeEmailRecipient(ownerEmail);
+  if (!to) {
+    console.info("[weekly-report] skip email unauthorized or missing recipient", {
+      reportId: input.reportId,
+      workspaceId: input.workspaceId,
     });
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      console.error("[weekly-report] Resend failed:", res.status, body.slice(0, 200));
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error(
-      "[weekly-report] Resend error:",
-      err instanceof Error ? err.message : err
-    );
     return false;
   }
+
+  const result = await sendTransactionalEmail({
+    to,
+    subject: input.subject,
+    html: input.html,
+    idempotencyKey: `weekly-report:${input.reportId}`,
+  });
+
+  if (!result.ok) {
+    console.info("[weekly-report] email not sent", {
+      reportId: input.reportId,
+      reason: result.reason,
+    });
+    return false;
+  }
+
+  const claimed = await markWeeklyReportEmailSent(input.reportId);
+  if (!claimed) {
+    console.info("[weekly-report] email mark skipped (already sent)", {
+      reportId: input.reportId,
+    });
+  }
+  return true;
 }
 
 async function generateForStore(
   store: ActiveStoreCandidate,
   periodStart: string,
   periodEnd: string
-): Promise<{ reportId: string | null; emailed: boolean; failed: boolean }> {
+): Promise<{
+  reportId: string | null;
+  emailed: boolean;
+  failed: boolean;
+  /** True when an existing ready report for the same audit was reused. */
+  reused: boolean;
+}> {
   const pair = await getLatestAuditPairForStore(store.storeId);
   if (!pair) {
-    return { reportId: null, emailed: false, failed: false };
+    return { reportId: null, emailed: false, failed: false, reused: false };
+  }
+
+  const existing = await getWeeklyReportByStorePeriod(store.storeId, periodStart);
+  if (
+    shouldSkipWeeklyReportRegeneration({
+      existing,
+      latestAuditId: pair.latestAuditId,
+    })
+  ) {
+    console.info("[weekly-report] skip regenerate", {
+      storeId: store.storeId,
+      periodStart,
+      reportId: existing?.id,
+    });
+    return {
+      reportId: existing?.id ?? null,
+      emailed: false,
+      failed: false,
+      reused: true,
+    };
   }
 
   try {
@@ -114,11 +146,11 @@ async function generateForStore(
     });
 
     if (!saved) {
-      return { reportId: null, emailed: false, failed: true };
+      return { reportId: null, emailed: false, failed: true, reused: false };
     }
 
     const emailHtml = renderWeeklyReportEmailHtml(payload, saved.id);
-    await upsertWeeklyReport({
+    const refreshed = await upsertWeeklyReport({
       workspaceId: store.workspaceId,
       storeId: store.storeId,
       periodStart,
@@ -130,28 +162,43 @@ async function generateForStore(
       emailHtml,
     });
 
+    const report = refreshed ?? saved;
+
     let emailed = false;
-    const ownerEmail = await getWorkspaceOwnerEmail(store.workspaceId);
-    if (ownerEmail) {
-      emailed = await sendWeeklyReportEmail({
-        to: ownerEmail,
-        subject: `التقرير الأسبوعي — ${payload.storeName}`,
-        html: emailHtml,
+    if (shouldSendWeeklyReportEmail(report.emailSentAt)) {
+      try {
+        emailed = await deliverWeeklyReportEmail({
+          reportId: report.id,
+          workspaceId: store.workspaceId,
+          subject: `التقرير الأسبوعي — ${payload.storeName}`,
+          html: emailHtml,
+        });
+      } catch (err) {
+        // Email must never fail report generation / unrelated product paths.
+        console.error(
+          "[weekly-report] email delivery threw:",
+          err instanceof Error ? err.message : err
+        );
+        emailed = false;
+      }
+    } else {
+      console.info("[weekly-report] skip email already sent", {
+        storeId: store.storeId,
+        reportId: report.id,
       });
-      if (emailed) await markWeeklyReportEmailSent(saved.id);
     }
 
-    // In-app Notification Center — no push.
+    // In-app Notification Center — deduped by weekly_report:{id}.
     await emitWeeklyReportNotification({
       workspaceId: store.workspaceId,
       storeId: store.storeId,
-      reportId: saved.id,
+      reportId: report.id,
       storeName: payload.storeName,
       overallScore: payload.overallScoreChange.current,
       overallDelta: payload.overallScoreChange.delta,
     });
 
-    return { reportId: saved.id, emailed, failed: false };
+    return { reportId: report.id, emailed, failed: false, reused: false };
   } catch (err) {
     console.error(
       "[weekly-report] generate failed for store",
@@ -181,15 +228,21 @@ async function generateForStore(
       emailHtml: null,
       errorMessage: err instanceof Error ? err.message : "unknown error",
     });
-    return { reportId: null, emailed: false, failed: true };
+    return { reportId: null, emailed: false, failed: true, reused: false };
   }
 }
 
 /** Cron entrypoint: one report per active store every 7 days. */
 export async function runWeeklyReportJob(now = new Date()): Promise<WeeklyReportJobResult> {
+  const startedAt = Date.now();
   const { periodStart, periodEnd } = weeklyPeriodBounds(now);
   const periodStartIso = periodStart.toISOString();
   const periodEndIso = periodEnd.toISOString();
+
+  console.info("[weekly-report] job start", {
+    periodStart: periodStartIso,
+    periodEnd: periodEndIso,
+  });
 
   const stores = await listActiveStoresForWeeklyReport();
   const result: WeeklyReportJobResult = {
@@ -202,7 +255,7 @@ export async function runWeeklyReportJob(now = new Date()): Promise<WeeklyReport
   };
 
   for (const store of stores) {
-    if (!isDue(store, now)) {
+    if (!isWeeklyReportDue(store.lastReportAt, now)) {
       result.skipped += 1;
       continue;
     }
@@ -212,7 +265,7 @@ export async function runWeeklyReportJob(now = new Date()): Promise<WeeklyReport
       result.failed += 1;
       continue;
     }
-    if (!outcome.reportId) {
+    if (!outcome.reportId || outcome.reused) {
       result.skipped += 1;
       continue;
     }
@@ -220,6 +273,11 @@ export async function runWeeklyReportJob(now = new Date()): Promise<WeeklyReport
     result.reportIds.push(outcome.reportId);
     if (outcome.emailed) result.emailed += 1;
   }
+
+  console.info("[weekly-report] job end", {
+    ...result,
+    durationMs: Date.now() - startedAt,
+  });
 
   return result;
 }

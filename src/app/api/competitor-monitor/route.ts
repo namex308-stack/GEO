@@ -7,10 +7,22 @@ import {
 import { isCompetitorCrawlAllowed } from "@/lib/competitor-monitor/crawl-policy";
 import { buildMonitorInsights } from "@/lib/competitor-monitor/diff";
 import type { CompetitorMonitorOverview } from "@/lib/competitor-monitor/types";
+import { getPlanForUser } from "@/lib/db/workspace-stats";
+import {
+  featureLockedBody,
+  isPlanFeatureEnabled,
+} from "@/lib/billing/entitlements";
 
 export async function GET() {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
+
+  const plan = await getPlanForUser(auth.user.id);
+  if (!isPlanFeatureEnabled(plan, "competitor")) {
+    return NextResponse.json(featureLockedBody("competitor", plan.planId), {
+      status: 403,
+    });
+  }
 
   const [targets, timeline] = await Promise.all([
     listCompetitorTargetsForUser(auth.user.id),

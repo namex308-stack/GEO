@@ -11,6 +11,8 @@ import {
   type DueCompetitorTarget,
 } from "@/lib/db/competitor-monitor-repository";
 import { emitAlertsForCompetitorChanges } from "@/lib/alerts/emit";
+import { getPlanForWorkspace } from "@/lib/db/workspace-stats";
+import { isPlanFeatureEnabled } from "@/lib/billing/entitlements";
 import { isCompetitorCrawlAllowed } from "./crawl-policy";
 import { detectCompetitorChanges } from "./diff";
 import { extractCompetitorSignals } from "./signals";
@@ -161,12 +163,32 @@ async function processTarget(target: DueCompetitorTarget): Promise<{
   };
 }
 
+async function workspaceAllowsCompetitor(
+  workspaceId: string,
+  cache: Map<string, boolean>
+): Promise<boolean> {
+  const cached = cache.get(workspaceId);
+  if (cached !== undefined) return cached;
+  const plan = await getPlanForWorkspace(workspaceId);
+  const allowed = isPlanFeatureEnabled(plan, "competitor");
+  cache.set(workspaceId, allowed);
+  return allowed;
+}
+
 /** Scheduled production entrypoint for competitor change monitoring. */
 export async function runCompetitorMonitorJob(
   now = new Date()
 ): Promise<CompetitorMonitorJobResult> {
+  const startedAt = Date.now();
   const crawlEnabled = isCompetitorCrawlAllowed();
-  const targetsSynced = await syncCompetitorTargetsFromAudits();
+  const entitlementCache = new Map<string, boolean>();
+
+  console.info("[competitor-monitor] job start", { crawlEnabled });
+
+  const targetsSynced = await syncCompetitorTargetsFromAudits({
+    isWorkspaceAllowed: (workspaceId) =>
+      workspaceAllowsCompetitor(workspaceId, entitlementCache),
+  });
   const due = await listDueCompetitorTargets(now);
 
   const result: CompetitorMonitorJobResult = {
@@ -182,6 +204,17 @@ export async function runCompetitorMonitorJob(
 
   for (const target of due) {
     try {
+      const allowed = await workspaceAllowsCompetitor(
+        target.workspaceId,
+        entitlementCache
+      );
+      if (!allowed) {
+        // Advance cadence so free-plan leftovers do not re-queue daily.
+        await touchCompetitorTarget({ targetId: target.id, changed: false });
+        result.skipped += 1;
+        continue;
+      }
+
       const outcome = await processTarget(target);
       if (outcome.failed) {
         result.failed += 1;
@@ -203,6 +236,11 @@ export async function runCompetitorMonitorJob(
       result.failed += 1;
     }
   }
+
+  console.info("[competitor-monitor] job end", {
+    ...result,
+    durationMs: Date.now() - startedAt,
+  });
 
   return result;
 }

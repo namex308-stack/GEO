@@ -7,13 +7,11 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 import { getLocaleConfig } from "@/lib/locale/config";
 import { getActiveLocaleId } from "@/lib/locale/resolve";
 import { getSiteUrl } from "@/lib/site-url";
-
-/** Shared across <meta name="description">, Open Graph, and Twitter Card so all three surfaces stay consistent. */
-const SITE_DESCRIPTION =
-  "حلّل أي متجر أو صفحة منتج في 60 ثانية. احصل على تقييم بالذكاء الاصطناعي للتحويل، SEO، الظهور في محركات الذكاء الاصطناعي (GEO)، والثقة — مع مقارنة بالمنافسين. يدعم Shopify وWooCommerce وسلة وزد.";
-
-/** Shared brand title for Open Graph / Twitter cards (kept distinct from the longer <title>). */
-const SITE_OG_TITLE = "ConvAudit — ذكاء اصطناعي لتحليل التجارة الإلكترونية";
+import {
+  SITE_DEFAULT_TITLE,
+  SITE_DESCRIPTION,
+  SITE_OG_TITLE,
+} from "@/lib/seo/site-copy";
 
 /** Arabic-first typeface (Latin fallback for brand name, URLs, code). */
 const cairo = Cairo({
@@ -30,7 +28,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "ConvAudit — تحليل وتحسين متاجر التجارة الإلكترونية بالذكاء الاصطناعي",
+    default: SITE_DEFAULT_TITLE,
     template: "%s · ConvAudit",
   },
   description: SITE_DESCRIPTION,
@@ -48,9 +46,7 @@ export const metadata: Metadata = {
   authors: [{ name: "ConvAudit" }],
   creator: "ConvAudit",
   publisher: "ConvAudit",
-  alternates: {
-    canonical: "/",
-  },
+  // Canonical / OG url are set per public page so private routes do not inherit "/".
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -65,8 +61,7 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     siteName: "ConvAudit",
     type: "website",
-    locale: "ar_EG",
-    url: "/",
+    locale: getLocaleConfig(getActiveLocaleId()).ogLocale,
   },
   twitter: {
     card: "summary_large_image",
@@ -106,71 +101,8 @@ export default function RootLayout({
 }>) {
   const locale = getLocaleConfig(getActiveLocaleId());
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: "ConvAudit",
-    applicationCategory: "BusinessApplication",
-    operatingSystem: "Web",
-    description:
-      "منصة تحليل تجارة إلكترونية بالذكاء الاصطناعي تحلل أي متجر أو صفحة منتج وتقيّمه في التحويل، SEO، الظهور في محركات الذكاء الاصطناعي (GEO) والثقة — مع إصلاحات جاهزة للنشر.",
-    offers: [
-      { "@type": "Offer", price: "0", priceCurrency: "USD", name: "مجاني" },
-      { "@type": "Offer", price: "29", priceCurrency: "USD", name: "احترافي" },
-      { "@type": "Offer", price: "79", priceCurrency: "USD", name: "أعمال" },
-    ],
-    featureList: [
-      "تقييم التحويل",
-      "تقييم SEO",
-      "تقييم الظهور في ChatGPT وPerplexity وGoogle AI",
-      "تقييم الثقة",
-      "مقارنة بالمنافسين",
-      "مولّد ذكاء اصطناعي (عناوين، أوصاف، أسئلة شائعة، Meta، نصوص إعلانية)",
-    ],
-  };
-  const faqLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: "كيف يعمل التحليل بالذكاء الاصطناعي؟",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "ألصق رابط صفحة المنتج ويقرأ Firecrawl الصفحة كاملة كما تُعرض. ثم يقيّمها Gemini في التحويل، SEO، الظهور في GEO والثقة، ويقارنها بمنافسك، ويولّد توصيات مرتبة بالأولوية مع نصوص جاهزة للنشر.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "ما هو تقييم GEO / الظهور بالذكاء الاصطناعي؟",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "يقيس GEO (تحسين محركات الذكاء التوليدي) ما إذا كانت مساعدات الذكاء الاصطناعي مثل ChatGPT وPerplexity وGoogle AI قادرة على فهم صفحتك وقد توصي بمنتجك.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "ما المنصات المدعومة؟",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "أي صفحة منتج عامة تعمل — Shopify, WooCommerce, سلة, زد, Magento, Wix, والمتاجر المخصصة وصفحات الأفلييت.",
-        },
-      },
-    ],
-  };
-
   return (
     <html lang={locale.htmlLang} dir={locale.dir} suppressHydrationWarning>
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
-        />
-      </head>
       <body
         className={`${cairo.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >

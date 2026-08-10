@@ -161,6 +161,38 @@ export async function getLatestAuditPairForStore(
   };
 }
 
+/** Look up an existing weekly report for store + period (idempotency). */
+export async function getWeeklyReportByStorePeriod(
+  storeId: string,
+  periodStart: string
+): Promise<WeeklyReportRecord | null> {
+  const sb = getSupabaseAdmin();
+  if (!sb) return null;
+
+  const { data, error } = await sb
+    .from("weekly_reports")
+    .select("*")
+    .eq("store_id", storeId)
+    .eq("period_start", periodStart)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[weekly_reports] get by period failed:", error.message);
+    return null;
+  }
+  if (!data) return null;
+
+  try {
+    return mapRecord(data as Record<string, unknown>);
+  } catch (err) {
+    console.error(
+      "[weekly_reports] map by period failed:",
+      err instanceof Error ? err.message : err
+    );
+    return null;
+  }
+}
+
 export async function upsertWeeklyReport(input: {
   workspaceId: string;
   storeId: string;
@@ -226,16 +258,28 @@ function mapRecord(row: Record<string, unknown>): WeeklyReportRecord {
   };
 }
 
+/**
+ * Mark email as sent only if not already marked (duplicate prevention).
+ * Returns true when this call claimed the send; false if already sent / error.
+ * Call only after a real provider success — never on soft failures.
+ */
 export async function markWeeklyReportEmailSent(
   reportId: string
-): Promise<void> {
+): Promise<boolean> {
   const sb = getSupabaseAdmin();
-  if (!sb) return;
-  const { error } = await sb
+  if (!sb) return false;
+  const { data, error } = await sb
     .from("weekly_reports")
     .update({ email_sent_at: new Date().toISOString() })
-    .eq("id", reportId);
-  if (error) console.error("[weekly_reports] email mark failed:", error.message);
+    .eq("id", reportId)
+    .is("email_sent_at", null)
+    .select("id")
+    .maybeSingle();
+  if (error) {
+    console.error("[weekly_reports] email mark failed:", error.message);
+    return false;
+  }
+  return Boolean(data?.id);
 }
 
 export async function listWeeklyReportsForUser(
@@ -299,18 +343,31 @@ export async function getWeeklyReportForUser(
   return mapRecord(row as Record<string, unknown>);
 }
 
+/**
+ * Resolve the workspace owner's auth email for product mail.
+ * Only the `owner` role is eligible — never members/admins/viewers.
+ * Returns null when there is no owner or no usable email address.
+ */
 export async function getWorkspaceOwnerEmail(
   workspaceId: string
 ): Promise<string | null> {
   const sb = getSupabaseAdmin();
   if (!sb) return null;
 
-  const { data: owner } = await sb
+  const trimmedWorkspaceId = workspaceId.trim();
+  if (!trimmedWorkspaceId) return null;
+
+  const { data: owner, error: ownerError } = await sb
     .from("workspace_members")
     .select("user_id")
-    .eq("workspace_id", workspaceId)
+    .eq("workspace_id", trimmedWorkspaceId)
     .eq("role", "owner")
     .maybeSingle();
+
+  if (ownerError) {
+    console.error("[weekly_reports] owner lookup failed:", ownerError.message);
+    return null;
+  }
 
   const userId = (owner?.user_id as string | undefined) ?? null;
   if (!userId) return null;
@@ -320,5 +377,17 @@ export async function getWorkspaceOwnerEmail(
     if (error) console.error("[weekly_reports] owner email failed:", error.message);
     return null;
   }
+
+  // Banned / deleted auth users must not receive product email.
+  if (data.user.banned_until) {
+    const bannedUntil = Date.parse(data.user.banned_until);
+    if (Number.isFinite(bannedUntil) && bannedUntil > Date.now()) {
+      console.info("[weekly_reports] skip email banned owner", {
+        workspaceId: trimmedWorkspaceId,
+      });
+      return null;
+    }
+  }
+
   return data.user.email;
 }

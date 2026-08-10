@@ -67,7 +67,10 @@ function mapSnapshot(row: Record<string, unknown>): CompetitorSnapshotSummary {
 }
 
 /** Upsert watch targets from recent audits that include a competitor URL. */
-export async function syncCompetitorTargetsFromAudits(): Promise<number> {
+export async function syncCompetitorTargetsFromAudits(options?: {
+  /** When set, only sync targets for workspaces that pass (plan entitlement). */
+  isWorkspaceAllowed?: (workspaceId: string) => Promise<boolean>;
+}): Promise<number> {
   const sb = getSupabaseAdmin();
   if (!sb) return 0;
 
@@ -86,6 +89,7 @@ export async function syncCompetitorTargetsFromAudits(): Promise<number> {
 
   let upserted = 0;
   const seen = new Set<string>();
+  const allowedCache = new Map<string, boolean>();
 
   for (const row of audits) {
     const url = ((row.competitor_url as string) || "").trim();
@@ -94,6 +98,15 @@ export async function syncCompetitorTargetsFromAudits(): Promise<number> {
     const key = `${workspaceId}::${url}`;
     if (seen.has(key)) continue;
     seen.add(key);
+
+    if (options?.isWorkspaceAllowed) {
+      let allowed = allowedCache.get(workspaceId);
+      if (allowed === undefined) {
+        allowed = await options.isWorkspaceAllowed(workspaceId);
+        allowedCache.set(workspaceId, allowed);
+      }
+      if (!allowed) continue;
+    }
 
     const { error: upsertError } = await sb.from("competitor_targets").upsert(
       {

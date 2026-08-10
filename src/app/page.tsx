@@ -1,10 +1,40 @@
 import dynamic from "next/dynamic";
+import type { Metadata } from "next";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { ScrollProgress } from "@/components/common/visual-effects";
 import { Hero } from "@/components/sections/hero";
 import { LogosStrip } from "@/components/sections/logos-strip";
 import { Skeleton } from "@/components/ui/skeleton";
+import { JsonLd } from "@/components/seo/json-ld";
+import { publicPageMetadata } from "@/lib/seo/page-metadata";
+import { buildHomeJsonLdGraph } from "@/lib/seo/structured-data";
+import {
+  SITE_DEFAULT_TITLE,
+  SITE_DESCRIPTION,
+  SITE_OG_TITLE,
+} from "@/lib/seo/site-copy";
+import { ROUTES } from "@/lib/routes";
+
+const homeMeta = publicPageMetadata({
+  title: SITE_OG_TITLE,
+  description: SITE_DESCRIPTION,
+  path: ROUTES.home,
+});
+
+export const metadata: Metadata = {
+  ...homeMeta,
+  // Keep the historical homepage <title> (do not apply root `%s · ConvAudit` template).
+  title: { absolute: SITE_DEFAULT_TITLE },
+  openGraph: {
+    ...homeMeta.openGraph,
+    title: SITE_OG_TITLE,
+  },
+  twitter: {
+    ...homeMeta.twitter,
+    title: SITE_OG_TITLE,
+  },
+};
 
 function SectionSkeleton() {
   return (
@@ -75,6 +105,7 @@ const CTA = dynamic(
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <JsonLd data={buildHomeJsonLdGraph()} />
       <ScrollProgress />
       <Navbar />
       <main className="flex-1 flex flex-col pt-16">

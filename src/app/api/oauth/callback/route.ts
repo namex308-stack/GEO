@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { absoluteUrl } from "@/lib/site-url";
 
 /**
  * Legacy OAuth callback path.
@@ -6,10 +7,9 @@ import { NextResponse } from "next/server";
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || url.origin;
   const params = url.searchParams.toString();
   const target = params
-    ? `${origin}/auth/callback?${params}`
-    : `${origin}/auth/callback`;
+    ? absoluteUrl(`/auth/callback?${params}`)
+    : absoluteUrl("/auth/callback");
   return NextResponse.redirect(target);
 }

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { PRIVATE_APP_PATHS } from "./src/lib/seo/private-app-paths";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -38,6 +39,14 @@ const securityHeaders = [
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
 ];
 
+const noindexNofollow = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
+
+/** Exact path + nested children for each private app prefix. */
+const privateAppRobotHeaders = PRIVATE_APP_PATHS.flatMap((path) => [
+  { source: path, headers: noindexNofollow },
+  { source: `${path}/:path*`, headers: noindexNofollow },
+]);
+
 const nextConfig: NextConfig = {
   output: "standalone",
   turbopack: {
@@ -56,6 +65,13 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
+      // Defense-in-depth: robots.txt already disallows /api/; keep JSON out of indexes.
+      {
+        source: "/api/:path*",
+        headers: noindexNofollow,
+      },
+      // Pair with segment `privatePageMetadata()` — header survives odd link/crawl cases.
+      ...privateAppRobotHeaders,
     ];
 
     // Immutable static caching is production-only. In `next dev`, Turbopack HMR

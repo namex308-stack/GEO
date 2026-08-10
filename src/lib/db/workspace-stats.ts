@@ -129,20 +129,20 @@ function isPaidSubscriptionActive(sub: {
   return new Date(sub.current_period_end).getTime() > Date.now();
 }
 
-export async function getPlanForUser(userId: string): Promise<PlanLimits> {
-  const sb = getSupabaseAdmin();
-  const fallback: PlanLimits = {
-    planId: "free",
-    displayName: "مجاني",
-    auditsPerMonth: 3,
-    aiGensPerMonth: 0,
-    storesLimit: 1,
-    features: { aiGenerator: false, competitor: false, api: false },
-  };
-  if (!sb) return fallback;
+const FREE_PLAN_FALLBACK: PlanLimits = {
+  planId: "free",
+  displayName: "مجاني",
+  auditsPerMonth: 3,
+  aiGensPerMonth: 0,
+  storesLimit: 1,
+  features: { aiGenerator: false, competitor: false, api: false },
+};
 
-  const workspaceId = await ensurePersonalWorkspace(userId);
-  if (!workspaceId) return fallback;
+/** Resolve plan limits for a workspace (lazy expiry downgrade included). */
+export async function getPlanForWorkspace(workspaceId: string): Promise<PlanLimits> {
+  const sb = getSupabaseAdmin();
+  const fallback = FREE_PLAN_FALLBACK;
+  if (!sb) return fallback;
 
   const { data: ws } = await sb
     .from("workspaces")
@@ -169,7 +169,6 @@ export async function getPlanForUser(userId: string): Promise<PlanLimits> {
         .eq("id", workspaceId);
       if (downgradeError) {
         console.error("[billing] expired plan downgrade failed:", downgradeError.message, {
-          userId,
           workspaceId,
         });
       } else if (sub?.id && sub.status === "active") {
@@ -194,6 +193,12 @@ export async function getPlanForUser(userId: string): Promise<PlanLimits> {
     .maybeSingle();
 
   return planLimitsFromCatalog(planId, catalog, fallback);
+}
+
+export async function getPlanForUser(userId: string): Promise<PlanLimits> {
+  const workspaceId = await ensurePersonalWorkspace(userId);
+  if (!workspaceId) return FREE_PLAN_FALLBACK;
+  return getPlanForWorkspace(workspaceId);
 }
 
 export async function getUsageCountsForUser(

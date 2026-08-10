@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight, CheckCircle2, Search, Bot, ShieldCheck, Zap, FileSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BlurFade } from "@/components/magicui/blur-fade";
@@ -26,7 +27,7 @@ const TRUST_POINTS = [
 /** Marketing hero — no fabricated scores or sample store metrics. */
 export function Hero() {
   const t = useT();
-  const { startAuditAndNavigate } = useNavigateAfterAction();
+  const { startAuditAndNavigate, startAuditHref } = useNavigateAfterAction();
 
   return (
     <section className="relative overflow-hidden pt-24 pb-16 sm:pt-32 sm:pb-24">
@@ -35,9 +36,10 @@ export function Hero() {
 
       <Container>
         <BlurFade className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => {
+          <Link
+            href="/#why-lose-sales"
+            onClick={(e) => {
+              e.preventDefault();
               document.getElementById("why-lose-sales")?.scrollIntoView({ behavior: "smooth" });
             }}
             className={cn(
@@ -49,7 +51,7 @@ export function Hero() {
               {t("hero.badge")}
             </AnimatedShinyText>
             <ArrowRight className="size-3 rtl:rotate-180 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-          </button>
+          </Link>
         </BlurFade>
 
         <BlurFade delay={0.05}>
@@ -67,23 +69,28 @@ export function Hero() {
 
         <BlurFade delay={0.15}>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-            <Button
-              size="lg"
-              onClick={startAuditAndNavigate}
-              className="h-11 px-7 font-semibold rounded-full shadow-glow group"
-            >
-              {t("hero.startFreeAudit")}
-              <ArrowRight className="size-4 ms-0.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
+            <Button size="lg" asChild className="h-11 px-7 font-semibold rounded-full shadow-glow group">
+              <Link
+                href={startAuditHref}
+                onClick={(e) => {
+                  e.preventDefault();
+                  startAuditAndNavigate();
+                }}
+              >
+                {t("hero.startFreeAudit")}
+                <ArrowRight className="size-4 ms-0.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => {
-                document.getElementById("how")?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="h-11 px-7 font-semibold bg-card/80"
-            >
-              {t("hero.viewDemo")}
+            <Button size="lg" variant="outline" asChild className="h-11 px-7 font-semibold bg-card/80">
+              <Link
+                href="/#how"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById("how")?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                {t("hero.viewDemo")}
+              </Link>
             </Button>
           </div>
         </BlurFade>

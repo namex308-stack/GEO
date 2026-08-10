@@ -16,7 +16,7 @@ import {
   isKashierPaymentMethodId,
   type KashierPaymentMethodId,
 } from "@/lib/kashier/methods";
-import { getSiteUrl } from "@/lib/site-url";
+import { absoluteUrl, getSiteUrl } from "@/lib/site-url";
 
 const Body = z.object({
   planId: z.enum(["pro", "business"]),
@@ -96,9 +96,11 @@ export async function POST(req: NextRequest) {
       ? getKashierAllowedMethod(methodId as KashierPaymentMethodId)
       : undefined;
     // Canonical webhook path (HMAC + amount map 199→pro / 499→business)
-    const callbackUrl = `${appUrl.replace(/\/$/, "")}/api/webhook/kashier`;
+    const callbackUrl = absoluteUrl("/api/webhook/kashier");
     const successUrl = buildPostPaymentPath(planId, { orderId, appUrl });
-    const failureUrl = `${appUrl.replace(/\/$/, "")}/checkout?plan=${planId}&period=${period}&error=payment_failed`;
+    const failureUrl = absoluteUrl(
+      `/checkout?plan=${planId}&period=${period}&error=payment_failed`
+    );
 
     console.info("[api/checkout] creating Kashier URL", {
       orderId,
