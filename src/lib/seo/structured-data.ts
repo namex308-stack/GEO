@@ -25,7 +25,7 @@ function websiteSchemaId(base = getSiteUrl()): string {
  * No fixed SLAs or invented statistics.
  */
 const SOFTWARE_DESCRIPTION =
-  "منصة تحليل تجارة إلكترونية بالذكاء الاصطناعي تحلل أي متجر أو صفحة منتج وتقيّمه في التحويل، SEO، الظهور في محركات الذكاء الاصطناعي (GEO) والثقة — مع إصلاحات جاهزة للنشر.";
+  "منصة تحليل تجارة إلكترونية بالذكاء الاصطناعي تحلل أي متجر أو صفحة منتج وتقيّمه في التحويل، SEO، الظهور في م[...]";
 
 function organizationNode(base: string) {
   return {
@@ -204,7 +204,11 @@ export function collectJsonLdUrls(node: unknown, out: string[] = []): string[] {
     return out;
   }
   if (typeof node === "object") {
-    for (const value of Object.values(node as Record<string, unknown>)) {
+    // Ignore the @context property — it's an external JSON-LD context
+    // (e.g. "https://schema.org") and not a site-owned canonical URL.
+    const obj = node as Record<string, unknown>;
+    for (const [key, value] of Object.entries(obj)) {
+      if (key === "@context") continue;
       collectJsonLdUrls(value, out);
     }
   }
