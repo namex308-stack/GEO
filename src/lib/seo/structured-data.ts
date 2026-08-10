@@ -12,11 +12,11 @@ const ORG_FRAGMENT = "#organization";
 const WEBSITE_FRAGMENT = "#website";
 
 /** Stable `@id` for the site Organization (used in `@graph` to avoid duplicate nodes). */
-export function organizationSchemaId(base = getSiteUrl()): string {
+export function organizationSchemaId(base: string): string {
   return `${base}${ORG_FRAGMENT}`;
 }
 
-function websiteSchemaId(base = getSiteUrl()): string {
+function websiteSchemaId(base: string): string {
   return `${base}${WEBSITE_FRAGMENT}`;
 }
 
@@ -25,7 +25,7 @@ function websiteSchemaId(base = getSiteUrl()): string {
  * No fixed SLAs or invented statistics.
  */
 const SOFTWARE_DESCRIPTION =
-  "منصة تحليل تجارة إلكترونية بالذكاء الاصطناعي تحلل أي متجر أو صفحة منتج وتقيّمه في التحويل، SEO، الظهور في م[...]";
+  "منصة تحليل تجارة إلكترونية بالذكاء الاصطناعي تحلل أي متجر أو صفحة منتج وتقيّمه في التحويل، SEO، الظهور في محركات الذكاء الاصطناعي (GEO) والثقة — مع إصلاحات جاهزة للنشر.";
 
 function organizationNode(base: string) {
   return {
