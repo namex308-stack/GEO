@@ -48,6 +48,15 @@ describe("structured data", () => {
 
   it("uses the canonical deployment domain for every absolute URL", () => {
     const urls = collectJsonLdUrls(buildHomeJsonLdGraph());
+    
+    // Debug: print all collected URLs
+    console.log("Collected URLs:", urls);
+    console.log("Canonical:", CANONICAL);
+    urls.forEach((url, idx) => {
+      const valid = url.startsWith(CANONICAL);
+      console.log(`[${idx}] ${valid ? "✓" : "✗"} ${url}`);
+    });
+    
     expect(urls.length).toBeGreaterThan(0);
     for (const url of urls) {
       expect(url.startsWith(CANONICAL)).toBe(true);
