@@ -12,6 +12,7 @@ import {
   SITE_DESCRIPTION,
   SITE_OG_TITLE,
 } from "@/lib/seo/site-copy";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 /** Arabic-first typeface (Latin fallback for brand name, URLs, code). */
 const cairo = Cairo({
@@ -112,6 +113,7 @@ export default function RootLayout({
             <SonnerToaster position="top-center" richColors closeButton />
           </AuthProvider>
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
