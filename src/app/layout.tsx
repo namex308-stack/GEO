@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { Cairo, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
@@ -7,6 +8,7 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 import { getLocaleConfig } from "@/lib/locale/config";
 import { getActiveLocaleId } from "@/lib/locale/resolve";
 import { getSiteUrl } from "@/lib/site-url";
+import { googleSiteVerificationMetadata } from "@/lib/seo/google-site-verification";
 import {
   SITE_DEFAULT_TITLE,
   SITE_DESCRIPTION,
@@ -27,6 +29,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
+  ...googleSiteVerificationMetadata(),
   title: {
     default: SITE_DEFAULT_TITLE,
     template: "%s · ConvAudit",
@@ -113,6 +116,7 @@ export default function RootLayout({
           </AuthProvider>
         </ThemeProvider>
       </body>
+      <GoogleAnalytics gaId="G-MDR2NP5CJ3" />
     </html>
   );
 }

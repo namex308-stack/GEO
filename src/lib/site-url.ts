@@ -10,9 +10,14 @@
  * - Missing NEXT_PUBLIC_APP_URL → throw (no silent localhost fallback)
  * - Vercel production / ENFORCE_PUBLIC_SITE_URL=1 → reject loopback + require https
  * - Any non-loopback production URL → require https
+ * - Stale `*.vercel.app` values on Vercel production are rewritten to the
+ *   canonical public origin (https://www.convaudit.com)
  */
 
 const DEV_FALLBACK = "http://localhost:3000";
+
+/** Canonical public production origin (custom domain). */
+export const PRODUCTION_CANONICAL_ORIGIN = "https://www.convaudit.com";
 
 function isLoopbackHostname(hostname: string): boolean {
   const host = hostname.toLowerCase();
@@ -34,6 +39,23 @@ function mustRejectLoopbackSiteUrl(): boolean {
   return false;
 }
 
+function isVercelAppHostname(hostname: string): boolean {
+  return hostname.toLowerCase().endsWith(".vercel.app");
+}
+
+/**
+ * On Vercel production (or enforced public hosts), replace legacy deployment
+ * hostnames with the custom-domain canonical so sitemap/robots/canonicals
+ * never advertise *.vercel.app.
+ */
+function resolveCanonicalOrigin(parsed: URL, normalized: string): string {
+  if (!isVercelAppHostname(parsed.hostname)) return normalized;
+  if (process.env.VERCEL_ENV === "production" || process.env.ENFORCE_PUBLIC_SITE_URL === "1") {
+    return PRODUCTION_CANONICAL_ORIGIN;
+  }
+  return normalized;
+}
+
 export function getSiteUrl(): string {
   const raw = process.env.NEXT_PUBLIC_APP_URL?.trim();
 
@@ -42,7 +64,7 @@ export function getSiteUrl(): string {
       throw new Error(
         "NEXT_PUBLIC_APP_URL is required in production. " +
           "It sets metadataBase, canonical URLs, sitemap, robots host, Open Graph, and JSON-LD. " +
-          "Set it to your public HTTPS origin (e.g. https://convaudit.com)."
+          `Set it to your public HTTPS origin (e.g. ${PRODUCTION_CANONICAL_ORIGIN}).`
       );
     }
     return DEV_FALLBACK;
@@ -56,7 +78,7 @@ export function getSiteUrl(): string {
   } catch {
     throw new Error(
       `NEXT_PUBLIC_APP_URL is invalid (${JSON.stringify(raw)}). ` +
-        "Expected an absolute URL such as https://convaudit.com."
+        `Expected an absolute URL such as ${PRODUCTION_CANONICAL_ORIGIN}.`
     );
   }
 
@@ -77,7 +99,7 @@ export function getSiteUrl(): string {
     );
   }
 
-  return normalized;
+  return resolveCanonicalOrigin(parsed, normalized);
 }
 
 /**

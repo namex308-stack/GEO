@@ -22,7 +22,7 @@ const securityHeaders = [
       "default-src 'self'",
       // 'unsafe-eval' is dev-only: Turbopack's HMR client needs it for module
       // reloading. Production bundles never call eval(), so it's dropped there.
-      `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
+      `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"} https://www.googletagmanager.com https://www.google-analytics.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data:",
       "img-src 'self' data: https:",

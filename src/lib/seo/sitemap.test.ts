@@ -7,22 +7,22 @@ import { PRIVATE_APP_PATHS } from "@/lib/seo/private-app-paths";
 describe("sitemap", () => {
   it("includes only existing non-placeholder public URLs with absolute origins", () => {
     vi.stubEnv("NODE_ENV", "development");
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://convaudit.com");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://www.convaudit.com");
 
     const entries = sitemap();
     const urls = entries.map((e) => e.url);
 
-    expect(urls).toContain("https://convaudit.com");
-    expect(urls).toContain("https://convaudit.com/pricing");
-    expect(urls).toContain("https://convaudit.com/docs");
-    expect(urls).toContain("https://convaudit.com/blog");
-    expect(urls).toContain("https://convaudit.com/affiliate");
-    expect(urls).toContain("https://convaudit.com/security");
-    expect(urls).toContain("https://convaudit.com/privacy");
-    expect(urls).toContain("https://convaudit.com/roadmap");
+    expect(urls).toContain("https://www.convaudit.com");
+    expect(urls).toContain("https://www.convaudit.com/pricing");
+    expect(urls).toContain("https://www.convaudit.com/docs");
+    expect(urls).toContain("https://www.convaudit.com/blog");
+    expect(urls).toContain("https://www.convaudit.com/affiliate");
+    expect(urls).toContain("https://www.convaudit.com/security");
+    expect(urls).toContain("https://www.convaudit.com/privacy");
+    expect(urls).toContain("https://www.convaudit.com/roadmap");
 
     for (const post of BLOG_POSTS) {
-      expect(urls).toContain(`https://convaudit.com${ROUTES.blogPost(post.slug)}`);
+      expect(urls).toContain(`https://www.convaudit.com${ROUTES.blogPost(post.slug)}`);
     }
 
     // Placeholders excluded until they have real content
