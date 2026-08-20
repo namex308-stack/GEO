@@ -5,12 +5,21 @@
 
 import type { PlanLimits } from "@/lib/dashboard/types";
 
-export type PlanFeature = "competitor" | "aiGenerator" | "api";
+export type PlanFeature =
+  | "competitor"
+  | "aiGenerator"
+  | "api"
+  | "competitorMonitoring"
+  | "weeklyMonitoring"
+  | "automatedAlerts";
 
 export const ENTITLEMENT_CODES = {
   COMPETITOR_LOCKED: "COMPETITOR_LOCKED",
   AI_GENERATOR_LOCKED: "AI_GENERATOR_LOCKED",
   API_LOCKED: "API_LOCKED",
+  COMPETITOR_MONITORING_LOCKED: "COMPETITOR_MONITORING_LOCKED",
+  WEEKLY_MONITORING_LOCKED: "WEEKLY_MONITORING_LOCKED",
+  AUTOMATED_ALERTS_LOCKED: "AUTOMATED_ALERTS_LOCKED",
   STORE_LIMIT_REACHED: "STORE_LIMIT_REACHED",
 } as const;
 
@@ -28,6 +37,12 @@ export function isPlanFeatureEnabled(
       return Boolean(plan.features.aiGenerator);
     case "api":
       return Boolean(plan.features.api);
+    case "competitorMonitoring":
+      return Boolean(plan.features.competitorMonitoring);
+    case "weeklyMonitoring":
+      return Boolean(plan.features.weeklyMonitoring);
+    case "automatedAlerts":
+      return Boolean(plan.features.automatedAlerts);
     default: {
       const _exhaustive: never = feature;
       return _exhaustive;
@@ -37,8 +52,7 @@ export function isPlanFeatureEnabled(
 
 /**
  * Whether a workspace may add another store.
- * `storesLimit === null` means unlimited (Business).
- * Existing stores (updates) are not gated — callers must only invoke this for inserts.
+ * `storesLimit === null` means unlimited (legacy); current Business uses a finite cap.
  */
 export function canCreateStore(
   currentStoreCount: number,
@@ -46,6 +60,58 @@ export function canCreateStore(
 ): boolean {
   if (storesLimit == null) return true;
   return currentStoreCount < storesLimit;
+}
+
+export type StoreEnsureDecision =
+  | { action: "update" }
+  | { action: "insert" }
+  | { action: "reject"; used: number; limit: number };
+
+/**
+ * Oldest-first ids that remain in-quota for this workspace.
+ * Pass only this workspace's store ids — other workspaces must not be included.
+ */
+export function oldestAllowedStoreIds(
+  storeIdsOldestFirst: string[],
+  storesLimit: number | null | undefined
+): string[] {
+  if (storesLimit == null) return storeIdsOldestFirst;
+  return storeIdsOldestFirst.slice(0, storesLimit);
+}
+
+/**
+ * Decide insert vs update vs reject for ensureWorkspaceStore.
+ * `storesLimit === undefined` skips enforcement (legacy callers).
+ * `storesLimit === null` is unlimited (legacy); current Business uses a finite cap.
+ *
+ * Same-URL updates are allowed only for in-quota stores. An extra row that
+ * already exists (e.g. inserted by a former client RLS bypass) is rejected
+ * instead of being treated as a legitimate existing store.
+ */
+export function decideStoreEnsure(input: {
+  existingId: string | null;
+  currentCount: number;
+  storesLimit: number | null | undefined;
+  oldestAllowedStoreIds: string[];
+}): StoreEnsureDecision {
+  const { existingId, currentCount, storesLimit, oldestAllowedStoreIds } = input;
+
+  if (existingId) {
+    if (
+      storesLimit != null &&
+      currentCount > storesLimit &&
+      !oldestAllowedStoreIds.includes(existingId)
+    ) {
+      return { action: "reject", used: currentCount, limit: storesLimit };
+    }
+    return { action: "update" };
+  }
+
+  if (typeof storesLimit === "number" && !canCreateStore(currentCount, storesLimit)) {
+    return { action: "reject", used: currentCount, limit: storesLimit };
+  }
+
+  return { action: "insert" };
 }
 
 export function competitorLockedMessage(): string {
@@ -58,6 +124,18 @@ export function aiGeneratorLockedMessage(): string {
 
 export function apiLockedMessage(): string {
   return "واجهة البرمجة (API) غير متاحة في باقتك الحالية. قم بالترقية لباقة الأعمال للمتابعة.";
+}
+
+export function competitorMonitoringLockedMessage(): string {
+  return "مراقبة المنافسين المتقدمة غير متاحة في باقتك الحالية. قم بالترقية لباقة الأعمال للمتابعة.";
+}
+
+export function weeklyMonitoringLockedMessage(): string {
+  return "المراقبة الأسبوعية غير متاحة في باقتك الحالية. قم بالترقية لباقة الأعمال للمتابعة.";
+}
+
+export function automatedAlertsLockedMessage(): string {
+  return "التنبيهات الآلية غير متاحة في باقتك الحالية. قم بالترقية لباقة الأعمال للمتابعة.";
 }
 
 export function storeLimitReachedMessage(
@@ -90,6 +168,24 @@ export function featureLockedBody(
       return {
         error: apiLockedMessage(),
         code: ENTITLEMENT_CODES.API_LOCKED,
+        plan: planId,
+      };
+    case "competitorMonitoring":
+      return {
+        error: competitorMonitoringLockedMessage(),
+        code: ENTITLEMENT_CODES.COMPETITOR_MONITORING_LOCKED,
+        plan: planId,
+      };
+    case "weeklyMonitoring":
+      return {
+        error: weeklyMonitoringLockedMessage(),
+        code: ENTITLEMENT_CODES.WEEKLY_MONITORING_LOCKED,
+        plan: planId,
+      };
+    case "automatedAlerts":
+      return {
+        error: automatedAlertsLockedMessage(),
+        code: ENTITLEMENT_CODES.AUTOMATED_ALERTS_LOCKED,
         plan: planId,
       };
     default: {

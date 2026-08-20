@@ -1,3 +1,4 @@
+import { isGenericSolution, solutionForFinding } from "@/lib/audit/finding-copy";
 import { prioritizeRecommendations } from "@/lib/ai/recommendations";
 import { recommendationKey } from "@/lib/weekly-report/compare";
 import type { AuditData, Recommendation, ScorePillar } from "@/lib/types";
@@ -110,12 +111,14 @@ function expectedResultFor(rec: Recommendation): string {
 
 /** Action title — execution-focused, not a copy of the recommendation problem card. */
 function taskTitle(rec: Recommendation): string {
-  const solution = rec.solution?.trim();
-  if (solution) {
-    const firstLine = solution.split(/\n+/)[0]?.trim() || solution;
+  const raw = isGenericSolution(rec.solution)
+    ? solutionForFinding(rec.problem, rec.pillar)
+    : rec.solution?.trim();
+  if (raw) {
+    const firstLine = raw.split(/\n+/)[0]?.trim() || raw;
     return firstLine.length > 140 ? `${firstLine.slice(0, 137)}…` : firstLine;
   }
-  return "نفّذ تحسين الصفحة حسب أولوية الأثر";
+  return solutionForFinding(rec.problem, rec.pillar).split(/\n+/)[0] ?? "نفّذ تحسين صفحة المنتج";
 }
 
 function assignHorizon(

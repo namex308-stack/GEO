@@ -24,9 +24,9 @@ const securityHeaders = [
       // reloading. Production bundles never call eval(), so it's dropped there.
       `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"} https://www.googletagmanager.com https://www.google-analytics.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' data:",
+      "font-src 'self' data: https://fonts.gstatic.com",
       "img-src 'self' data: https:",
-      "connect-src 'self' https:",
+      "connect-src 'self' https: wss: ws:",
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -36,7 +36,6 @@ const securityHeaders = [
   },
   { key: "X-DNS-Prefetch-Control", value: "on" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-  { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
 ];
 
 const noindexNofollow = [{ key: "X-Robots-Tag", value: "noindex, nofollow" }];
@@ -49,6 +48,10 @@ const privateAppRobotHeaders = PRIVATE_APP_PATHS.flatMap((path) => [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // `next dev` binds as localhost. Chromium on http://127.0.0.1:3000 sends
+  // Origin: 127.0.0.1 for scripts with crossorigin=""; Next then 403s those
+  // chunks unless this host is allowlisted.
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   turbopack: {
     root: process.cwd(),
   },
@@ -61,8 +64,9 @@ const nextConfig: NextConfig = {
   compress: true,
   async headers() {
     const headers = [
+      // Keep COOP/CSP/HSTS on documents, not on JS chunks.
       {
-        source: "/(.*)",
+        source: "/((?!_next/static).*)",
         headers: securityHeaders,
       },
       // Defense-in-depth: robots.txt already disallows /api/; keep JSON out of indexes.
@@ -85,6 +89,10 @@ const nextConfig: NextConfig = {
             key: "Cache-Control",
             value: "public, max-age=31536000, immutable",
           },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
+          },
         ],
       });
     } else {
@@ -94,6 +102,10 @@ const nextConfig: NextConfig = {
           {
             key: "Cache-Control",
             value: "no-store, must-revalidate",
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*",
           },
         ],
       });

@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/components/providers/auth-provider";
-import { getUserDisplayName, getUserInitials } from "@/lib/auth/display-user";
+import { initialsFromDisplayName, resolvePreferredDisplayName } from "@/lib/auth/display-user";
 import { useT } from "@/lib/i18n";
 
 function greetingKey(hour: number): "dashboard.goodMorning" | "dashboard.goodAfternoon" | "dashboard.goodEvening" {
@@ -71,19 +71,8 @@ export function AppTopbar({
     }
   };
 
-  const authName = user ? getUserDisplayName(user) : "";
-  const displayName = (preferredDisplayName?.trim() || authName).trim();
-  const initials = displayName
-    ? displayName
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((p) => p[0] ?? "")
-        .join("")
-        .toUpperCase() || "?"
-    : user
-      ? getUserInitials(user)
-      : "?";
+  const displayName = resolvePreferredDisplayName(preferredDisplayName, user);
+  const initials = displayName ? initialsFromDisplayName(displayName) : "?";
   const avatarUrl =
     (typeof user?.user_metadata?.avatar_url === "string" && user.user_metadata.avatar_url) ||
     (typeof user?.user_metadata?.picture === "string" && user.user_metadata.picture) ||

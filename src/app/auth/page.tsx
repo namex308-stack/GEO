@@ -22,7 +22,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Logo } from "@/components/brand/logo";
 import { getSupabaseBrowser, isSupabaseConfigured } from "@/lib/supabase-browser";
+import { mapAuthErrorMessage } from "@/lib/auth/map-auth-error";
 import { safeNextPath } from "@/lib/auth/safe-next-path";
+import { withTimeout } from "@/lib/with-timeout";
 import { translate, useT, type TranslationKey } from "@/lib/i18n";
 
 type StatItem = { v: string; lKey: TranslationKey };
@@ -40,34 +42,7 @@ const CALLBACK_ERROR_KEYS: Record<string, TranslationKey> = {
   auth_callback_failed: "auth.error.callbackFailed",
 };
 
-function mapAuthErrorMessage(message: string, t: (key: TranslationKey) => string): string {
-  const lower = message.toLowerCase();
-  if (lower.includes("invalid login credentials") || lower.includes("invalid credentials")) {
-    return t("auth.error.invalidCredentials");
-  }
-  if (lower.includes("email not confirmed")) {
-    return t("auth.error.emailNotConfirmed");
-  }
-  if (lower.includes("user already registered") || lower.includes("already been registered")) {
-    return t("auth.error.alreadyRegistered");
-  }
-  if (
-    lower.includes("email address") &&
-    (lower.includes("invalid") || lower.includes("is invalid"))
-  ) {
-    return t("auth.error.invalidEmail");
-  }
-  if (lower.includes("unable to validate email") || lower.includes("valid email")) {
-    return t("auth.error.invalidEmail");
-  }
-  if (lower.includes("password") && (lower.includes("weak") || lower.includes("at least"))) {
-    return t("auth.error.weakPassword");
-  }
-  if (lower.includes("rate limit") || lower.includes("too many")) {
-    return t("auth.error.rateLimited");
-  }
-  return message || t("auth.error.generic");
-}
+const AUTH_REQUEST_MS = 12_000;
 
 export default function AuthPage() {
   return (
@@ -152,7 +127,7 @@ function AuthPageInner() {
     });
     if (oauthError) {
       setLoading(false);
-      setError(mapAuthErrorMessage(oauthError.message, t));
+      setError(mapAuthErrorMessage(oauthError, t));
     }
   };
 
@@ -180,12 +155,20 @@ function AuthPageInner() {
     setLoading(true);
     try {
       if (mode === "login") {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: trimmedEmail,
-          password,
-        });
-        if (signInError) {
-          setError(mapAuthErrorMessage(signInError.message, t));
+        const signInResult = await withTimeout(
+          supabase.auth.signInWithPassword({
+            email: trimmedEmail,
+            password,
+          }),
+          AUTH_REQUEST_MS,
+          null
+        );
+        if (!signInResult) {
+          setError(t("auth.error.generic"));
+          return;
+        }
+        if (signInResult.error) {
+          setError(mapAuthErrorMessage(signInResult.error, t));
           return;
         }
         redirectAfterAuth();
@@ -197,23 +180,34 @@ function AuthPageInner() {
         return;
       }
 
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password,
-        options: {
-          data: { full_name: fullName.trim() },
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
-        },
-      });
-      if (signUpError) {
-        setError(mapAuthErrorMessage(signUpError.message, t));
+      const signUpResult = await withTimeout(
+        supabase.auth.signUp({
+          email: trimmedEmail,
+          password,
+          options: {
+            data: { full_name: fullName.trim() },
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+          },
+        }),
+        AUTH_REQUEST_MS,
+        null
+      );
+      if (!signUpResult) {
+        setError(t("auth.error.generic"));
         return;
       }
-      if (data.session) {
+      if (signUpResult.error) {
+        setError(mapAuthErrorMessage(signUpResult.error, t));
+        return;
+      }
+      if (signUpResult.data.session) {
         redirectAfterAuth();
         return;
       }
       setInfo(t("auth.checkEmail"));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      setError(mapAuthErrorMessage(message, t));
     } finally {
       setLoading(false);
     }
@@ -352,7 +346,16 @@ function AuthPageInner() {
                   <div className="flex-1 h-px bg-border" />
                 </div>
 
-                <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+                <form
+                  method="dialog"
+                  noValidate
+                  data-hydrated={mounted ? "true" : "false"}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void handleSubmit(e);
+                  }}
+                  className="space-y-4"
+                >
                   {!isLogin && (
                     <div className="space-y-1.5">
                       <Label className="text-sm font-medium text-muted-foreground">

@@ -11,6 +11,12 @@ export type PlanLimits = {
     aiGenerator: boolean;
     competitor: boolean;
     api: boolean;
+    /** Scheduled competitor monitoring (Business). */
+    competitorMonitoring: boolean;
+    /** Weekly monitoring / reports (Business). */
+    weeklyMonitoring: boolean;
+    /** Automated alerts (Business). */
+    automatedAlerts: boolean;
   };
 };
 

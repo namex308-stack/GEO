@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useParams, notFound } from "next/navigation";
 import { motion } from "framer-motion";
 import { Clock, ArrowLeft, Share2, Twitter, Linkedin, ArrowUpRight } from "lucide-react";
+import { toast } from "sonner";
 import { PageShell, PageContent } from "@/components/app/page-shell";
 import { useT, type TranslationKey } from "@/lib/i18n";
+import { absoluteUrl } from "@/lib/site-url";
 
 type ContentBlock = {
   type: "h2" | "h3" | "p";
@@ -155,6 +157,17 @@ export default function BlogPostPage() {
   }
 
   const RELATED = relatedFor(slug);
+  const pageUrl = absoluteUrl(`/blog/${POST.slug}`);
+  const title = t(POST.titleKey);
+
+  const copyPageUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(pageUrl);
+      toast.success(t("blog.shareCopied"));
+    } catch {
+      toast.error(t("report.copyFailed"));
+    }
+  };
 
   return (
     <PageShell>
@@ -183,18 +196,80 @@ export default function BlogPostPage() {
         {/* Content */}
         <article className="mt-8 space-y-4">
           {POST.content.map((block, i) => {
-            if (block.type === "h2") return <motion.h2 key={i} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="font-display text-xl font-bold mt-8">{t(block.textKey)}</motion.h2>;
-            if (block.type === "h3") return <motion.h3 key={i} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="font-display text-lg font-semibold mt-6">{t(block.textKey)}</motion.h3>;
-            return <motion.p key={i} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-foreground/85 leading-relaxed">{t(block.textKey)}</motion.p>;
+            switch (block.type) {
+              case "h2":
+                return (
+                  <motion.h2
+                    key={i}
+                    initial={{ opacity: 0, y: 8 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="font-display text-xl font-bold mt-8"
+                  >
+                    {t(block.textKey)}
+                  </motion.h2>
+                );
+              case "h3":
+                return (
+                  <motion.h3
+                    key={i}
+                    initial={{ opacity: 0, y: 8 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="font-display text-lg font-semibold mt-6"
+                  >
+                    {t(block.textKey)}
+                  </motion.h3>
+                );
+              case "p":
+                return (
+                  <motion.p
+                    key={i}
+                    initial={{ opacity: 0, y: 8 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="text-foreground/85 leading-relaxed"
+                  >
+                    {t(block.textKey)}
+                  </motion.p>
+                );
+              default: {
+                const _exhaustive: never = block.type;
+                return _exhaustive;
+              }
+            }
           })}
         </article>
 
         {/* Share */}
         <div className="mt-8 flex items-center gap-3 py-5 border-y border-border/60">
           <span className="text-sm font-medium text-muted-foreground">{t("blog.share")}</span>
-          <button className="size-9 rounded-full border border-border/60 grid place-items-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"><Twitter className="size-4" /></button>
-          <button className="size-9 rounded-full border border-border/60 grid place-items-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"><Linkedin className="size-4" /></button>
-          <button className="size-9 rounded-full border border-border/60 grid place-items-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"><Share2 className="size-4" /></button>
+          <a
+            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(title)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t("blog.shareTwitter")}
+            className="size-9 rounded-full border border-border/60 grid place-items-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+          >
+            <Twitter className="size-4" />
+          </a>
+          <a
+            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t("blog.shareLinkedin")}
+            className="size-9 rounded-full border border-border/60 grid place-items-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+          >
+            <Linkedin className="size-4" />
+          </a>
+          <button
+            type="button"
+            onClick={() => void copyPageUrl()}
+            aria-label={t("blog.shareCopy")}
+            className="size-9 rounded-full border border-border/60 grid place-items-center text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+          >
+            <Share2 className="size-4" />
+          </button>
         </div>
 
         {/* Related */}

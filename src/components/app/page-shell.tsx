@@ -12,6 +12,11 @@ import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale/resolve";
 import { isAppShellRoute } from "@/lib/app-nav";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
+import {
+  PROFILE_UPDATED_EVENT,
+  type ProfileUpdatedDetail,
+} from "@/lib/auth/display-user";
 
 /** Public routes share homepage Navbar + Footer (one marketing chrome). */
 function MarketingShell({ children }: { children: React.ReactNode }) {
@@ -39,35 +44,46 @@ function ProductShell({ children }: { children: React.ReactNode }) {
     setMobileOpen(false);
   }, [pathname]);
 
-  React.useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        // Lightweight shell endpoint — avoids full /api/dashboard on every app route.
-        const res = await fetch("/api/shell");
-        if (!res.ok) return;
-        const json = (await res.json()) as {
-          shell?: {
-            planName?: string;
-            displayName?: string | null;
-            latestAuditId?: string | null;
-            notificationCount?: number;
-          };
+  const loadShell = React.useCallback(async (signal?: { cancelled: boolean }) => {
+    try {
+      const res = await fetch("/api/shell");
+      if (!res.ok) return;
+      const json = (await res.json()) as {
+        shell?: {
+          planName?: string;
+          displayName?: string | null;
+          latestAuditId?: string | null;
+          notificationCount?: number;
         };
-        if (cancelled || !json.shell) return;
-        setPlanName(json.shell.planName ?? null);
-        setPreferredDisplayName(json.shell.displayName ?? null);
-        const latest = json.shell.latestAuditId ?? null;
-        setLatestAuditId(latest);
-        setNotificationCount(latest ? (json.shell.notificationCount ?? 0) : 0);
-      } catch {
-        /* ignore — nav still works with fallbacks */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+      };
+      if (signal?.cancelled || !json.shell) return;
+      setPlanName(json.shell.planName ?? null);
+      setPreferredDisplayName(json.shell.displayName ?? null);
+      const latest = json.shell.latestAuditId ?? null;
+      setLatestAuditId(latest);
+      setNotificationCount(latest ? (json.shell.notificationCount ?? 0) : 0);
+    } catch {
+      /* ignore — nav still works with fallbacks */
+    }
   }, []);
+
+  React.useEffect(() => {
+    const state = { cancelled: false };
+    void loadShell(state);
+    return () => {
+      state.cancelled = true;
+    };
+  }, [pathname, loadShell]);
+
+  React.useEffect(() => {
+    const onProfileUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<ProfileUpdatedDetail>).detail;
+      if (detail?.displayName) setPreferredDisplayName(detail.displayName);
+      void loadShell();
+    };
+    window.addEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+    return () => window.removeEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+  }, [loadShell]);
 
   const compactGreeting = pathname !== "/dashboard";
 
@@ -77,6 +93,8 @@ function ProductShell({ children }: { children: React.ReactNode }) {
         latestAuditId={latestAuditId}
         mobileOpen={mobileOpen}
         onClose={() => setMobileOpen(false)}
+        preferredDisplayName={preferredDisplayName}
+        planName={planName}
       />
       <div className="min-h-screen flex flex-col lg:ms-[260px]">
         <AppTopbar
@@ -118,6 +136,8 @@ export function PageHeader({
   const inApp = isAppShellRoute(pathname);
   const { dir } = useLocale();
   const t = useT();
+  const displayTitle = decodeHtmlEntities(title);
+  const displaySubtitle = subtitle ? decodeHtmlEntities(subtitle) : subtitle;
 
   if (inApp) {
     return (
@@ -141,9 +161,9 @@ export function PageHeader({
               )}
               <div>
                 <h1 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
-                  {title}
+                  {displayTitle}
                 </h1>
-                {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+                {displaySubtitle && <p className="text-sm text-muted-foreground mt-1">{displaySubtitle}</p>}
               </div>
             </div>
             {actions && <div className="flex items-center gap-2">{actions}</div>}
@@ -174,10 +194,10 @@ export function PageHeader({
             )}
             <div>
               <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight">
-                {title}
+                {displayTitle}
               </h1>
-              {subtitle && (
-                <p className="text-sm sm:text-base text-muted-foreground mt-1.5">{subtitle}</p>
+              {displaySubtitle && (
+                <p className="text-sm sm:text-base text-muted-foreground mt-1.5">{displaySubtitle}</p>
               )}
             </div>
           </div>

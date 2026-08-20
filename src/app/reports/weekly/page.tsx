@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useT } from "@/lib/i18n";
 import type { WeeklyReportListItem } from "@/lib/weekly-report/types";
 import { cn } from "@/lib/utils";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
 
 export default function WeeklyReportsPage() {
   const t = useT();
@@ -86,7 +87,7 @@ export default function WeeklyReportsPage() {
                   <Card className="transition-colors hover:border-primary/30">
                     <CardContent className="flex items-center justify-between gap-4 py-5">
                       <div className="min-w-0">
-                        <p className="font-display font-bold truncate">{report.storeName}</p>
+                        <p className="font-display font-bold truncate">{decodeHtmlEntities(report.storeName)}</p>
                         <p className="text-xs text-muted-foreground mt-1">
                           {report.periodStart.slice(0, 10)} → {report.periodEnd.slice(0, 10)}
                         </p>

@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     const kashierMethod = methodId
       ? getKashierAllowedMethod(methodId as KashierPaymentMethodId)
       : undefined;
-    // Canonical webhook path (HMAC + amount map 199→pro / 499→business)
+    // Canonical webhook path (HMAC + amount map 399→pro / 999→business)
     const callbackUrl = absoluteUrl("/api/webhook/kashier");
     const successUrl = buildPostPaymentPath(planId, { orderId, appUrl });
     const failureUrl = absoluteUrl(
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     const url = await createCheckoutUrl({
       orderId,
-      amount, // pro: 199/1490 · business: 499/3990 (from PLAN_PRICES)
+      amount, // pro: 399/3990 · business: 999/9990 (from PLAN_PRICES)
       currency: "EGP",
       customerEmail: user.email ?? "",
       customerName: user.user_metadata?.full_name as string | undefined,

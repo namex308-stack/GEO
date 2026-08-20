@@ -1,10 +1,9 @@
 "use client";
 
 import { EyeOff, FileWarning, ShieldAlert, Swords } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { StartAuditCta } from "@/components/common/start-audit-cta";
 import { Container, Section, SectionHeader, SurfaceCard } from "@/components/design-system/section";
 import { BlurFade } from "@/components/magicui/blur-fade";
-import { useNavigateAfterAction } from "@/lib/use-navigate";
 import { useT } from "@/lib/i18n";
 
 const PROBLEMS = [
@@ -36,7 +35,6 @@ const PROBLEMS = [
 
 export function WhyLoseSales() {
   const t = useT();
-  const { startAuditAndNavigate } = useNavigateAfterAction();
   return (
     <Section id="why-lose-sales">
       <Container>
@@ -67,9 +65,9 @@ export function WhyLoseSales() {
         </div>
 
         <div className="mt-10 text-center">
-          <Button size="lg" onClick={startAuditAndNavigate} className="font-semibold h-11 px-7 rounded-full shadow-glow">
+          <StartAuditCta className="font-semibold h-11 px-7 rounded-full shadow-glow">
             {t("whyLose.cta")}
-          </Button>
+          </StartAuditCta>
           <p className="mt-3 text-xs text-muted-foreground">{t("whyLose.ctaSub")}</p>
         </div>
       </Container>

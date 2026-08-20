@@ -103,6 +103,10 @@ export const SaveOnboardingBodySchema = z.object({
   answers: OnboardingProfilePartialSchema,
   /** Skip only optional steps (competitor). */
   skip: z.boolean().optional(),
+  /**
+   * Accepted for API compatibility with the wizard. Never grants completion;
+   * the server completes only when required fields are valid on the last step.
+   */
   markComplete: z.boolean().optional(),
 });
 

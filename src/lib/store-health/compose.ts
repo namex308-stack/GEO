@@ -3,6 +3,7 @@ import { buildScoreTrend } from "@/lib/dashboard/trend";
 import { storeHealthBand } from "@/lib/report/executive-summary";
 import { describeScoreBalance } from "@/lib/report/overview-balance";
 import type { AuditData, Recommendation, ScorePillar } from "@/lib/types";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
 import { pillarScoreFromAudit } from "@/lib/weekly-report/compare";
 import { performanceScoreFromCrawlMs } from "./performance";
 import type {
@@ -157,7 +158,9 @@ export function composeStoreHealth(input: {
   const next = computeNextScan(lastScan, now);
 
   return {
-    storeName: audit?.storeName?.trim() || audit?.productName?.trim() || "المتجر",
+    storeName: decodeHtmlEntities(
+      audit?.storeName?.trim() || audit?.productName?.trim() || "المتجر"
+    ),
     auditId: audit?.id ?? null,
     currentHealth,
     healthBand: currentHealth != null ? storeHealthBand(currentHealth) : null,

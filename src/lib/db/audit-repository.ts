@@ -1,6 +1,10 @@
 import "server-only";
 
 import { getSupabaseAdmin } from "@/lib/supabase";
+import {
+  decideStoreEnsure,
+  oldestAllowedStoreIds,
+} from "@/lib/billing/entitlements";
 import type { AnalyzerName, AnalyzerJsonResult, NormalizedPage, UsageMetric } from "@/lib/db/types";
 import type { AuditData } from "@/lib/types";
 import {
@@ -16,7 +20,7 @@ import {
 } from "@/lib/audits/types";
 import { mapRecommendationRow, toJsonValue } from "@/lib/audits/parse";
 import { displayHostFromUrl } from "@/lib/url-display";
-import { decodeHtmlEntities } from "@/lib/text/decode-html";
+import { decodeAuditDisplayFields, decodeHtmlEntities } from "@/lib/text/decode-html";
 import type { Json } from "@/lib/db/database.types";
 import { recordGeoScoreHistory } from "@/lib/db/geo-history-repository";
 import { emitAlertsForCompletedAudit } from "@/lib/alerts/emit";
@@ -66,67 +70,84 @@ export async function ensureWorkspaceStore(input: {
     displayHostFromUrl(primaryUrl) ||
     FALLBACK_STORE_NAME;
 
-  const { data: existing } = await sb
+  const { data: workspaceStores } = await sb
     .from("stores")
-    .select("id")
+    .select("id, primary_url, created_at")
     .eq("workspace_id", input.workspaceId)
-    .eq("primary_url", primaryUrl)
-    .maybeSingle();
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
 
-  if (existing?.id) {
-    const patch: Record<string, unknown> = {
-      updated_at: now,
-      name,
-    };
-    if (input.platform) patch.platform = input.platform;
-    if (input.country) patch.country = input.country;
-    if (input.language) patch.language = input.language;
-    if (input.currency) patch.currency = input.currency;
-    if (input.detectedTheme) patch.detected_theme = input.detectedTheme;
-    if (input.verifiedAt) patch.verified_at = input.verifiedAt;
-    if (input.markCrawled) patch.last_crawled_at = now;
+  const rows = workspaceStores ?? [];
+  const existing = rows.find((row) => row.primary_url === primaryUrl);
+  const existingId = existing?.id ? String(existing.id) : null;
+  const currentCount = rows.length;
+  const allowedIds = oldestAllowedStoreIds(
+    rows.map((row) => String(row.id)),
+    input.storesLimit
+  );
 
-    await sb.from("stores").update(patch).eq("id", existing.id);
-    return { ok: true, storeId: existing.id as string };
+  const decision = decideStoreEnsure({
+    existingId,
+    currentCount,
+    storesLimit: input.storesLimit,
+    oldestAllowedStoreIds: allowedIds,
+  });
+
+  switch (decision.action) {
+    case "reject":
+      return {
+        ok: false,
+        code: "STORE_LIMIT_REACHED",
+        used: decision.used,
+        limit: decision.limit,
+      };
+    case "update": {
+      if (!existingId) return { ok: false, code: "FAILED" };
+      const patch: Record<string, unknown> = {
+        updated_at: now,
+        name,
+      };
+      if (input.platform) patch.platform = input.platform;
+      if (input.country) patch.country = input.country;
+      if (input.language) patch.language = input.language;
+      if (input.currency) patch.currency = input.currency;
+      if (input.detectedTheme) patch.detected_theme = input.detectedTheme;
+      if (input.verifiedAt) patch.verified_at = input.verifiedAt;
+      if (input.markCrawled) patch.last_crawled_at = now;
+
+      await sb.from("stores").update(patch).eq("id", existingId);
+      return { ok: true, storeId: existingId };
+    }
+    case "insert": {
+      const { data, error } = await sb
+        .from("stores")
+        .insert({
+          workspace_id: input.workspaceId,
+          name,
+          primary_url: primaryUrl,
+          platform: input.platform ?? null,
+          country: input.country ?? null,
+          language: input.language ?? null,
+          currency: input.currency ?? null,
+          detected_theme: input.detectedTheme ?? null,
+          is_primary: currentCount === 0,
+          verified_at: input.verifiedAt ?? null,
+          last_crawled_at: input.markCrawled ? now : null,
+        })
+        .select("id")
+        .single();
+
+      if (error || !data) {
+        console.error("[stores] upsert failed:", error?.message);
+        return { ok: false, code: "FAILED" };
+      }
+      return { ok: true, storeId: data.id as string };
+    }
+    default: {
+      const _exhaustive: never = decision;
+      return _exhaustive;
+    }
   }
-
-  const { count } = await sb
-    .from("stores")
-    .select("id", { count: "exact", head: true })
-    .eq("workspace_id", input.workspaceId);
-
-  const used = count ?? 0;
-  if (
-    input.storesLimit !== undefined &&
-    input.storesLimit !== null &&
-    used >= input.storesLimit
-  ) {
-    return { ok: false, code: "STORE_LIMIT_REACHED", used, limit: input.storesLimit };
-  }
-
-  const { data, error } = await sb
-    .from("stores")
-    .insert({
-      workspace_id: input.workspaceId,
-      name,
-      primary_url: primaryUrl,
-      platform: input.platform ?? null,
-      country: input.country ?? null,
-      language: input.language ?? null,
-      currency: input.currency ?? null,
-      detected_theme: input.detectedTheme ?? null,
-      is_primary: used === 0,
-      verified_at: input.verifiedAt ?? null,
-      last_crawled_at: input.markCrawled ? now : null,
-    })
-    .select("id")
-    .single();
-
-  if (error || !data) {
-    console.error("[stores] upsert failed:", error?.message);
-    return { ok: false, code: "FAILED" };
-  }
-  return { ok: true, storeId: data.id as string };
 }
 
 /** Ensure the user has a personal workspace; return its id. */
@@ -228,7 +249,7 @@ export async function saveAuditPage(
       role,
       url: page.url,
       page_type: page.pageType,
-      title: page.title,
+      title: decodeHtmlEntities(page.title),
       description: page.description,
       image_count: page.imageCount,
       scrape_status: page.scrapeStatus,
@@ -301,9 +322,10 @@ export async function finishAnalysisRun(
   if (error) console.error("[analysis_runs] finish failed:", error.message);
 }
 
-export async function persistAuditResults(auditId: string, workspaceId: string, audit: AuditData): Promise<void> {
+export async function persistAuditResults(auditId: string, workspaceId: string, rawAudit: AuditData): Promise<void> {
   const sb = getSupabaseAdmin();
   if (!sb) return;
+  const audit = decodeAuditDisplayFields(rawAudit);
 
   const { data: categories } = await sb
     .from("analysis_categories")
@@ -871,7 +893,7 @@ async function hydrateStoredAudit(row: Record<string, unknown>): Promise<StoredA
   if (report?.summary && typeof report.summary === "object") {
     const summary = report.summary as AuditData;
     return {
-      audit: {
+      audit: decodeAuditDisplayFields({
         ...summary,
         id: auditId,
         productUrl: summary.productUrl || (row.product_url as string),
@@ -880,7 +902,7 @@ async function hydrateStoredAudit(row: Record<string, unknown>): Promise<StoredA
         demoMode: summary.demoMode ?? demoMode,
         recommendations: prioritizeRecommendations(summary.recommendations ?? []),
         status: rowStatus,
-      },
+      }),
       demoMode: summary.demoMode ?? demoMode,
       aiConfigured,
       analysisRuns,
@@ -890,7 +912,7 @@ async function hydrateStoredAudit(row: Record<string, unknown>): Promise<StoredA
   // In-progress / failed audits must be readable for scanning polls and routing.
   if (rowStatus !== "completed") {
     return {
-      audit: {
+      audit: decodeAuditDisplayFields({
         id: auditId,
         productUrl: (row.product_url as string) || "",
         storeUrl: (row.store_url as string) || undefined,
@@ -904,7 +926,7 @@ async function hydrateStoredAudit(row: Record<string, unknown>): Promise<StoredA
         createdAt: (row.created_at as string) || new Date().toISOString(),
         demoMode,
         status: rowStatus,
-      },
+      }),
       demoMode,
       aiConfigured,
       analysisRuns,
@@ -991,5 +1013,5 @@ async function hydrateStoredAudit(row: Record<string, unknown>): Promise<StoredA
     status: rowStatus,
   };
 
-  return { audit, demoMode, aiConfigured, analysisRuns };
+  return { audit: decodeAuditDisplayFields(audit), demoMode, aiConfigured, analysisRuns };
 }

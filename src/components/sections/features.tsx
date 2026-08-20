@@ -1,10 +1,9 @@
 "use client";
 
 import { Zap, Search, Bot, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { StartAuditCta } from "@/components/common/start-audit-cta";
 import { Container, Section, SectionHeader, SurfaceCard } from "@/components/design-system/section";
 import { BlurFade } from "@/components/magicui/blur-fade";
-import { useNavigateAfterAction } from "@/lib/use-navigate";
 import { useT } from "@/lib/i18n";
 
 /** GEO leads — it is the core differentiator vs. generic CRO tools. */
@@ -65,7 +64,6 @@ const PILLARS = [
 
 export function Features() {
   const t = useT();
-  const { startAuditAndNavigate } = useNavigateAfterAction();
   return (
     <Section id="features">
       <Container>
@@ -107,9 +105,9 @@ export function Features() {
         </div>
 
         <div className="mt-10 text-center">
-          <Button size="lg" onClick={startAuditAndNavigate} className="font-semibold h-11 px-7">
+          <StartAuditCta className="font-semibold h-11 px-7">
             {t("features.cta")}
-          </Button>
+          </StartAuditCta>
           <p className="mt-3 text-xs text-muted-foreground">{t("features.ctaSub")}</p>
         </div>
       </Container>

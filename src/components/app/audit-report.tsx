@@ -94,6 +94,7 @@ import {
   type QuickWinTask,
 } from "@/lib/report/quick-wins";
 import type { AuditData, PageSignals, Recommendation, ScorePillar } from "@/lib/types";
+import { decodeAuditDisplayFields } from "@/lib/text/decode-html";
 
 type PillarIcon = typeof Zap;
 
@@ -114,11 +115,12 @@ export type AuditReportProps = {
 };
 
 export function AuditReport({
-  audit,
+  audit: rawAudit,
   demoMode = false,
   aiConfigured = true,
 }: AuditReportProps) {
   const t = useT();
+  const audit = rawAudit ? decodeAuditDisplayFields(rawAudit) : rawAudit;
 
   if (!audit) {
     return (

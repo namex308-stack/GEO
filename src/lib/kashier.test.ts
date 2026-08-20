@@ -48,7 +48,7 @@ describe("extractOrderId / extractAmount / isPaymentSuccessful", () => {
   });
 
   it("reads nested amount", () => {
-    expect(extractAmount({ data: { amount: "199.00" } })).toBe(199);
+    expect(extractAmount({ data: { amount: "399.00" } })).toBe(399);
   });
 });
 

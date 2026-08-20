@@ -79,6 +79,16 @@ describe("onboarding step validation", () => {
     expect(body.success).toBe(true);
   });
 
+  it("still accepts markComplete in the HTTP body (ignored as a grant)", () => {
+    const body = SaveOnboardingBodySchema.safeParse({
+      step: 1,
+      answers: { businessName: "GlowLab" },
+      markComplete: true,
+    });
+    expect(body.success).toBe(true);
+    if (body.success) expect(body.data.markComplete).toBe(true);
+  });
+
   it("accepts store probe metadata in partial answers", () => {
     const body = SaveOnboardingBodySchema.safeParse({
       step: 2,

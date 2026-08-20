@@ -11,6 +11,7 @@ import {
   computeResumeStep,
   onboardingPathForStep,
 } from "@/lib/onboarding/constants";
+import { decideOnboardingSave } from "@/lib/onboarding/completion";
 import { normalizeStoreUrl, type OnboardingProfilePartial } from "@/lib/onboarding/schema";
 import type { OnboardingAnswers } from "@/lib/types";
 
@@ -216,21 +217,50 @@ function applyAnswerPatch(
   if (a.storeVerifiedAt !== undefined) patch.store_verified_at = a.storeVerifiedAt;
 }
 
+export type SaveOnboardingResult =
+  | { ok: true; state: OnboardingState }
+  | { ok: false; code: "INCOMPLETE_REQUIRED_FIELDS" | "SAVE_FAILED" };
+
 export async function saveOnboardingStep(input: {
   userId: string;
   step: number;
   answers: OnboardingProfilePartial;
   skip?: boolean;
+  /** Finish intent only — never sufficient to set onboarding_completed_at. */
   markComplete?: boolean;
-}): Promise<OnboardingState | null> {
+}): Promise<SaveOnboardingResult> {
   // Prefer service role so onboarding_completed_at can be set under the
   // profiles_protect_onboarding_completed_at trigger (clients cannot forge it).
   const admin = getSupabaseAdmin();
   const userSb = await createSupabaseServerClient();
   const sb = admin ?? userSb;
-  if (!sb) return null;
+  if (!sb) return { ok: false, code: "SAVE_FAILED" };
 
   await ensureProfileRow(input.userId);
+
+  const { data: existingRow, error: existingError } = await sb
+    .from("profiles")
+    .select(SELECT_COLS)
+    .eq("id", input.userId)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error("[onboarding] load before save failed:", existingError.message);
+    return { ok: false, code: "SAVE_FAILED" };
+  }
+
+  const existing = mapRow(existingRow as ProfileRow | null);
+  const decision = decideOnboardingSave({
+    existing,
+    incoming: input.answers,
+    step: input.step,
+    skip: input.skip,
+    markComplete: input.markComplete,
+  });
+
+  if (decision.action === "reject") {
+    return { ok: false, code: decision.code };
+  }
 
   const patch: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
@@ -245,10 +275,7 @@ export async function saveOnboardingStep(input: {
   const nextStep = Math.min(ONBOARDING_STEP_COUNT + 1, input.step + 1);
   patch.onboarding_step = nextStep;
 
-  const shouldComplete =
-    Boolean(input.markComplete) || input.step >= ONBOARDING_STEP_COUNT;
-
-  if (shouldComplete) {
+  if (decision.complete) {
     patch.onboarding_completed_at = new Date().toISOString();
     patch.onboarding_step = ONBOARDING_STEP_COUNT + 1;
   }
@@ -262,10 +289,10 @@ export async function saveOnboardingStep(input: {
 
   if (error) {
     console.error("[onboarding] save failed:", error.message);
-    return null;
+    return { ok: false, code: "SAVE_FAILED" };
   }
 
-  return toState(mapRow(data as ProfileRow | null));
+  return { ok: true, state: toState(mapRow(data as ProfileRow | null)) };
 }
 
 /** Full profile update from Settings (does not reset completion). */

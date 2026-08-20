@@ -4,6 +4,7 @@
 
 import "server-only";
 
+import { fetchSafePublicHttpUrl } from "@/lib/safe-http-fetch";
 import { assertSafePublicHttpUrl } from "@/lib/url-safety";
 import { normalizeStoreUrl } from "@/lib/onboarding/schema";
 import {
@@ -61,35 +62,41 @@ export async function probeStoreUrl(rawUrl: string): Promise<StoreProbeResult> {
     };
   }
 
-  const safe = assertSafePublicHttpUrl(normalized);
+  const safe = await assertSafePublicHttpUrl(normalized);
   if (!safe.ok) {
     return { ok: false, code: "blocked_url", error: safe.reason };
   }
 
   try {
-    const res = await fetch(safe.href, {
+    const fetched = await fetchSafePublicHttpUrl(safe.href, {
       method: "GET",
       headers: {
         "User-Agent":
           "Mozilla/5.0 (compatible; ConvAuditBot/1.0; +https://convaudit.com)",
         Accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
       },
-      redirect: "follow",
-      cache: "no-store",
       signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
     });
 
-    const finalUrl = res.url || safe.href;
-    const safeFinal = assertSafePublicHttpUrl(finalUrl);
+    if (!fetched.ok) {
+      return {
+        ok: false,
+        code: fetched.blocked ? "blocked_url" : "unreachable",
+        error: fetched.blocked ? fetched.reason : FRIENDLY_UNREACHABLE,
+      };
+    }
+
+    const finalUrl = fetched.url || safe.href;
+    const safeFinal = await assertSafePublicHttpUrl(finalUrl);
     if (!safeFinal.ok) {
       return { ok: false, code: "blocked_url", error: FRIENDLY_UNREACHABLE };
     }
 
-    if (!res.ok) {
+    if (fetched.status < 200 || fetched.status >= 300) {
       return { ok: false, code: "unreachable", error: FRIENDLY_UNREACHABLE };
     }
 
-    const htmlRaw = await res.text();
+    const htmlRaw = fetched.bodyText;
     if (!htmlRaw || htmlRaw.trim().length < 40) {
       return {
         ok: false,
@@ -100,7 +107,7 @@ export async function probeStoreUrl(rawUrl: string): Promise<StoreProbeResult> {
 
     const html = htmlRaw.slice(0, MAX_HTML_BYTES);
     const headerBag: Record<string, string> = {};
-    res.headers.forEach((value, key) => {
+    fetched.headers.forEach((value, key) => {
       headerBag[key] = value;
     });
 

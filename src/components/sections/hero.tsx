@@ -27,7 +27,7 @@ const TRUST_POINTS = [
 /** Marketing hero — no fabricated scores or sample store metrics. */
 export function Hero() {
   const t = useT();
-  const { startAuditAndNavigate, startAuditHref } = useNavigateAfterAction();
+  const { startAuditHref } = useNavigateAfterAction();
 
   return (
     <section className="relative overflow-hidden pt-24 pb-16 sm:pt-32 sm:pb-24">
@@ -70,13 +70,7 @@ export function Hero() {
         <BlurFade delay={0.15}>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <Button size="lg" asChild className="h-11 px-7 font-semibold rounded-full shadow-glow group">
-              <Link
-                href={startAuditHref}
-                onClick={(e) => {
-                  e.preventDefault();
-                  startAuditAndNavigate();
-                }}
-              >
+              <Link href={startAuditHref}>
                 {t("hero.startFreeAudit")}
                 <ArrowRight className="size-4 ms-0.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
               </Link>

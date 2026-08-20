@@ -67,7 +67,7 @@ try {
 const payload = JSON.stringify({
   status: "SUCCESS",
   orderId: "sp-pro-monthly-00000000-0000-0000-0000-000000000000-0",
-  amount: 199,
+  amount: 399,
 });
 
 function verify(payloadStr, signature, secrets) {

@@ -318,7 +318,8 @@ function buildRecommendations(
       impact: "high",
       effort: "medium",
       problem: "تغطية الأسئلة الشائعة ضعيفة لمحركات الإجابة والاستشهاد بالذكاء الاصطناعي.",
-      solution: "أضف 5–8 أسئلة شائعة عن المنتج بإجابات واضحة مع مخطط FAQPage JSON-LD.",
+      solution:
+        "أضف 5–8 أسئلة شائعة يسألها المشتري (الشحن، الاستخدام، الإرجاع) بإجابات مباشرة في الصفحة.\nأضف مخطط FAQPage JSON-LD لنفس الأسئلة حتى يسهل الاستشهاد بها في ChatGPT وPerplexity.",
       confidence: 92,
       source: "rule_engine",
       fixType: "manual",
@@ -461,7 +462,7 @@ function buildRecommendations(
     });
   }
 
-  if (!signals.hasFaqSchema && signals.faqCount > 0) {
+  if (!signals.hasFaqSchema && signals.faqCount > 0 && !failed.has("geo-faq") && !warned.has("geo-faq")) {
     recs.push({
       id: "geo-rec-faq-schema",
       pillar: "geo",

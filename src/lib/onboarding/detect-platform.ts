@@ -3,6 +3,8 @@
  * Pure module — safe for unit tests (no network).
  */
 
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
+
 export type DetectedPlatform =
   | "shopify"
   | "woocommerce"
@@ -195,17 +197,12 @@ export function detectEcommercePlatform(input: {
 export function extractHomepageTitle(html: string): string {
   const match = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
   if (!match?.[1]) return "";
-  return match[1]
-    .replace(/<[^>]+>/g, "")
-    .replace(/\s+/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .trim()
-    .slice(0, 300);
+  return decodeHtmlEntities(
+    match[1]
+      .replace(/<[^>]+>/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  ).slice(0, 300);
 }
 
 export function extractDomainFromUrl(url: string): string {

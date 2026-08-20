@@ -6,15 +6,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
+import { StartAuditCta } from "@/components/common/start-audit-cta";
 import { ArrowRight } from "lucide-react";
-import { useNavigateAfterAction } from "@/lib/use-navigate";
 import { useT } from "@/lib/i18n";
 import { Container, Section, SectionHeader } from "@/components/design-system/section";
 import { HOME_FAQ_KEYS } from "@/lib/seo/faq-keys";
 
 export function FAQ() {
-  const { startAuditAndNavigate } = useNavigateAfterAction();
   const t = useT();
   return (
     <Section id="faq">
@@ -45,10 +43,10 @@ export function FAQ() {
 
         <div className="mt-10 text-center">
           <p className="text-sm text-muted-foreground mb-4">{t("faq.stillQuestions")}</p>
-          <Button size="lg" onClick={startAuditAndNavigate} className="font-semibold h-11 px-7 rounded-full shadow-glow group">
+          <StartAuditCta className="font-semibold h-11 px-7 rounded-full shadow-glow group">
             {t("faq.cta")}
             <ArrowRight className="size-4 ms-0.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
-          </Button>
+          </StartAuditCta>
         </div>
       </Container>
     </Section>

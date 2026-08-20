@@ -10,6 +10,7 @@ import type {
 import type { AuditData, OnboardingAnswers, PageSignals, Recommendation, ScoreBreakdown } from "@/lib/types";
 import {
   generatedContentFromPage,
+  isGeneratedContentArabicEnough,
   parseGeneratedContent,
   type GeneratedContent,
 } from "@/lib/ai/generated-content";
@@ -20,6 +21,7 @@ import {
 } from "@/lib/ai/sanitize-analyzer";
 import { sanitizeOnboarding, sanitizePromptText } from "@/lib/ai/sanitize-prompt";
 import { analyzeGeo, geoAnalysisToAnalyzerResult } from "@/lib/audit/geo-analyzer";
+import { solutionForFinding } from "@/lib/audit/finding-copy";
 import { applyGeoAnalysisToAudit, averagePillarScores, clampScore } from "@/lib/audit/scoring";
 import {
   moduleResultToRecommendations,
@@ -34,6 +36,7 @@ import {
   type PillarScoreModuleResult,
 } from "@/lib/audit/score-modules";
 import { arabicTextRatio, normalizeAppLocale, type AppLocale } from "@/lib/locale";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
 
 export type { AnalyzerName, AnalyzerJsonResult, NormalizedPage };
 export type { GeneratedContent };
@@ -52,11 +55,11 @@ export function isGeminiConfigured(): boolean {
   return !!process.env.GEMINI_API_KEY;
 }
 
-/** Stable Gemini model id (1.5-flash was retired from the v1beta API). */
+/** Stable Gemini model id (2.5-flash-lite is unavailable to new API keys). */
 export function getGeminiModelId(): string {
   const fromEnv = process.env.GEMINI_MODEL?.trim();
   if (fromEnv) return fromEnv;
-  return "gemini-2.0-flash";
+  return "gemini-3.5-flash-lite";
 }
 
 /** @deprecated Use NormalizedPage from @/lib/db/types — kept for older imports. */
@@ -227,15 +230,42 @@ export async function runBatchedPillarAnalysis(
   }
 }
 
+export type GenerateContentResult =
+  | {
+      ok: true;
+      content: GeneratedContent;
+      source: "gemini";
+      tokensUsed: number | null;
+    }
+  | {
+      ok: true;
+      content: GeneratedContent;
+      source: "page";
+      tokensUsed: null;
+    }
+  | {
+      ok: false;
+      code: "GEMINI_FAILED" | "GEMINI_INVALID" | "GEMINI_NOT_ARABIC";
+      error: string;
+    };
+
+/**
+ * AI Studio copy generation.
+ * - Gemini configured: must return Gemini Arabic output, or an explicit failure
+ *   (never a silent page scrape presented as success).
+ * - Gemini not configured: page-derived fallback only, source "page".
+ */
 export async function generateContent(
   page: NormalizedPage | ScrapedPage,
   outputLocale: AppLocale | string | null = "ar"
-): Promise<GeneratedContent & { tokensUsed?: number | null }> {
+): Promise<GenerateContentResult> {
   const locale = normalizeAppLocale(outputLocale);
   const normalized = toNormalized(page);
   const pageFallback = generatedContentFromPage(normalized);
   const client = getClient();
-  if (!client) return { ...pageFallback, tokensUsed: null };
+  if (!client) {
+    return { ok: true, content: pageFallback, source: "page", tokensUsed: null };
+  }
 
   const model = client.getGenerativeModel({ model: getGeminiModelId() });
   const safeTitle = sanitizePromptText(normalized.title, 120);
@@ -261,20 +291,44 @@ ${safeMarkdown}
 
 Return JSON:
 {
-  "title": "SEO + GEO optimized product title (max 70 chars)",
-  "description": "Benefit-led markdown description, 150-250 words, with a short bullet list",
-  "faq": [ { "q": "string", "a": "string" } ],
-  "metaDescription": "155 char meta description",
+  "title": "SEO + GEO optimized product title in Arabic (max 70 chars)",
+  "description": "Benefit-led Arabic markdown description, 150-250 words, with a short bullet list",
+  "faq": [ { "q": "Arabic question", "a": "Arabic answer" } ],
+  "metaDescription": "Arabic meta description under 155 chars",
   "adCopy": [
-    { "platform": "Meta / Instagram", "headline": "string", "body": "string", "cta": "string" },
-    { "platform": "TikTok", "headline": "string", "body": "string", "cta": "string" },
-    { "platform": "Google Search", "headline": "string", "body": "string", "cta": "string" }
+    { "platform": "Meta / Instagram", "headline": "Arabic headline", "body": "Arabic body", "cta": "Arabic CTA" },
+    { "platform": "TikTok", "headline": "Arabic headline", "body": "Arabic body", "cta": "Arabic CTA" },
+    { "platform": "Google Search", "headline": "Arabic headline", "body": "Arabic body", "cta": "Arabic CTA" }
   ]
 }`;
 
   try {
     const result = await model.generateContent(prompt);
-    const parsed = parseGeneratedContent(JSON.parse(stripCodeFences(result.response.text())));
+    let rawText = "";
+    try {
+      rawText = result.response.text();
+    } catch (textErr) {
+      console.error("[gemini] generateContent empty/blocked response:", textErr);
+      return {
+        ok: false,
+        code: "GEMINI_FAILED",
+        error: "تعذّر الحصول على رد من نموذج الذكاء الاصطناعي.",
+      };
+    }
+
+    let json: unknown;
+    try {
+      json = JSON.parse(stripCodeFences(rawText));
+    } catch (parseErr) {
+      console.warn("[gemini] generateContent JSON parse failed:", parseErr);
+      return {
+        ok: false,
+        code: "GEMINI_INVALID",
+        error: "رد الذكاء الاصطناعي غير صالح. حاول مرة أخرى.",
+      };
+    }
+
+    const parsed = parseGeneratedContent(json);
     const usage = result.response.usageMetadata as
       | { totalTokenCount?: number; promptTokenCount?: number; candidatesTokenCount?: number }
       | undefined;
@@ -284,14 +338,38 @@ Return JSON:
         : typeof usage?.promptTokenCount === "number" && typeof usage?.candidatesTokenCount === "number"
           ? usage.promptTokenCount + usage.candidatesTokenCount
           : null;
+
     if (!parsed) {
-      console.warn("[gemini] generateContent failed validation — using page-derived content");
-      return { ...pageFallback, tokensUsed };
+      console.warn("[gemini] generateContent failed schema validation");
+      return {
+        ok: false,
+        code: "GEMINI_INVALID",
+        error: "تعذّر التحقق من محتوى التوليد. حاول مرة أخرى.",
+      };
     }
-    return { ...parsed, source: "gemini", tokensUsed };
+
+    if (!isGeneratedContentArabicEnough(parsed)) {
+      console.warn("[gemini] generateContent output was not Arabic enough");
+      return {
+        ok: false,
+        code: "GEMINI_NOT_ARABIC",
+        error: "المحتوى المُولَّد ليس بالعربية. حاول إعادة التوليد.",
+      };
+    }
+
+    return {
+      ok: true,
+      content: { ...parsed, source: "gemini" },
+      source: "gemini",
+      tokensUsed,
+    };
   } catch (err) {
     console.error("[gemini] generateContent failed:", err);
-    return { ...pageFallback, tokensUsed: null };
+    return {
+      ok: false,
+      code: "GEMINI_FAILED",
+      error: "فشل توليد المحتوى بالذكاء الاصطناعي. حاول مرة أخرى.",
+    };
   }
 }
 
@@ -428,7 +506,7 @@ function assembleAuditData(
 
   const base: AuditData = {
     productUrl: page.url,
-    productName: page.title || "منتج بدون عنوان",
+    productName: decodeHtmlEntities(page.title || "منتج بدون عنوان") || "منتج بدون عنوان",
     storeName: extractStoreName(page.url),
     competitorUrl: competitor?.url,
     overallScore: clampScore(overall),
@@ -579,7 +657,7 @@ function heuristicRecommendations(page: NormalizedPage): Recommendation[] {
       impact: "high",
       effort: "quick",
       problem: "لم يتم استخراج إشارة سعر واضحة من الصفحة.",
-      solution: "اجعل السعر ظاهرًا في HTML أو مخطط Offer JSON-LD قرب زر الشراء.",
+      solution: solutionForFinding("لم يتم استخراج إشارة سعر واضحة من الصفحة.", "conversion"),
       source: "rule_engine",
     });
   }
@@ -591,7 +669,7 @@ function heuristicRecommendations(page: NormalizedPage): Recommendation[] {
       impact: "high",
       effort: "medium",
       problem: "لا يوجد تقييم أو عدد مراجعات على الصفحة.",
-      solution: "أضف مراجعات ظاهرة ومخطط AggregateRating.",
+      solution: solutionForFinding("لا يوجد تقييم أو عدد مراجعات على الصفحة.", "trust"),
       source: "rule_engine",
     });
   }
@@ -603,7 +681,7 @@ function heuristicRecommendations(page: NormalizedPage): Recommendation[] {
       impact: "medium",
       effort: "medium",
       problem: "لا يوجد محتوى أسئلة شائعة أو مخطط FAQPage.",
-      solution: "أضف 5–8 أسئلة شائعة عن المنتج مع FAQPage JSON-LD لدعم الاستشهاد بالذكاء الاصطناعي.",
+      solution: solutionForFinding("لا يوجد محتوى أسئلة شائعة أو مخطط FAQPage.", "geo"),
       source: "rule_engine",
     });
   }
@@ -615,7 +693,7 @@ function heuristicRecommendations(page: NormalizedPage): Recommendation[] {
       impact: "medium",
       effort: "quick",
       problem: "لم يتم رصد أنواع Schema.org / JSON-LD.",
-      solution: "أضف Product + Offer JSON-LD مع الاسم والصورة والسعر والتوفر.",
+      solution: solutionForFinding("لم يتم رصد أنواع Schema.org / JSON-LD.", "seo"),
       source: "rule_engine",
     });
   }
@@ -627,7 +705,7 @@ function heuristicRecommendations(page: NormalizedPage): Recommendation[] {
       impact: "high",
       effort: "quick",
       problem: "لم يتم اكتشاف صورة للمنتج.",
-      solution: "أضف صورة منتج عالية الجودة مع og:image على الأقل.",
+      solution: solutionForFinding("لم يتم اكتشاف صورة للمنتج.", "conversion"),
       source: "rule_engine",
     });
   }
@@ -710,7 +788,7 @@ function buildPageSignals(
     productPageDetected,
     productImageDetected,
     productImageUrl: primaryImage,
-    pageTitle: page.title,
+    pageTitle: decodeHtmlEntities(page.title),
     pageType: page.pageType,
     errors: uniqueErrors.slice(0, 8),
   };
@@ -966,7 +1044,7 @@ function toNormalized(page: NormalizedPage | ScrapedPage): NormalizedPage {
   const markdown = page.markdown ?? "";
   return {
     url: page.url,
-    title: page.title,
+    title: decodeHtmlEntities(page.title),
     description: page.description,
     pageType: "unknown",
     markdown,

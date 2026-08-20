@@ -1,5 +1,7 @@
 import { z } from "zod";
 import type { NormalizedPage } from "@/lib/db/types";
+import { arabicTextRatio } from "@/lib/locale";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
 
 export const GeneratedContentSchema = z.object({
   title: z.string().min(1).max(200),
@@ -35,7 +37,7 @@ export function parseGeneratedContent(raw: unknown): GeneratedContent | null {
   if (!parsed.success) return null;
   return {
     ...parsed.data,
-    title: parsed.data.title.trim().slice(0, 120),
+    title: decodeHtmlEntities(parsed.data.title).trim().slice(0, 120),
     description: parsed.data.description.trim(),
     metaDescription: parsed.data.metaDescription.trim().slice(0, 160),
     faq: parsed.data.faq.slice(0, 8),
@@ -43,12 +45,34 @@ export function parseGeneratedContent(raw: unknown): GeneratedContent | null {
   };
 }
 
+/** Merchant-facing strings used to judge Arabic quality for AI Studio output. */
+export function collectedGeneratedContentTexts(content: GeneratedContent): string[] {
+  return [
+    content.title,
+    content.description,
+    content.metaDescription,
+    ...content.faq.flatMap((f) => [f.q, f.a]),
+    ...content.adCopy.flatMap((a) => [a.headline, a.body, a.cta]),
+  ];
+}
+
+/**
+ * Arabic-first product requirement for AI Studio.
+ * Short tokens (CTAs, brand-heavy titles) are ignored by `arabicTextRatio`.
+ */
+export function isGeneratedContentArabicEnough(
+  content: GeneratedContent,
+  minRatio = 0.5
+): boolean {
+  return arabicTextRatio(collectedGeneratedContentTexts(content)) >= minRatio;
+}
+
 /**
  * Build copy strictly from crawled page fields — never marketing sample text.
  */
 export function generatedContentFromPage(page: NormalizedPage): GeneratedContent {
   const sd = page.structuredData ?? {};
-  const title = (page.title || "منتج").trim().slice(0, 70);
+  const title = decodeHtmlEntities(page.title || "منتج").trim().slice(0, 70);
   const description =
     (page.description || "").trim() ||
     page.markdown.slice(0, 600).trim() ||

@@ -70,8 +70,8 @@ const Body = z
     }
   });
 
-function validateCrawlUrl(label: string, raw: string): string | null {
-  const safe = assertSafePublicHttpUrl(raw);
+async function validateCrawlUrl(label: string, raw: string): Promise<string | null> {
+  const safe = await assertSafePublicHttpUrl(raw);
   if (!safe.ok) return `${label}: ${safe.reason}`;
   return null;
 }
@@ -246,11 +246,11 @@ export async function POST(req: NextRequest) {
       competitorUrlInput || onboardingState.competitorUrl || undefined;
 
     const urlError =
-      validateCrawlUrl(productUrlInput ? "رابط المنتج" : "رابط المتجر", primaryUrl) ||
+      (await validateCrawlUrl(productUrlInput ? "رابط المنتج" : "رابط المتجر", primaryUrl)) ||
       (resolvedStoreUrl && resolvedStoreUrl !== primaryUrl
-        ? validateCrawlUrl("رابط المتجر", resolvedStoreUrl)
+        ? await validateCrawlUrl("رابط المتجر", resolvedStoreUrl)
         : null) ||
-      (competitorCandidate ? validateCrawlUrl("رابط المنافس", competitorCandidate) : null);
+      (competitorCandidate ? await validateCrawlUrl("رابط المنافس", competitorCandidate) : null);
     if (urlError) {
       return NextResponse.json({ error: urlError, code: "BLOCKED_URL" }, { status: 400 });
     }

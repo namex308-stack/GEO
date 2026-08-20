@@ -10,6 +10,7 @@ import {
   scoreTrustModule,
   severityFromScore,
   TRUST_PAYMENT_MISSING_FINDING,
+  moduleResultToRecommendations,
 } from "@/lib/audit/score-modules";
 import type { NormalizedPage } from "@/lib/db/types";
 
@@ -215,5 +216,27 @@ describe("shipping & returns clarity sub-check", () => {
     expect(enriched.findings[0]).toBe(TRUST_PAYMENT_MISSING_FINDING);
     expect(enriched.findings.some((f) => f.includes("مدة الشحن"))).toBe(true);
     expect(enriched.severity).toBe("high");
+  });
+});
+
+describe("moduleResultToRecommendations", () => {
+  it("emits specific Arabic fix steps instead of generic placeholders", () => {
+    const recs = moduleResultToRecommendations("seo", {
+      score: 40,
+      severity: "high",
+      summary: "SEO ضعيف",
+      findings: [
+        "لا توجد بيانات منظمة Schema.org على الصفحة.",
+        "عنوان الصفحة مفقود أو فارغ.",
+      ],
+    });
+    expect(recs.length).toBe(2);
+    for (const rec of recs) {
+      expect(rec.solution).not.toMatch(/عالج هذه النقطة/);
+      expect(rec.solution).not.toMatch(/فرصة تحسين إضافية/);
+      expect(rec.solution.length).toBeGreaterThan(40);
+    }
+    expect(recs.find((r) => r.problem.includes("Schema"))?.solution).toMatch(/JSON-LD/);
+    expect(recs.find((r) => r.problem.includes("عنوان"))?.solution).toMatch(/عنوان/);
   });
 });

@@ -6,6 +6,7 @@
  */
 
 import { analyzeGeo } from "@/lib/audit/geo-analyzer";
+import { solutionForFinding } from "@/lib/audit/finding-copy";
 import { clampScore } from "@/lib/audit/scoring";
 import type { CategorySlug, NormalizedPage } from "@/lib/db/types";
 import type { Recommendation } from "@/lib/types";
@@ -614,11 +615,7 @@ export function moduleResultToRecommendations(
         ? TRUST_PAYMENT_MISSING_SOLUTION
         : isShippingGap
           ? TRUST_SHIPPING_MISSING_SOLUTION
-          : result.severity === "high"
-            ? "عالج هذه النقطة أولًا لأنها تؤثر بقوة على درجة المتجر."
-            : result.severity === "medium"
-              ? "حسّن هذه النقطة لرفع الدرجة واستقرار الأداء."
-              : "فرصة تحسين إضافية لتعزيز التجربة.",
+          : solutionForFinding(finding, pillar),
       confidence: source === "gemini" ? 80 : 90,
       source,
       fixType: "manual" as const,

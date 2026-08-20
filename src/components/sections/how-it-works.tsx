@@ -1,8 +1,7 @@
 "use client";
 
 import { Link2, Cpu, FileCheck2 } from "lucide-react";
-import { useNavigateAfterAction } from "@/lib/use-navigate";
-import { Button } from "@/components/ui/button";
+import { StartAuditCta } from "@/components/common/start-audit-cta";
 import { Container, Section, SectionHeader, SurfaceCard } from "@/components/design-system/section";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { useT } from "@/lib/i18n";
@@ -15,7 +14,6 @@ const STEPS = [
 
 export function HowItWorks() {
   const t = useT();
-  const { startAuditAndNavigate } = useNavigateAfterAction();
   return (
     <Section id="how" tone="muted">
       <Container>
@@ -44,9 +42,9 @@ export function HowItWorks() {
         </div>
 
         <div className="mt-10 text-center">
-          <Button size="lg" onClick={startAuditAndNavigate} className="font-semibold h-11 px-7">
+          <StartAuditCta className="font-semibold h-11 px-7">
             {t("how.cta")}
-          </Button>
+          </StartAuditCta>
           <p className="mt-3 text-xs text-muted-foreground">{t("how.ctaSub")}</p>
         </div>
       </Container>

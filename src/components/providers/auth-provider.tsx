@@ -4,6 +4,8 @@ import * as React from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useAppStore } from "@/lib/store";
+import { PROFILE_UPDATED_EVENT } from "@/lib/auth/display-user";
+import { withTimeout } from "@/lib/with-timeout";
 
 type AuthContextValue = {
   user: User | null;
@@ -32,10 +34,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     let mounted = true;
 
-    void supabase.auth.getSession().then(({ data }) => {
+    void withTimeout(
+      supabase.auth.getSession().then((r) => r.data.session),
+      4_000,
+      null
+    ).then((nextSession) => {
       if (!mounted) return;
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
       setLoading(false);
     });
 
@@ -47,9 +53,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
+    const onProfileUpdated = () => {
+      void supabase.auth.refreshSession().then(({ data }) => {
+        if (!mounted) return;
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+        }
+      });
+    };
+    window.addEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      window.removeEventListener(PROFILE_UPDATED_EVENT, onProfileUpdated);
     };
   }, []);
 

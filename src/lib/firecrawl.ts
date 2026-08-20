@@ -9,6 +9,7 @@ import {
   extractPageData,
   extractionToStructuredData,
 } from "@/lib/firecrawl/extract";
+import { fetchSafePublicHttpUrl } from "@/lib/safe-http-fetch";
 import { assertSafePublicHttpUrl } from "@/lib/url-safety";
 
 export { classifyPageType };
@@ -64,7 +65,7 @@ export async function crawlAndNormalize(url: string): Promise<NormalizedPage | n
 }
 
 export async function crawlWithFallback(url: string): Promise<CrawlResult> {
-  const safe = assertSafePublicHttpUrl(url);
+  const safe = await assertSafePublicHttpUrl(url);
   if (!safe.ok) {
     return {
       page: null,
@@ -219,47 +220,58 @@ async function fetchPageFallback(url: string): Promise<FallbackAttempt> {
   for (const userAgent of attempts) {
     const started = Date.now();
     try {
-      const res = await fetch(url, {
+      const fetched = await fetchSafePublicHttpUrl(url, {
         headers: {
           "User-Agent": userAgent,
           Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
           "Accept-Language": "ar,en-US;q=0.9,en;q=0.8",
           "Cache-Control": "no-cache",
         },
-        redirect: "follow",
-        cache: "no-store",
         signal: AbortSignal.timeout(FALLBACK_TIMEOUT_MS),
       });
 
-      lastStatus = res.status;
+      if (!fetched.ok) {
+        if (fetched.blocked) {
+          console.error("[scrape-fallback] blocked redirect target:", url);
+          return {
+            page: null,
+            httpStatus: fetched.status,
+            reason: "The page redirected to a blocked host.",
+          };
+        }
+        lastReason = fetched.reason;
+        continue;
+      }
 
-      if (!res.ok) {
-        console.error("[scrape-fallback] HTTP", res.status, url);
+      lastStatus = fetched.status;
+
+      if (fetched.status < 200 || fetched.status >= 300) {
+        console.error("[scrape-fallback] HTTP", fetched.status, url);
         lastReason =
-          res.status === 402
+          fetched.status === 402
             ? STORE_LOCKED_402_MESSAGE
-            : res.status === 403
+            : fetched.status === 403
               ? "The site blocked direct fetch (HTTP 403)."
-              : `Direct fetch failed (HTTP ${res.status}).`;
+              : `Direct fetch failed (HTTP ${fetched.status}).`;
         // Retry with the next UA on challenge/forbidden; 402 from Shopify is usually final.
-        if (res.status === 402) {
+        if (fetched.status === 402) {
           return { page: null, httpStatus: 402, reason: STORE_LOCKED_402_MESSAGE };
         }
         continue;
       }
 
-      const finalUrl = res.url || url;
-      const safeFinal = assertSafePublicHttpUrl(finalUrl);
+      const finalUrl = fetched.url || url;
+      const safeFinal = await assertSafePublicHttpUrl(finalUrl);
       if (!safeFinal.ok) {
         console.error("[scrape-fallback] blocked redirect target:", finalUrl);
         return {
           page: null,
-          httpStatus: res.status,
+          httpStatus: fetched.status,
           reason: "The page redirected to a blocked host.",
         };
       }
 
-      const htmlRaw = await res.text();
+      const htmlRaw = fetched.bodyText;
       if (!htmlRaw || htmlRaw.length < 50) {
         lastReason = "The page returned empty HTML.";
         continue;
@@ -310,7 +322,7 @@ async function fetchPageFallback(url: string): Promise<FallbackAttempt> {
           scrapeStatus: "ok",
           scrapeMs: Date.now() - started,
         },
-        httpStatus: res.status,
+        httpStatus: fetched.status,
       };
     } catch (err) {
       console.error("[scrape-fallback] error:", err);

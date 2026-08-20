@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useT, type TranslationKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
 import type {
   HealthIssueItem,
   HealthPillar,
@@ -156,7 +157,7 @@ export function StoreHealthView({ health }: { health: StoreHealthPayload }) {
               <p className="font-display text-5xl font-bold tabular-nums">
                 {health.currentHealth ?? "—"}
               </p>
-              <p className="text-sm text-muted-foreground mt-2">{health.storeName}</p>
+              <p className="text-sm text-muted-foreground mt-2">{decodeHtmlEntities(health.storeName)}</p>
               {health.healthBand && (
                 <Badge variant="secondary" className="mt-3">
                   {t(bandLabelKey(health.healthBand))}

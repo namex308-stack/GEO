@@ -9,9 +9,11 @@ import { ensurePersonalWorkspace, listAuditsForUser } from "@/lib/db/audit-repos
 import { countUnreadNotificationsForUser } from "@/lib/db/notifications-repository";
 import { emitSubscriptionWarningNotification } from "@/lib/notifications/emit";
 import type { PlanId, UsageMetric } from "@/lib/db/types";
+import { PLAN_LIMITS } from "@/lib/billing/plans";
 import { parseImpact, parseSeverity } from "@/lib/audits/parse";
 import { buildScoreTrend } from "@/lib/dashboard/trend";
 import { decodeHtmlEntities } from "@/lib/text/decode-html";
+import { sanitizeDisplayName } from "@/lib/auth/display-user";
 import type {
   DashboardPayload,
   DashboardPriorityIssue,
@@ -115,6 +117,9 @@ function planLimitsFromCatalog(
       aiGenerator: Boolean(featuresRaw.ai_generator),
       competitor: Boolean(featuresRaw.competitor),
       api: Boolean(featuresRaw.api),
+      competitorMonitoring: Boolean(featuresRaw.competitor_monitoring),
+      weeklyMonitoring: Boolean(featuresRaw.weekly_monitoring),
+      automatedAlerts: Boolean(featuresRaw.automated_alerts),
     },
   };
 }
@@ -132,10 +137,17 @@ function isPaidSubscriptionActive(sub: {
 const FREE_PLAN_FALLBACK: PlanLimits = {
   planId: "free",
   displayName: "مجاني",
-  auditsPerMonth: 3,
-  aiGensPerMonth: 0,
-  storesLimit: 1,
-  features: { aiGenerator: false, competitor: false, api: false },
+  auditsPerMonth: PLAN_LIMITS.free.auditsPerMonth,
+  aiGensPerMonth: PLAN_LIMITS.free.aiGensPerMonth,
+  storesLimit: PLAN_LIMITS.free.storesLimit,
+  features: {
+    aiGenerator: false,
+    competitor: false,
+    api: false,
+    competitorMonitoring: false,
+    weeklyMonitoring: false,
+    automatedAlerts: false,
+  },
 };
 
 /** Resolve plan limits for a workspace (lazy expiry downgrade included). */
@@ -357,10 +369,12 @@ async function getProfileDisplayName(userId: string): Promise<string | null> {
     .select("full_name")
     .eq("id", userId)
     .maybeSingle();
-  const name = typeof data?.full_name === "string" ? data.full_name.trim() : "";
+  const name = sanitizeDisplayName(
+    typeof data?.full_name === "string" ? data.full_name : null
+  );
   if (!name) return null;
 
-  // Heal stale auth metadata (e.g. placeholder "NAME X") so shell + marketing nav match settings.
+  // Keep auth metadata aligned with profiles.full_name so JWT fallbacks stay current.
   void sb.auth.admin
     .updateUserById(userId, { user_metadata: { full_name: name.slice(0, 120) } })
     .then(({ error }) => {
@@ -750,7 +764,7 @@ export async function getAccountProfile(
   }
 
   return {
-    fullName: (data?.full_name as string) || "",
+    fullName: sanitizeDisplayName((data?.full_name as string) || "") ?? "",
     email,
     locale: "ar",
     timezone: (data?.timezone as string) || "",
@@ -769,7 +783,9 @@ export async function updateAccountProfile(
   if (!sb) return null;
 
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (patch.fullName !== undefined) update.full_name = patch.fullName.trim().slice(0, 120);
+  if (patch.fullName !== undefined) {
+    update.full_name = (sanitizeDisplayName(patch.fullName) ?? "").slice(0, 120);
+  }
   // Product UI is Arabic-only — never persist English or other UI locales.
   if (patch.locale !== undefined) update.locale = "ar";
   if (patch.timezone !== undefined) update.timezone = patch.timezone.trim().slice(0, 64);
@@ -784,8 +800,9 @@ export async function updateAccountProfile(
 
   // Keep auth metadata in sync so shell greeting / avatar name match settings.
   if (patch.fullName !== undefined) {
+    const syncedName = (sanitizeDisplayName(patch.fullName) ?? "").slice(0, 120);
     const { error: metaError } = await sb.auth.admin.updateUserById(userId, {
-      user_metadata: { full_name: patch.fullName.trim().slice(0, 120) },
+      user_metadata: { full_name: syncedName, name: syncedName },
     });
     if (metaError) {
       console.error("[profiles] auth metadata sync failed:", metaError.message);

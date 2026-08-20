@@ -12,7 +12,7 @@ import { DotPattern } from "@/components/magicui/dot-pattern";
 
 export function CTA() {
   const t = useT();
-  const { startAuditAndNavigate, startAuditHref } = useNavigateAfterAction();
+  const { startAuditHref } = useNavigateAfterAction();
   return (
     <Section>
       <Container className="max-w-5xl">
@@ -32,13 +32,7 @@ export function CTA() {
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                 <Button size="lg" asChild className="h-11 px-7 font-semibold group">
-                  <Link
-                    href={startAuditHref}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      startAuditAndNavigate();
-                    }}
-                  >
+                  <Link href={startAuditHref}>
                     {t("cta.button")}
                     <ArrowRight className="size-4 ms-0.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
                   </Link>

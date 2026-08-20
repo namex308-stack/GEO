@@ -4,7 +4,11 @@ import {
   toPrioritizedFindingsJson,
 } from "@/lib/ai/recommendations";
 import { sanitizeUserContextField } from "@/lib/ai/sanitize-prompt";
-import { generatedContentFromPage, parseGeneratedContent } from "@/lib/ai/generated-content";
+import {
+  generatedContentFromPage,
+  isGeneratedContentArabicEnough,
+  parseGeneratedContent,
+} from "@/lib/ai/generated-content";
 import type { Recommendation } from "@/lib/types";
 import type { NormalizedPage } from "@/lib/db/types";
 
@@ -109,6 +113,30 @@ describe("generatedContentFromPage", () => {
     expect(content.title.toLowerCase()).not.toContain("argan");
   });
 
+  it("decodes HTML entities in page-derived titles", () => {
+    const page: NormalizedPage = {
+      url: "https://shop.example.com/p/1",
+      title: "Soap &amp; Water",
+      description: "Cleanser",
+      pageType: "product",
+      markdown: "# Soap",
+      imageCount: 1,
+      contentHash: "abc",
+      structuredData: {},
+      scrapeStatus: "ok",
+    };
+    expect(generatedContentFromPage(page).title).toBe("Soap & Water");
+    expect(
+      parseGeneratedContent({
+        title: "Soap &amp; Water",
+        description: "Cleanser for daily use",
+        faq: [],
+        metaDescription: "Cleanser for daily use",
+        adCopy: [],
+      })?.title
+    ).toBe("Soap & Water");
+  });
+
   it("rejects invalid AI payloads", () => {
     expect(parseGeneratedContent({ title: "" })).toBeNull();
     expect(
@@ -120,5 +148,51 @@ describe("generatedContentFromPage", () => {
         adCopy: [],
       })
     ).not.toBeNull();
+  });
+
+  it("accepts Arabic AI Studio output for the Arabic flow", () => {
+    const arabic = parseGeneratedContent({
+      title: "حذاء يومي مريح للتنقل في المدينة",
+      description:
+        "حذاء خفيف ومريح مصمم لروتينك اليومي مع تهوية جيدة ودعم مناسب للقدم خلال ساعات العمل والتنقل.",
+      faq: [
+        {
+          q: "هل المقاس مطابق؟",
+          a: "نعم، المقاس مطابق لمعظم العملاء مع إمكانية الإرجاع خلال أسبوعين.",
+        },
+      ],
+      metaDescription: "حذاء يومي مريح بتهوية ممتازة وشحن سريع داخل المنطقة.",
+      adCopy: [
+        {
+          platform: "Meta / Instagram",
+          headline: "راحة تدوم طوال اليوم",
+          body: "اختر الحذاء الأخف لمشاويرك اليومية مع شحن سريع.",
+          cta: "تسوّق الآن",
+        },
+      ],
+    });
+    expect(arabic).not.toBeNull();
+    expect(isGeneratedContentArabicEnough(arabic!)).toBe(true);
+  });
+
+  it("rejects English page-scrape style content as Arabic AI output", () => {
+    const english = parseGeneratedContent({
+      title: "Allbirds: Comfortable, Sustainable Shoes & Apparel",
+      description:
+        "Allbirds: The world’s most comfortable shoes, flats, and clothing made with natural materials.",
+      faq: [],
+      metaDescription:
+        "Allbirds: The world’s most comfortable shoes, flats, and clothing made with natural materials.",
+      adCopy: [
+        {
+          platform: "Meta / Instagram",
+          headline: "Comfortable everyday shoes",
+          body: "Shop sustainable footwear made with natural materials.",
+          cta: "Shop now",
+        },
+      ],
+    });
+    expect(english).not.toBeNull();
+    expect(isGeneratedContentArabicEnough(english!)).toBe(false);
   });
 });

@@ -1,4 +1,5 @@
 import type { Recommendation, ScorePillar } from "@/lib/types";
+import { isGenericSolution, solutionForFinding } from "@/lib/audit/finding-copy";
 
 export type ImpactLabelKey =
   | "report.highImpact"
@@ -306,7 +307,9 @@ export function buildConsultantRecommendationView(
     whatIsWrong: (rec.problem || "").trim() || "هناك فجوة واضحة في تجربة صفحة المنتج.",
     whyItMatters: whyItMattersLabel(rec),
     ifIgnored: ifIgnoredLabel(rec),
-    howToFix: (rec.solution || "").trim() || "حسّن عنصر الصفحة المرتبط بهذه الفرصة ثم أعد المراجعة.",
+    howToFix: isGenericSolution(rec.solution)
+      ? solutionForFinding(rec.problem, rec.pillar)
+      : rec.solution.trim() || solutionForFinding(rec.problem, rec.pillar),
     howLong: estimatedTimeLabel(rec),
     businessImpact: expectedResultLabel(rec),
     impactLevel: rec.impact,

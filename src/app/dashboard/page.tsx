@@ -32,6 +32,8 @@ import { filterTrendByMonths, labelTrendPoints } from "@/lib/dashboard/trend";
 import { displayHostFromUrl } from "@/lib/url-display";
 import { cn } from "@/lib/utils";
 import { isAuditInProgress } from "@/lib/audits/types";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
+import { sanitizeDisplayName } from "@/lib/auth/display-user";
 
 const ScoreTrendChart = dynamic(
   () =>
@@ -61,6 +63,12 @@ function relativeDate(iso: string, t: (key: TranslationKey, params?: Record<stri
   if (diffDays === 1) return t("dashboard.yesterday");
   if (diffDays < 7) return t("dashboard.daysAgo", { count: diffDays });
   return t("dashboard.weekAgo");
+}
+
+function greetingKey(hour: number): "dashboard.goodMorning" | "dashboard.goodAfternoon" | "dashboard.goodEvening" {
+  if (hour < 12) return "dashboard.goodMorning";
+  if (hour < 18) return "dashboard.goodAfternoon";
+  return "dashboard.goodEvening";
 }
 
 function scoreTone(score: number | null): string {
@@ -263,6 +271,15 @@ export default function DashboardPage() {
 
         {data && (
           <>
+            <div className="sm:hidden">
+              <h1 className="font-display text-lg font-bold tracking-tight">
+                {t(greetingKey(new Date().getHours()), {
+                  name:
+                    sanitizeDisplayName(data.displayName)?.split(/\s+/)[0] || "بك",
+                })}
+              </h1>
+              <p className="mb-1 text-xs text-muted-foreground">{t("dashboard.subtitle")}</p>
+            </div>
             {/* KPI row */}
             <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
               <KpiCard
@@ -454,12 +471,12 @@ export default function DashboardPage() {
                                 className="flex items-center gap-3 min-w-0"
                               >
                                 <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-display text-xs font-bold">
-                                  {(r.storeName || r.productName).slice(0, 2).toUpperCase()}
+                                  {decodeHtmlEntities(r.storeName || r.productName).slice(0, 2).toUpperCase()}
                                 </span>
                                 <span className="min-w-0 text-start">
-                                  <span className="block font-semibold truncate">{r.productName}</span>
+                                  <span className="block font-semibold truncate">{decodeHtmlEntities(r.productName)}</span>
                                   <span className="block text-xs text-muted-foreground truncate" dir="ltr">
-                                    {displayHostFromUrl(r.productUrl) || r.storeName}
+                                    {displayHostFromUrl(r.productUrl) || decodeHtmlEntities(r.storeName)}
                                   </span>
                                 </span>
                               </Link>

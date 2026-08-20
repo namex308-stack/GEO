@@ -28,7 +28,7 @@ async function handlePaymentSuccess(
   const fromOrder = parseOrderId(orderId);
   const fromAmount = amount != null ? mapAmountToPlan(amount) : null;
 
-  // Prefer orderId plan; fall back / validate with amount map (199→pro, 499→business).
+  // Prefer orderId plan; fall back / validate with amount map (399→pro, 999→business).
   let plan: PaidPlan | null = fromOrder?.plan ?? fromAmount?.plan ?? null;
   let period: BillingPeriod | null = fromOrder?.period ?? fromAmount?.period ?? null;
   const userId = fromOrder?.userId ?? null;

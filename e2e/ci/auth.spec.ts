@@ -12,16 +12,14 @@ test.describe("CI — authentication flow", () => {
     page,
   }) => {
     await page.goto("/auth");
+    await expect(page.locator("form[data-hydrated='true']")).toBeVisible({
+      timeout: 15_000,
+    });
     await page.locator('input[type="email"]').fill("e2e-invalid@example.com");
     await page.locator('input[type="password"]').fill("definitely-wrong-password");
     await page.getByRole("button", { name: "تسجيل الدخول" }).click();
 
-    // Either a mapped auth error, or not-configured message — never leave /auth.
     await expect(page).toHaveURL(/\/auth/);
-    await expect(
-      page.getByText(
-        /البريد الإلكتروني أو كلمة المرور غير صحيحة|المصادقة غير مُعدّة|حدث خطأ|Invalid|غير/
-      )
-    ).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole("alert")).toBeVisible({ timeout: 20_000 });
   });
 });

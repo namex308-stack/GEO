@@ -10,6 +10,11 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n";
 import {
+  initialsFromDisplayName,
+  resolvePreferredDisplayName,
+} from "@/lib/auth/display-user";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
   APP_NAV_FOOTER,
   APP_NAV_PRIMARY,
   isNavItemActive,
@@ -58,15 +63,21 @@ export function AppSidebar({
   latestAuditId,
   mobileOpen,
   onClose,
+  preferredDisplayName = null,
+  planName = null,
 }: {
   latestAuditId: string | null;
   mobileOpen: boolean;
   onClose: () => void;
+  preferredDisplayName?: string | null;
+  planName?: string | null;
 }) {
   const t = useT();
   const router = useRouter();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [signingOut, setSigningOut] = React.useState(false);
+  const displayName = resolvePreferredDisplayName(preferredDisplayName, user);
+  const initials = displayName ? initialsFromDisplayName(displayName) : "?";
 
   const handleLogout = async () => {
     if (signingOut) return;
@@ -124,6 +135,25 @@ export function AppSidebar({
       </nav>
 
       <div className="space-y-2 p-3 pt-0">
+        {displayName ? (
+          <Link
+            href="/settings"
+            onClick={onClose}
+            className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/40 px-3 py-2.5 transition-colors hover:border-primary/30 hover:bg-primary/[0.06]"
+          >
+            <Avatar className="size-9">
+              <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1 leading-tight">
+              <div className="truncate text-sm font-semibold text-foreground">{displayName}</div>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {planName ? t("dashboard.planBadge", { plan: planName }) : t("dashboard.account")}
+              </p>
+            </div>
+          </Link>
+        ) : null}
         <Button
           type="button"
           variant="ghost"

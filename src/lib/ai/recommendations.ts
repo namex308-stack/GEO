@@ -1,3 +1,4 @@
+import { dedupeByFindingTopic, enrichRecommendation } from "@/lib/audit/finding-copy";
 import type { Recommendation, ScorePillar } from "@/lib/types";
 
 /**
@@ -63,10 +64,16 @@ export function compareFindings(a: Recommendation, b: Recommendation): number {
 }
 
 function dedupeRecommendations(recs: Recommendation[]): Recommendation[] {
+  const prepared: Recommendation[] = [];
+  for (const rec of recs) {
+    const next = enrichRecommendation(rec);
+    if (next) prepared.push(next);
+  }
+
   const byId = new Map<string, Recommendation>();
   const byProblem = new Map<string, Recommendation>();
 
-  for (const r of recs) {
+  for (const r of prepared) {
     const id = (r.id || "").trim();
     const problemKey = normalizeKey(r.problem || "");
 
@@ -100,7 +107,7 @@ function dedupeRecommendations(recs: Recommendation[]): Recommendation[] {
     if (!existing || isBetter(r, existing)) finalByProblem.set(pk, r);
   }
 
-  return [...finalByProblem.values()];
+  return dedupeByFindingTopic([...finalByProblem.values()]);
 }
 
 /**

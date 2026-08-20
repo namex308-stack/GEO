@@ -170,7 +170,7 @@ async function workspaceAllowsCompetitor(
   const cached = cache.get(workspaceId);
   if (cached !== undefined) return cached;
   const plan = await getPlanForWorkspace(workspaceId);
-  const allowed = isPlanFeatureEnabled(plan, "competitor");
+  const allowed = isPlanFeatureEnabled(plan, "competitorMonitoring");
   cache.set(workspaceId, allowed);
   return allowed;
 }

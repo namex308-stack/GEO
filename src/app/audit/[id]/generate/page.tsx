@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useT } from "@/lib/i18n";
 import { isPlaceholderAuditId } from "@/lib/audits/types";
 import type { GeneratedContent } from "@/lib/types";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
 
 type LoadState =
   | { status: "loading" }
@@ -141,12 +142,12 @@ export default function GeneratePage() {
                       variant="ghost"
                       size="sm"
                       className="rounded-full h-8"
-                      onClick={() => copyText(state.content.title, t("generate.titleTab"))}
+                      onClick={() => copyText(decodeHtmlEntities(state.content.title), t("generate.titleTab"))}
                     >
                       <Copy className="size-3.5" />
                     </Button>
                   </div>
-                  <p className="text-sm font-semibold">{state.content.title}</p>
+                  <p className="text-sm font-semibold">{decodeHtmlEntities(state.content.title)}</p>
                 </motion.div>
                 <div className="rounded-2xl border border-border/50 bg-card p-5 space-y-3">
                   <div className="flex items-center justify-between">

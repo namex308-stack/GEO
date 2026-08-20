@@ -21,7 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/components/providers/auth-provider";
-import { getUserInitials } from "@/lib/auth/display-user";
+import { getUserInitials, notifyProfileUpdated } from "@/lib/auth/display-user";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { useT } from "@/lib/i18n";
 import {
   CATEGORY_OPTIONS,
@@ -196,6 +197,11 @@ export default function SettingsPage() {
       const data = (await res.json()) as { profile?: { fullName?: string; email?: string } };
       if (data.profile?.fullName != null) setFullName(data.profile.fullName);
       if (data.profile?.email) setEmail(data.profile.email);
+      notifyProfileUpdated(data.profile?.fullName ?? fullName);
+      const supabase = getSupabaseBrowser();
+      if (supabase) {
+        await supabase.auth.refreshSession();
+      }
       setSavedAccount(true);
       toast.success(t("settings.saved"));
     } catch {

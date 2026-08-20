@@ -6,7 +6,7 @@ import {
   saveOnboardingStep,
   updateOnboardingAnswers,
 } from "@/lib/db/onboarding-repository";
-import { ONBOARDING_STEPS, isOptionalStep, slugFromStepNumber } from "@/lib/onboarding/constants";
+import { isOptionalStep, slugFromStepNumber } from "@/lib/onboarding/constants";
 import { probeStoreUrl } from "@/lib/onboarding/probe-store";
 import {
   OnboardingProfilePartialSchema,
@@ -116,17 +116,35 @@ export async function PATCH(req: NextRequest) {
     mergedAnswers.competitorUrl = normalizeStoreUrl(mergedAnswers.competitorUrl);
   }
 
-  const state = await saveOnboardingStep({
+  const result = await saveOnboardingStep({
     userId: auth.user.id,
     step,
     answers: mergedAnswers,
     skip,
-    markComplete: markComplete || step >= ONBOARDING_STEPS.length,
+    markComplete,
   });
 
-  if (!state) {
-    return NextResponse.json({ error: "تعذّر حفظ خطوة الإعداد." }, { status: 503 });
+  if (!result.ok) {
+    switch (result.code) {
+      case "INCOMPLETE_REQUIRED_FIELDS":
+        return NextResponse.json(
+          {
+            error: "أكمل الحقول المطلوبة قبل إنهاء الإعداد.",
+            code: result.code,
+          },
+          { status: 400 }
+        );
+      case "SAVE_FAILED":
+        return NextResponse.json(
+          { error: "تعذّر حفظ خطوة الإعداد." },
+          { status: 503 }
+        );
+      default: {
+        const _exhaustive: never = result.code;
+        return _exhaustive;
+      }
+    }
   }
 
-  return NextResponse.json({ onboarding: state });
+  return NextResponse.json({ onboarding: result.state });
 }

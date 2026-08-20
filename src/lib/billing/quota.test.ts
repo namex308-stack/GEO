@@ -4,9 +4,10 @@ import {
   auditLimitReachedMessage,
   isUnderQuota,
 } from "@/lib/billing/quota";
+import { PLAN_LIMITS } from "@/lib/billing/plans";
 
 describe("isUnderQuota", () => {
-  it("treats a null limit as unlimited", () => {
+  it("treats a null limit as unlimited (legacy)", () => {
     expect(isUnderQuota(0, null)).toBe(true);
     expect(isUnderQuota(10_000, null)).toBe(true);
   });
@@ -22,11 +23,18 @@ describe("isUnderQuota", () => {
   });
 
   it("matches Free/Pro/Business plan boundaries", () => {
-    expect(isUnderQuota(2, 3)).toBe(true); // Free: 3rd audit still allowed
-    expect(isUnderQuota(3, 3)).toBe(false); // Free: 4th audit blocked
-    expect(isUnderQuota(29, 30)).toBe(true); // Pro: 30th audit allowed
-    expect(isUnderQuota(30, 30)).toBe(false); // Pro: 31st audit blocked
-    expect(isUnderQuota(10_000, null)).toBe(true); // Business: unlimited
+    const { free, pro, business } = PLAN_LIMITS;
+    expect(isUnderQuota(free.auditsPerMonth - 1, free.auditsPerMonth)).toBe(true);
+    expect(isUnderQuota(free.auditsPerMonth, free.auditsPerMonth)).toBe(false);
+    expect(isUnderQuota(pro.auditsPerMonth - 1, pro.auditsPerMonth)).toBe(true);
+    expect(isUnderQuota(pro.auditsPerMonth, pro.auditsPerMonth)).toBe(false);
+    expect(isUnderQuota(business.auditsPerMonth - 1, business.auditsPerMonth)).toBe(true);
+    expect(isUnderQuota(business.auditsPerMonth, business.auditsPerMonth)).toBe(false);
+
+    expect(isUnderQuota(pro.aiGensPerMonth - 1, pro.aiGensPerMonth)).toBe(true);
+    expect(isUnderQuota(pro.aiGensPerMonth, pro.aiGensPerMonth)).toBe(false);
+    expect(isUnderQuota(business.aiGensPerMonth - 1, business.aiGensPerMonth)).toBe(true);
+    expect(isUnderQuota(business.aiGensPerMonth, business.aiGensPerMonth)).toBe(false);
   });
 });
 

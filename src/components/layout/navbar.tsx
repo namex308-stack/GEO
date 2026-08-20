@@ -28,7 +28,6 @@ export function Navbar() {
   const pathname = usePathname();
   const { isAuthed, user, loading, signOut } = useAuth();
   const {
-    startAuditAndNavigate,
     startAuditHref,
     loginHref,
     newAuditHref,
@@ -70,10 +69,8 @@ export function Navbar() {
     router.refresh();
   };
 
-  const onStartAuditClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
+  const onStartAuditClick = () => {
     setMobileOpen(false);
-    startAuditAndNavigate();
   };
 
   const showAuthed = mounted && !loading && isAuthed && user;

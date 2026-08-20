@@ -26,8 +26,8 @@ export async function GET(
   if (!auth.ok) return auth.response;
 
   const plan = await getPlanForUser(auth.user.id);
-  if (!isPlanFeatureEnabled(plan, "competitor")) {
-    return NextResponse.json(featureLockedBody("competitor", plan.planId), {
+  if (!isPlanFeatureEnabled(plan, "competitorMonitoring")) {
+    return NextResponse.json(featureLockedBody("competitorMonitoring", plan.planId), {
       status: 403,
     });
   }

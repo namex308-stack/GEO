@@ -3,14 +3,36 @@ export type BillingPeriod = "monthly" | "yearly";
 
 export const PLAN_IDS = ["free", "pro", "business"] as const;
 
-/** Kashier checkout amounts in EGP */
+/** Kashier checkout amounts in EGP — authoritative paid-plan prices. */
 export const PLAN_PRICES: Record<
   Exclude<PlanId, "free">,
   Record<BillingPeriod, number>
 > = {
-  pro: { monthly: 199, yearly: 1490 },
-  business: { monthly: 499, yearly: 3990 },
+  pro: { monthly: 399, yearly: 3990 },
+  business: { monthly: 999, yearly: 9990 },
 };
+
+/** Authoritative monthly usage / store limits (mirrored in plan_catalog). */
+export const PLAN_LIMITS = {
+  free: {
+    auditsPerMonth: 3,
+    aiGensPerMonth: 0,
+    storesLimit: 1,
+  },
+  pro: {
+    auditsPerMonth: 50,
+    aiGensPerMonth: 100,
+    storesLimit: 5,
+  },
+  business: {
+    auditsPerMonth: 200,
+    aiGensPerMonth: 400,
+    storesLimit: 15,
+  },
+} as const satisfies Record<
+  PlanId,
+  { auditsPerMonth: number; aiGensPerMonth: number; storesLimit: number }
+>;
 
 export function getCheckoutPrice(planId: Exclude<PlanId, "free">, period: BillingPeriod): number {
   return PLAN_PRICES[planId][period];
@@ -18,7 +40,7 @@ export function getCheckoutPrice(planId: Exclude<PlanId, "free">, period: Billin
 
 /**
  * Map Kashier paid amount (EGP) → plan + period.
- * Used by webhook when amount is present (199→pro, 499→business).
+ * Used by webhook when amount is present (399→pro, 999→business).
  */
 export function mapAmountToPlan(amount: number): {
   plan: Exclude<PlanId, "free">;
@@ -30,6 +52,12 @@ export function mapAmountToPlan(amount: number): {
   if (rounded === PLAN_PRICES.business.monthly) return { plan: "business", period: "monthly" };
   if (rounded === PLAN_PRICES.business.yearly) return { plan: "business", period: "yearly" };
   return null;
+}
+
+/** Exact EGP saved vs paying monthly for 12 months. */
+export function yearlySavingsEgp(planId: Exclude<PlanId, "free">): number {
+  const { monthly, yearly } = PLAN_PRICES[planId];
+  return monthly * 12 - yearly;
 }
 
 export function formatEgp(amount: number): string {
@@ -48,12 +76,12 @@ export interface MarketingPlan {
   featureKeys: readonly string[];
 }
 
-/** UI plan cards — i18n keys for features live in entitlements / i18n */
+/** UI plan cards — prices always mirror PLAN_PRICES / free zero. */
 export const MARKETING_PLANS: MarketingPlan[] = [
   {
     id: "free",
     name: "مجاني",
-    tagline: "3 تحليلات، درجة أساسية، وسجل تقارير حديث.",
+    tagline: "ابدأ بتحليل أساسي واكشف فرص التحويل دون التزام.",
     monthlyPrice: 0,
     yearlyPrice: 0,
     auditsLabel: "3 تحليلات / شهر",
@@ -62,15 +90,17 @@ export const MARKETING_PLANS: MarketingPlan[] = [
       "plan.starter.f1",
       "plan.starter.f2",
       "plan.starter.f3",
+      "plan.starter.f4",
+      "plan.starter.f5",
     ],
   },
   {
     id: "pro",
     name: "احترافي",
-    tagline: "تحليل كامل وإصلاحات سريعة وأدوات AI للمتاجر النامية.",
-    monthlyPrice: 199,
-    yearlyPrice: 1490,
-    auditsLabel: "30 تحليلاً / شهر",
+    tagline: "الخطة المناسبة للمتاجر الجادة: تحليل كامل، منافسون، واستوديو AI.",
+    monthlyPrice: PLAN_PRICES.pro.monthly,
+    yearlyPrice: PLAN_PRICES.pro.yearly,
+    auditsLabel: "50 تحليلاً / شهر",
     highlight: true,
     cta: "الترقية للاحترافي",
     featureKeys: [
@@ -86,10 +116,10 @@ export const MARKETING_PLANS: MarketingPlan[] = [
   {
     id: "business",
     name: "أعمال",
-    tagline: "تحليلات وتوليدات AI غير محدودة للمتاجر ذات الحجم الأعلى.",
-    monthlyPrice: 499,
-    yearlyPrice: 3990,
-    auditsLabel: "تحليلات غير محدودة",
+    tagline: "حدود أعلى ومراقبة مستمرة للفرق التي تدير عدة متاجر.",
+    monthlyPrice: PLAN_PRICES.business.monthly,
+    yearlyPrice: PLAN_PRICES.business.yearly,
+    auditsLabel: "200 تحليل / شهر",
     cta: "الترقية للأعمال",
     featureKeys: [
       "plan.business.f1",
@@ -98,6 +128,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
       "plan.business.f4",
       "plan.business.f5",
       "plan.business.f6",
+      "plan.business.f7",
     ],
   },
 ];
@@ -113,14 +144,14 @@ export interface PlanComparisonRow {
 }
 
 export const PLAN_COMPARISON_ROWS: PlanComparisonRow[] = [
-  { labelKey: "planCompare.audits", free: "partial", pro: "partial", business: "yes", noteKey: "planCompare.auditsNote" },
+  { labelKey: "planCompare.audits", free: "partial", pro: "partial", business: "partial", noteKey: "planCompare.auditsNote" },
   { labelKey: "planCompare.overallScore", free: "yes", pro: "yes", business: "yes" },
-  { labelKey: "planCompare.fullAnalysis", free: "no", pro: "yes", business: "yes" },
-  { labelKey: "planCompare.aiRecommendations", free: "no", pro: "yes", business: "yes" },
+  { labelKey: "planCompare.fullAnalysis", free: "yes", pro: "yes", business: "yes" },
+  { labelKey: "planCompare.aiRecommendations", free: "yes", pro: "yes", business: "yes" },
   { labelKey: "planCompare.aiGenerator", free: "no", pro: "yes", business: "yes" },
-  { labelKey: "planCompare.competitor", free: "no", pro: "partial", business: "yes", noteKey: "planCompare.competitorNote" },
+  { labelKey: "planCompare.competitor", free: "no", pro: "yes", business: "yes", noteKey: "planCompare.competitorNote" },
   { labelKey: "planCompare.websiteCrawl", free: "partial", pro: "yes", business: "yes", noteKey: "planCompare.crawlNote" },
-  { labelKey: "planCompare.support", free: "partial", pro: "partial", business: "yes", noteKey: "planCompare.supportNote" },
+  { labelKey: "planCompare.support", free: "partial", pro: "yes", business: "yes", noteKey: "planCompare.supportNote" },
 ];
 
 export const PRICING_FAQ_KEYS = [

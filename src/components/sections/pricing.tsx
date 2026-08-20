@@ -10,13 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useT, type TranslationKey } from "@/lib/i18n";
-import { MARKETING_PLANS, formatEgp, type PlanId } from "@/lib/billing/plans";
+import { MARKETING_PLANS, formatEgp, yearlySavingsEgp, type PlanId } from "@/lib/billing/plans";
 import {
   assertNoUpgradeLoop,
   resolvePlanSelectionPath,
 } from "@/lib/billing/upgrade-flow";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
-import { useNavigateAfterAction } from "@/lib/use-navigate";
+import { CRAWLABLE_START_AUDIT_HREF } from "@/lib/use-navigate";
+import { withTimeout } from "@/lib/with-timeout";
 
 export type BillingInterval = "monthly" | "yearly";
 
@@ -64,7 +65,6 @@ const PLAN_META: Record<
 export function Pricing({ onFreeCta, className, variant = "landing" }: PricingProps) {
   const t = useT();
   const router = useRouter();
-  const { startAuditAndNavigate } = useNavigateAfterAction();
   const [interval, setInterval] = React.useState<BillingInterval>("monthly");
   const [checkingOut, setCheckingOut] = React.useState<PlanId | null>(null);
 
@@ -72,7 +72,11 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
 
   const handleCta = async (planId: PlanId) => {
     if (planId === "free") {
-      (onFreeCta ?? startAuditAndNavigate)();
+      if (onFreeCta) {
+        onFreeCta();
+        return;
+      }
+      router.push(CRAWLABLE_START_AUDIT_HREF);
       return;
     }
 
@@ -81,9 +85,11 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
       let authenticated = false;
       const sb = getSupabaseBrowser();
       if (sb) {
-        const {
-          data: { user },
-        } = await sb.auth.getUser();
+        const user = await withTimeout(
+          sb.auth.getUser().then((r) => r.data.user),
+          2500,
+          null
+        );
         authenticated = !!user;
       }
 
@@ -237,7 +243,11 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
                       variant="outline"
                       className="mt-2.5 text-xs font-semibold border-primary/40 text-primary bg-primary/5"
                     >
-                      {t("plan.saveFourMonths")}
+                      {t("plan.saveYearlyAmount", {
+                        amount: formatEgp(
+                          yearlySavingsEgp(plan.id === "business" ? "business" : "pro")
+                        ),
+                      })}
                     </Badge>
                   )}
 
@@ -245,7 +255,12 @@ export function Pricing({ onFreeCta, className, variant = "landing" }: PricingPr
                     <p className="mt-2 text-xs text-muted-foreground">
                       {formatEgp(plan.yearlyPrice)} EGP{t("pricing.perYear")}{" "}
                       <span className="text-primary font-medium">
-                        — {t("plan.saveFourMonths")}
+                        —{" "}
+                        {t("plan.saveYearlyAmount", {
+                          amount: formatEgp(
+                            yearlySavingsEgp(plan.id === "business" ? "business" : "pro")
+                          ),
+                        })}
                       </span>
                     </p>
                   )}

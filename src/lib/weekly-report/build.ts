@@ -1,5 +1,6 @@
 import { storeHealthBand } from "@/lib/report/executive-summary";
 import type { AuditData } from "@/lib/types";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
 import { compareAudits } from "./compare";
 import type {
   ScoreChange,
@@ -120,11 +121,12 @@ export function buildWeeklyReportPayload(input: {
   aiExecutiveSummary?: string;
 }): WeeklyReportPayload {
   const diff = compareAudits(input.latest, input.previous);
-  const storeName =
+  const storeName = decodeHtmlEntities(
     input.storeName.trim() ||
-    input.latest.storeName?.trim() ||
-    input.latest.productName?.trim() ||
-    "المتجر";
+      input.latest.storeName?.trim() ||
+      input.latest.productName?.trim() ||
+      "المتجر"
+  );
 
   const executiveSummary = buildDeterministicExecutiveSummary({
     storeName,

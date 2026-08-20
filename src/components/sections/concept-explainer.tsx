@@ -7,7 +7,7 @@ import {
   ArrowRight, Check, Sparkles, TrendingUp, Play, Pause,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigateAfterAction } from "@/lib/use-navigate";
+import { StartAuditCta } from "@/components/common/start-audit-cta";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { FloatingOrbs } from "@/components/common/visual-effects";
@@ -45,7 +45,6 @@ const PHASES = [
 
 export function ConceptExplainer() {
   const t = useT();
-  const { startAuditAndNavigate } = useNavigateAfterAction();
   const [phase, setPhase] = React.useState(0);
   const [playing, setPlaying] = React.useState(true);
 
@@ -111,9 +110,9 @@ export function ConceptExplainer() {
                 {playing ? <Pause className="size-3.5 me-1.5" /> : <Play className="size-3.5 me-1.5" />}
                 {playing ? t("concept.pause") : t("concept.play")}
               </Button>
-              <Button size="sm" onClick={startAuditAndNavigate} className="rounded-full shadow-glow">
+              <StartAuditCta size="sm" className="rounded-full shadow-glow">
                 {t("concept.tryNow")} <ArrowRight className="size-3.5 ms-1 rtl:rotate-180" />
-              </Button>
+              </StartAuditCta>
             </div>
           </div>
 

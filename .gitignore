@@ -41,6 +41,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local verification / scratch artifacts (never commit)
+health-check-report.txt
+tables-check.txt
+supabase/.temp/
 
 # typescript
 *.tsbuildinfo

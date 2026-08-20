@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractPageData, extractionToStructuredData } from "@/lib/firecrawl/extract";
+import { extractPageData, extractHtmlTitle, extractionToStructuredData } from "@/lib/firecrawl/extract";
 
 const SAMPLE_HTML = `<!DOCTYPE html>
 <html>
@@ -73,5 +73,12 @@ describe("extractPageData", () => {
     const extracted = extractPageData(html, "Buy now for $49.00", undefined, "https://example.com/p");
     expect(extracted.price).toMatch(/49/);
     expect(extracted.hasPriceSignal).toBe(true);
+  });
+
+  it("decodes HTML entities in page titles", () => {
+    const html = "<html><head><title>Soap &amp; Water &ndash; Shop</title></head><body></body></html>";
+    expect(extractHtmlTitle(html)).toBe("Soap & Water – Shop");
+    const extracted = extractPageData(html, "", undefined, "https://shop.example.com/p");
+    expect(extracted.title).toBe("Soap & Water – Shop");
   });
 });

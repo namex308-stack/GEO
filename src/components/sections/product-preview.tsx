@@ -2,10 +2,9 @@
 
 import Image from "next/image";
 import { ArrowRight, LayoutDashboard, Link2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { StartAuditCta } from "@/components/common/start-audit-cta";
 import { Container, Section, SectionHeader } from "@/components/design-system/section";
 import { BlurFade } from "@/components/magicui/blur-fade";
-import { useNavigateAfterAction } from "@/lib/use-navigate";
 import { useT } from "@/lib/i18n";
 
 const SHOTS = [
@@ -26,7 +25,6 @@ const SHOTS = [
 /** Real product screenshots — no mockups, no fabricated scores. */
 export function ProductPreview() {
   const t = useT();
-  const { startAuditAndNavigate } = useNavigateAfterAction();
 
   return (
     <Section id="product-preview" tone="muted">
@@ -67,10 +65,10 @@ export function ProductPreview() {
         </div>
 
         <div className="mt-10 text-center">
-          <Button size="lg" onClick={startAuditAndNavigate} className="font-semibold h-11 px-7 rounded-full shadow-glow group">
+          <StartAuditCta className="font-semibold h-11 px-7 rounded-full shadow-glow group">
             {t("productPreview.cta")}
             <ArrowRight className="size-4 ms-0.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
-          </Button>
+          </StartAuditCta>
           <p className="mt-3 text-xs text-muted-foreground">{t("productPreview.ctaSub")}</p>
         </div>
       </Container>

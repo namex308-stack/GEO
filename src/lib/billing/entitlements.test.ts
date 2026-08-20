@@ -4,58 +4,92 @@ import {
   apiLockedMessage,
   canCreateStore,
   competitorLockedMessage,
+  competitorMonitoringLockedMessage,
+  decideStoreEnsure,
   ENTITLEMENT_CODES,
   featureLockedBody,
   isPlanFeatureEnabled,
+  oldestAllowedStoreIds,
   storeLimitReachedBody,
   storeLimitReachedMessage,
 } from "@/lib/billing/entitlements";
+import { PLAN_LIMITS } from "@/lib/billing/plans";
 import type { PlanLimits } from "@/lib/dashboard/types";
 
 const freePlan: PlanLimits = {
   planId: "free",
   displayName: "مجاني",
-  auditsPerMonth: 3,
-  aiGensPerMonth: 0,
-  storesLimit: 1,
-  features: { aiGenerator: false, competitor: false, api: false },
+  auditsPerMonth: PLAN_LIMITS.free.auditsPerMonth,
+  aiGensPerMonth: PLAN_LIMITS.free.aiGensPerMonth,
+  storesLimit: PLAN_LIMITS.free.storesLimit,
+  features: {
+    aiGenerator: false,
+    competitor: false,
+    api: false,
+    competitorMonitoring: false,
+    weeklyMonitoring: false,
+    automatedAlerts: false,
+  },
 };
 
 const proPlan: PlanLimits = {
   planId: "pro",
   displayName: "احترافي",
-  auditsPerMonth: 30,
-  aiGensPerMonth: 100,
-  storesLimit: 3,
-  features: { aiGenerator: true, competitor: true, api: false },
+  auditsPerMonth: PLAN_LIMITS.pro.auditsPerMonth,
+  aiGensPerMonth: PLAN_LIMITS.pro.aiGensPerMonth,
+  storesLimit: PLAN_LIMITS.pro.storesLimit,
+  features: {
+    aiGenerator: true,
+    competitor: true,
+    api: false,
+    competitorMonitoring: false,
+    weeklyMonitoring: false,
+    automatedAlerts: false,
+  },
 };
 
 const businessPlan: PlanLimits = {
   planId: "business",
   displayName: "أعمال",
-  auditsPerMonth: null,
-  aiGensPerMonth: null,
-  storesLimit: null,
-  features: { aiGenerator: true, competitor: true, api: true },
+  auditsPerMonth: PLAN_LIMITS.business.auditsPerMonth,
+  aiGensPerMonth: PLAN_LIMITS.business.aiGensPerMonth,
+  storesLimit: PLAN_LIMITS.business.storesLimit,
+  features: {
+    aiGenerator: true,
+    competitor: true,
+    api: true,
+    competitorMonitoring: true,
+    weeklyMonitoring: true,
+    automatedAlerts: true,
+  },
 };
 
 describe("isPlanFeatureEnabled", () => {
-  it("locks competitor / AI generator / API on Free", () => {
+  it("locks competitor / AI / monitoring / API on Free", () => {
     expect(isPlanFeatureEnabled(freePlan, "competitor")).toBe(false);
     expect(isPlanFeatureEnabled(freePlan, "aiGenerator")).toBe(false);
     expect(isPlanFeatureEnabled(freePlan, "api")).toBe(false);
+    expect(isPlanFeatureEnabled(freePlan, "competitorMonitoring")).toBe(false);
+    expect(isPlanFeatureEnabled(freePlan, "weeklyMonitoring")).toBe(false);
+    expect(isPlanFeatureEnabled(freePlan, "automatedAlerts")).toBe(false);
   });
 
-  it("unlocks competitor and AI on Pro but not API", () => {
+  it("unlocks compare + AI on Pro but not Business-only monitoring", () => {
     expect(isPlanFeatureEnabled(proPlan, "competitor")).toBe(true);
     expect(isPlanFeatureEnabled(proPlan, "aiGenerator")).toBe(true);
     expect(isPlanFeatureEnabled(proPlan, "api")).toBe(false);
+    expect(isPlanFeatureEnabled(proPlan, "competitorMonitoring")).toBe(false);
+    expect(isPlanFeatureEnabled(proPlan, "weeklyMonitoring")).toBe(false);
+    expect(isPlanFeatureEnabled(proPlan, "automatedAlerts")).toBe(false);
   });
 
   it("unlocks all features on Business", () => {
     expect(isPlanFeatureEnabled(businessPlan, "competitor")).toBe(true);
     expect(isPlanFeatureEnabled(businessPlan, "aiGenerator")).toBe(true);
     expect(isPlanFeatureEnabled(businessPlan, "api")).toBe(true);
+    expect(isPlanFeatureEnabled(businessPlan, "competitorMonitoring")).toBe(true);
+    expect(isPlanFeatureEnabled(businessPlan, "weeklyMonitoring")).toBe(true);
+    expect(isPlanFeatureEnabled(businessPlan, "automatedAlerts")).toBe(true);
   });
 });
 
@@ -65,14 +99,109 @@ describe("canCreateStore", () => {
     expect(canCreateStore(1, 1)).toBe(false);
   });
 
-  it("enforces Pro stores_limit of 3", () => {
-    expect(canCreateStore(2, 3)).toBe(true);
-    expect(canCreateStore(3, 3)).toBe(false);
+  it("enforces Pro stores_limit of 5", () => {
+    expect(canCreateStore(4, 5)).toBe(true);
+    expect(canCreateStore(5, 5)).toBe(false);
   });
 
-  it("treats null storesLimit as unlimited (Business)", () => {
-    expect(canCreateStore(0, null)).toBe(true);
-    expect(canCreateStore(10_000, null)).toBe(true);
+  it("enforces Business stores_limit of 15", () => {
+    expect(canCreateStore(14, 15)).toBe(true);
+    expect(canCreateStore(15, 15)).toBe(false);
+  });
+});
+
+describe("decideStoreEnsure", () => {
+  const freeLimit = freePlan.storesLimit;
+  const proLimit = proPlan.storesLimit;
+  const businessLimit = businessPlan.storesLimit;
+
+  it("rejects Free store #2 (insert)", () => {
+    expect(
+      decideStoreEnsure({
+        existingId: null,
+        currentCount: 1,
+        storesLimit: freeLimit,
+        oldestAllowedStoreIds: oldestAllowedStoreIds(["store-1"], freeLimit),
+      })
+    ).toEqual({ action: "reject", used: 1, limit: 1 });
+  });
+
+  it("allows updating the existing Free store", () => {
+    expect(
+      decideStoreEnsure({
+        existingId: "store-1",
+        currentCount: 1,
+        storesLimit: freeLimit,
+        oldestAllowedStoreIds: oldestAllowedStoreIds(["store-1"], freeLimit),
+      })
+    ).toEqual({ action: "update" });
+  });
+
+  it("rejects ensureWorkspaceStore on a bypass extra when a store already exists", () => {
+    expect(
+      decideStoreEnsure({
+        existingId: "store-2",
+        currentCount: 2,
+        storesLimit: freeLimit,
+        oldestAllowedStoreIds: oldestAllowedStoreIds(["store-1", "store-2"], freeLimit),
+      })
+    ).toEqual({ action: "reject", used: 2, limit: 1 });
+  });
+
+  it("enforces Pro stores_limit of 5", () => {
+    expect(
+      decideStoreEnsure({
+        existingId: null,
+        currentCount: 4,
+        storesLimit: proLimit,
+        oldestAllowedStoreIds: oldestAllowedStoreIds(["s1", "s2", "s3", "s4"], proLimit),
+      })
+    ).toEqual({ action: "insert" });
+    expect(
+      decideStoreEnsure({
+        existingId: null,
+        currentCount: 5,
+        storesLimit: proLimit,
+        oldestAllowedStoreIds: oldestAllowedStoreIds(["s1", "s2", "s3", "s4", "s5"], proLimit),
+      })
+    ).toEqual({ action: "reject", used: 5, limit: 5 });
+  });
+
+  it("enforces Business stores_limit of 15", () => {
+    expect(
+      decideStoreEnsure({
+        existingId: null,
+        currentCount: 15,
+        storesLimit: businessLimit,
+        oldestAllowedStoreIds: oldestAllowedStoreIds(
+          Array.from({ length: 15 }, (_, i) => `s${i}`),
+          businessLimit
+        ),
+      })
+    ).toEqual({ action: "reject", used: 15, limit: 15 });
+  });
+
+  it("does not count another workspace's stores toward this workspace quota", () => {
+    const thisWorkspaceIds = ["ws-a-store-1"];
+    expect(
+      oldestAllowedStoreIds(["ws-b-store-1", "ws-b-store-2"], freeLimit)
+    ).not.toEqual(thisWorkspaceIds);
+    expect(
+      decideStoreEnsure({
+        existingId: null,
+        currentCount: thisWorkspaceIds.length,
+        storesLimit: freeLimit,
+        oldestAllowedStoreIds: oldestAllowedStoreIds(thisWorkspaceIds, freeLimit),
+      })
+    ).toEqual({ action: "reject", used: 1, limit: 1 });
+    expect(
+      decideStoreEnsure({
+        existingId: null,
+        currentCount: 0,
+        storesLimit: freeLimit,
+        oldestAllowedStoreIds: oldestAllowedStoreIds([], freeLimit),
+      })
+    ).toEqual({ action: "insert" });
   });
 });
 
@@ -97,6 +226,14 @@ describe("featureLockedBody", () => {
     expect(featureLockedBody("api", "pro")).toEqual({
       error: apiLockedMessage(),
       code: ENTITLEMENT_CODES.API_LOCKED,
+      plan: "pro",
+    });
+  });
+
+  it("returns COMPETITOR_MONITORING_LOCKED for Pro direct API bypass attempts", () => {
+    expect(featureLockedBody("competitorMonitoring", "pro")).toEqual({
+      error: competitorMonitoringLockedMessage(),
+      code: ENTITLEMENT_CODES.COMPETITOR_MONITORING_LOCKED,
       plan: "pro",
     });
   });

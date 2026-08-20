@@ -14,6 +14,8 @@ export interface Database {
           audits_per_month: number | null;
           ai_gens_per_month: number | null;
           stores_limit: number | null;
+          monthly_price_egp: number | null;
+          yearly_price_egp: number | null;
           features: Json;
           created_at: string;
         };

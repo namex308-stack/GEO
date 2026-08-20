@@ -16,6 +16,7 @@ import { ScoreRadial } from "@/components/common/score-viz";
 import { useT } from "@/lib/i18n";
 import { useLocale } from "@/lib/locale/resolve";
 import { isAuditInProgress, type AuditHistoryItem } from "@/lib/audits/types";
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
 
 function statusLabel(
   status: string,
@@ -168,7 +169,7 @@ function HistoryContent() {
                     />
                     <div className="flex-1 min-w-0 text-start">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="text-sm font-semibold truncate">{r.productName}</div>
+                        <div className="text-sm font-semibold truncate">{decodeHtmlEntities(r.productName)}</div>
                         {label && (
                           <Badge
                             variant="secondary"
@@ -179,7 +180,7 @@ function HistoryContent() {
                         )}
                       </div>
                       <div className="text-xs text-muted-foreground truncate mt-0.5" dir="ltr">
-                        {r.storeName} · {r.productUrl}
+                        {decodeHtmlEntities(r.storeName)} · {r.productUrl}
                       </div>
                     </div>
                     {r.status !== "failed" && (

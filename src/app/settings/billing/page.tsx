@@ -9,6 +9,11 @@ import { ApiLoadError } from "@/components/runtime/api-load-error";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useT } from "@/lib/i18n";
+import {
+  resolveBillingPaymentState,
+  shouldShowBillingUpgradeCta,
+} from "@/lib/billing/plan-copy";
+import type { PlanId } from "@/lib/db/types";
 
 type UsageData = {
   plan: {
@@ -72,6 +77,9 @@ export default function BillingPage() {
         day: "numeric",
       })
     : "—";
+  const planId = (usage?.plan.planId ?? "free") as PlanId;
+  const paymentState = resolveBillingPaymentState(planId);
+  const showUpgradeCta = shouldShowBillingUpgradeCta(planId);
 
   return (
     <PageShell>
@@ -122,7 +130,7 @@ export default function BillingPage() {
                     })}
                   </p>
                 </div>
-                {usage.plan.planId === "free" && (
+                {showUpgradeCta && (
                   <Button asChild className="rounded-full shadow-glow">
                     <Link href="/pricing">
                       <Crown className="size-4 me-1 text-brand" /> {t("dashboard.upgrade")}
@@ -160,10 +168,18 @@ export default function BillingPage() {
                 </span>
                 <div className="flex-1">
                   <div className="text-sm font-medium">{t("billing.noPayment")}</div>
-                  <div className="text-xs text-muted-foreground">{t("billing.noPaymentDesc")}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {paymentState === "free_needs_subscribe"
+                      ? t("billing.noPaymentDesc")
+                      : t("billing.paidNoPaymentDesc")}
+                  </div>
                 </div>
                 <Button asChild variant="outline" size="sm" className="rounded-full">
-                  <Link href="/pricing">{t("billing.addCard")}</Link>
+                  <Link href="/pricing">
+                    {paymentState === "free_needs_subscribe"
+                      ? t("billing.addCard")
+                      : t("billing.managePlan")}
+                  </Link>
                 </Button>
               </div>
             </div>

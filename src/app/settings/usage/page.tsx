@@ -7,6 +7,7 @@ import { PageShell, PageHeader, PageContent } from "@/components/app/page-shell"
 import { ApiLoadError } from "@/components/runtime/api-load-error";
 import { ScoreRadial } from "@/components/common/score-viz";
 import { useT } from "@/lib/i18n";
+import { usageDescParams } from "@/lib/billing/plan-copy";
 
 type UsageData = {
   plan: { planId: string; displayName: string; auditsPerMonth: number | null; aiGensPerMonth: number | null };
@@ -108,7 +109,7 @@ export default function UsagePage() {
               <div>
                 <h2 className="font-display text-xl font-bold">{t("usage.planUsage")}</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {t("usage.usageDesc", { pct: usage.usagePct })} · {usage.plan.displayName}
+                  {t("usage.usageDesc", usageDescParams(usage.usagePct, usage.plan.displayName))}
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">{t("usage.periodEnds", { date: renewLabel })}</p>
               </div>

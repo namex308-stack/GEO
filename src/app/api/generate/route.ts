@@ -54,14 +54,15 @@ export async function POST(req: NextRequest) {
       if (!stored) {
         return NextResponse.json({ error: "التحليل غير موجود" }, { status: 404 });
       }
-      productUrl = productUrl || stored.audit.productUrl;
+      productUrl =
+        productUrl || stored.audit.productUrl || stored.audit.storeUrl || undefined;
     }
 
     if (!productUrl) {
       return NextResponse.json({ error: "productUrl أو auditId مطلوب" }, { status: 400 });
     }
 
-    const safeUrl = assertSafePublicHttpUrl(productUrl);
+    const safeUrl = await assertSafePublicHttpUrl(productUrl);
     if (!safeUrl.ok) {
       return NextResponse.json({ error: safeUrl.reason, code: "BLOCKED_URL" }, { status: 400 });
     }
@@ -90,6 +91,75 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const page = await crawlAndNormalize(safeUrl.href);
+    if (!page) {
+      return NextResponse.json({ error: "تعذّر قراءة الصفحة" }, { status: 422 });
+    }
+
+    // ConvAudit is Arabic-only today; the locale layer is the extension point for future dialects.
+    const outputLocale = normalizeAppLocale(parsed.data.locale ?? "ar");
+    const geminiConfigured = isGeminiConfigured();
+    const generated = await generateContent(page, outputLocale);
+
+    if (!generated.ok) {
+      await saveGeneratedContentForAudit({
+        workspaceId,
+        userId: auth.user.id,
+        auditId,
+        productUrl: safeUrl.href,
+        content: toJsonValue({ error: generated.error, code: generated.code }),
+        model: geminiConfigured ? getGeminiModelId() : "page",
+        generationType,
+        status: "failed",
+        durationMs: Math.max(0, Date.now() - started),
+        tokensUsed: null,
+      });
+      return NextResponse.json(
+        { error: generated.error, code: generated.code },
+        { status: 502 }
+      );
+    }
+
+    // Page scrape is only allowed when Gemini is not configured — never burns AI quota.
+    if (generated.source === "page") {
+      if (geminiConfigured) {
+        // Defensive: configured Gemini must never succeed as page scrape.
+        return NextResponse.json(
+          {
+            error: "فشل توليد المحتوى بالذكاء الاصطناعي. حاول مرة أخرى.",
+            code: "GEMINI_FAILED",
+          },
+          { status: 502 }
+        );
+      }
+
+      const durationMs = Math.max(0, Date.now() - started);
+      const generationId = await saveGeneratedContentForAudit({
+        workspaceId,
+        userId: auth.user.id,
+        auditId,
+        productUrl: safeUrl.href,
+        content: toJsonValue(generated.content),
+        model: "page",
+        generationType,
+        status: "completed",
+        durationMs,
+        tokensUsed: null,
+      });
+
+      return NextResponse.json({
+        content: generated.content,
+        generationId,
+        auditId,
+        generationType,
+        durationMs,
+        tokensUsed: null,
+        demoMode: true,
+        source: "page",
+      });
+    }
+
+    // Real Gemini success — reserve AI quota only now.
     const { start: periodStart, end: periodEnd } = getCurrentUsagePeriod();
     const quota = await tryConsumeUsageQuota({
       workspaceId,
@@ -117,40 +187,29 @@ export async function POST(req: NextRequest) {
     }
     usageEventId = quota.usageEventId;
 
-    const page = await crawlAndNormalize(safeUrl.href);
-    if (!page) {
-      if (usageEventId) await releaseUsageQuota(usageEventId);
-      return NextResponse.json({ error: "تعذّر قراءة الصفحة" }, { status: 422 });
-    }
-
-    // ConvAudit is Arabic-only today; the locale layer is the extension point for future dialects.
-    const outputLocale = normalizeAppLocale("ar");
-    const content = await generateContent(page, outputLocale);
-
-    const { tokensUsed, ...payload } = content;
     const durationMs = Math.max(0, Date.now() - started);
     const generationId = await saveGeneratedContentForAudit({
       workspaceId,
       userId: auth.user.id,
       auditId,
       productUrl: safeUrl.href,
-      content: toJsonValue(payload),
-      model: isGeminiConfigured() && content.source === "gemini" ? getGeminiModelId() : "page",
+      content: toJsonValue(generated.content),
+      model: getGeminiModelId(),
       generationType,
       status: "completed",
       durationMs,
-      tokensUsed: tokensUsed ?? null,
+      tokensUsed: generated.tokensUsed,
     });
 
     return NextResponse.json({
-      content: payload,
+      content: generated.content,
       generationId,
       auditId,
       generationType,
       durationMs,
-      tokensUsed: tokensUsed ?? null,
-      demoMode: !isGeminiConfigured() || content.source === "page",
-      source: content.source ?? "page",
+      tokensUsed: generated.tokensUsed,
+      demoMode: false,
+      source: "gemini",
     });
   } catch (err) {
     if (usageEventId) await releaseUsageQuota(usageEventId);

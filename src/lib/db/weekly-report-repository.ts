@@ -2,6 +2,7 @@ import "server-only";
 
 import { getSupabaseAdmin } from "@/lib/supabase";
 import type { AuditData } from "@/lib/types";
+import { decodeAuditDisplayFields, decodeHtmlEntities } from "@/lib/text/decode-html";
 import type { Json } from "@/lib/db/database.types";
 import type {
   WeeklyReportListItem,
@@ -36,7 +37,7 @@ function mapListItem(row: Record<string, unknown>): WeeklyReportListItem {
   return {
     id: row.id as string,
     storeId: row.store_id as string,
-    storeName: payload?.storeName || "المتجر",
+    storeName: decodeHtmlEntities(payload?.storeName || "المتجر"),
     storeUrl: payload?.storeUrl || "",
     periodStart: row.period_start as string,
     periodEnd: row.period_end as string,
@@ -60,7 +61,7 @@ async function loadAuditData(auditId: string): Promise<AuditData | null> {
     .maybeSingle();
 
   if (report?.summary && typeof report.summary === "object") {
-    return report.summary as AuditData;
+    return decodeAuditDisplayFields(report.summary as AuditData);
   }
   return null;
 }
@@ -122,7 +123,7 @@ export async function listActiveStoresForWeeklyReport(): Promise<
   return (stores ?? []).map((s) => ({
     storeId: s.id as string,
     workspaceId: (s.workspace_id as string) || byStore.get(s.id as string)!,
-    storeName: (s.name as string) || "المتجر",
+    storeName: decodeHtmlEntities((s.name as string) || "المتجر"),
     storeUrl: (s.primary_url as string) || "",
     lastReportAt: lastByStore.get(s.id as string) ?? null,
   }));
@@ -250,7 +251,10 @@ function mapRecord(row: Record<string, unknown>): WeeklyReportRecord {
     latestAuditId: (row.latest_audit_id as string) ?? null,
     previousAuditId: (row.previous_audit_id as string) ?? null,
     status: row.status as WeeklyReportRecord["status"],
-    payload,
+    payload: {
+      ...payload,
+      storeName: decodeHtmlEntities(payload.storeName),
+    },
     emailHtml: (row.email_html as string) ?? null,
     emailSentAt: (row.email_sent_at as string) ?? null,
     generatedAt: row.generated_at as string,

@@ -3,6 +3,8 @@
  * Pure helpers — no server-only import so vitest can cover them.
  */
 
+import { decodeHtmlEntities } from "@/lib/text/decode-html";
+
 export type ExtractedFaq = { q: string; a: string };
 
 export type PageExtraction = {
@@ -138,6 +140,7 @@ export function extractPageData(
   out.primaryImageUrl = ogImage;
 
   if (out.price) out.hasPriceSignal = true;
+  if (out.title) out.title = decodeHtmlEntities(out.title);
 
   return out;
 }
@@ -481,7 +484,8 @@ function readImages(image: unknown, pageUrl: string): string[] {
 
 export function extractHtmlTitle(html: string): string {
   const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  return m?.[1]?.replace(/\s+/g, " ").trim() || "";
+  const raw = m?.[1]?.replace(/\s+/g, " ").trim() || "";
+  return decodeHtmlEntities(raw);
 }
 
 export function extractMetaContent(html: string, name: string): string {
